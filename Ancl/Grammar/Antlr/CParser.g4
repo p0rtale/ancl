@@ -211,10 +211,6 @@ declarationSpecifiers
     : specs+=declarationSpecifier+
     ;
 
-declarationSpecifiers2  // for abstract declarator ??????????
-    : specs+=declarationSpecifier+
-    ;
-
 declarationSpecifier
     : storage=storageClassSpecifier
     | typespec=typeSpecifier
@@ -346,7 +342,7 @@ parameterList
 
 parameterDeclaration
     : declarationSpecifiers declarator
-    | declarationSpecifiers2 abstractDeclarator?
+    | declarationSpecifiers abstractDeclarator?
     ;
 
 // identifierList
@@ -360,7 +356,7 @@ typeName
 
 abstractDeclarator
     : pointer
-    | pointer? directAbstractDeclarator
+    | pointer? decl=directAbstractDeclarator
     ;
 
 directAbstractDeclarator

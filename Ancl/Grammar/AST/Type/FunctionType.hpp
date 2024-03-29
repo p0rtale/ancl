@@ -37,6 +37,18 @@ public:
         return m_ParamTypes;
     }
 
+    bool IsArrayType() const override {
+        return false;
+    }
+
+    bool IsFunctionType() const override {
+        return true;
+    }
+    
+    bool IsPointerType() const override {
+        return false;
+    }
+
 private:
     QualType* m_ReturnType;
     std::vector<QualType*> m_ParamTypes;

@@ -19,6 +19,18 @@ public:
         return m_SubType;
     }
 
+    bool IsArrayType() const override {
+        return false;
+    }
+
+    bool IsFunctionType() const override {
+        return false;
+    }
+    
+    bool IsPointerType() const override {
+        return true;
+    }
+
 private:
     QualType* m_SubType;
 };

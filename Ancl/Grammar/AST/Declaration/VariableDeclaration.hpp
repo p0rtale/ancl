@@ -8,6 +8,7 @@ namespace ast {
 
 class VariableDeclaration: public ValueDeclaration {
 public:
+    VariableDeclaration() = default;
     VariableDeclaration(Expression* init): m_Init(init) {}
 
     void Accept(AstVisitor& visitor) override {
@@ -35,7 +36,7 @@ public:
     }
 
 private:
-    Expression* m_Init;
+    Expression* m_Init = nullptr;
 
     StorageClass m_StorageClass = StorageClass::kNone;
 };
