@@ -13,28 +13,12 @@ namespace anclgrammar {
 
 class BuildAstVisitor: public CParserBaseVisitor {
 public:
-    BuildAstVisitor(Program& program)
-            : m_Program(program) {
-        auto unit = m_Program.CreateAstNode<TranslationUnit>();
-        // IntExpression* expr = m_Program.CreateAstNode<IntExpression>(IntValue(10));
-    }
+    BuildAstVisitor(Program& program): m_Program(program) {}
 
 public:
     std::any visitPrimaryExpression(CParser::PrimaryExpressionContext *ctx) override {
         if (ctx->Identifier()) {
-            auto name = ctx->Identifier()->getText();
-            // auto identDeclOpt = m_CurrentScope->FindSymbol(Scope::NamespaceType::Ident, symbol);
-            // if (!identDeclOpt) {
-            //     // TODO: handle error
-            // }
-
-            // auto identDecl = *identDeclOpt;
-            // if (identDecl->IsTypeDecl()) {
-            //     // TODO: handle error
-            // }
-
-            // auto identValDecl = static_cast<ValueDeclaration*>(identDecl); 
-
+            auto name = ctx->getText();
             auto valueDecl = m_Program.CreateAstNode<ValueDeclaration>(std::move(name));           
             auto declExpression = m_Program.CreateAstNode<DeclRefExpression>(valueDecl);
             return static_cast<Expression*>(declExpression);
@@ -53,7 +37,7 @@ public:
         std::string literalWithQuotes = stringLiterals[0]->getText();
         std::string literal = literalWithQuotes.substr(1, literalWithQuotes.size() - 2);
         auto stringExpr = m_Program.CreateAstNode<StringExpression>(std::move(literal));
-        return stringExpr;
+        return static_cast<Expression*>(stringExpr);
     }
 
     std::any visitNumberConstant(CParser::NumberConstantContext *ctx) override {
@@ -107,8 +91,16 @@ public:
     }
 
     std::any visitEnumerationConstant(CParser::EnumerationConstantContext *ctx) override {
-        // TODO: Declaration
-        return visitChildren(ctx);
+        auto name = ctx->getText();
+        auto enumConstDecl = m_Program.CreateAstNode<EnumConstDeclaration>();
+        enumConstDecl->SetName(std::move(name));
+
+        // 6.7.2.2 - Enumerators have type int
+        auto intType = m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kInt);
+        auto intQualType = m_Program.CreateType<QualType>(intType);
+        enumConstDecl->SetType(intQualType);
+
+        return enumConstDecl;
     }
 
     std::any visitPostfixExpression(CParser::PostfixExpressionContext *ctx) override {
@@ -123,9 +115,7 @@ public:
             auto argsExpression = std::vector<Expression*>{};
             if (ctx->args) {
                 auto argsExpressionAny = visitArgumentExpressionList(ctx->args);
-                std::cout << "ABOBA?\n";
                 argsExpression = std::any_cast<std::vector<Expression*>>(argsExpressionAny);
-                std::cout << "KEEEEK\n";
             }
             auto callExpr = m_Program.CreateAstNode<CallExpression>(
                 leftExpression, argsExpression
@@ -1566,9 +1556,6 @@ public:
 
 private:
     Program& m_Program;
-
-    // SymbolTable m_SymbolTable;
-    // Scope* m_CurrentScope = m_SymbolTable.GetGlobalScope();
 };
 
 };

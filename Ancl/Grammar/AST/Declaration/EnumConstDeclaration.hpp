@@ -7,6 +7,7 @@ namespace ast {
 
 class EnumConstDeclaration: public ValueDeclaration {
 public:
+    EnumConstDeclaration() = default;
     EnumConstDeclaration(Expression* init): m_Init(init) {}
 
     void Accept(AstVisitor& visitor) override {
@@ -26,7 +27,7 @@ public:
     }
 
 private:
-    Expression* m_Init;
+    Expression* m_Init = nullptr;
 };
 
 }  // namespace ast
