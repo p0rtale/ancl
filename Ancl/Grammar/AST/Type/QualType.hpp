@@ -11,6 +11,10 @@ public:
     QualType() = default;
     QualType(Type* subType): m_SubType(subType) {}
 
+    void Accept(AstVisitor& visitor) override {
+        visitor.Visit(*this);
+    }
+
     void SetSubType(Type* subType) {
         m_SubType = subType;
     }

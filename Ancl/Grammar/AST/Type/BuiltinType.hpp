@@ -8,7 +8,8 @@ namespace ast {
 class BuiltinType: public Type {
 public:
     enum class Kind {
-        kVoid = 0,
+        kNone = 0,
+        kVoid,
         kChar,
         kUChar,
         kShort,
@@ -23,8 +24,12 @@ public:
     };
 
 public:
-    BuiltinType(): m_Kind(Kind::kVoid) {}
+    BuiltinType(): m_Kind(Kind::kNone) {}
     BuiltinType(Kind kind): m_Kind(kind) {}
+
+    void Accept(AstVisitor& visitor) override {
+        visitor.Visit(*this);
+    }
 
     void SetKind(Kind kind) {
         m_Kind = kind;

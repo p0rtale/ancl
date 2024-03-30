@@ -11,6 +11,10 @@ public:
     TypedefType(TypedefDeclaration* declaration)
         : m_Declaration(declaration) {}
 
+    void Accept(AstVisitor& visitor) override {
+        visitor.Visit(*this);
+    }
+
     TypedefDeclaration* GetDeclaration() const {
         return m_Declaration;
     }

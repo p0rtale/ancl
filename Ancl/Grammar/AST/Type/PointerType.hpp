@@ -11,6 +11,10 @@ class PointerType: public Type, public INodeType {
 public:
     PointerType(QualType* subType): m_SubType(subType) {}
 
+    void Accept(AstVisitor& visitor) override {
+        visitor.Visit(*this);
+    }
+
     void SetSubType(QualType* subType) override {
         m_SubType = subType;
     }

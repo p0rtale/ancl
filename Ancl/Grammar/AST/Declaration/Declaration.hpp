@@ -24,8 +24,6 @@ public:
         m_Name = name;
     }
 
-int typedef *kek;
-
     std::string GetName() const {
         return m_Name;
     }

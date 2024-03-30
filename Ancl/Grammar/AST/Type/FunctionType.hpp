@@ -13,6 +13,10 @@ class FunctionType: public Type, public INodeType {
 public:
     FunctionType(QualType* returnType): m_ReturnType(returnType) {}
 
+    void Accept(AstVisitor& visitor) override {
+        visitor.Visit(*this);
+    }
+
     void SetVariadic() {
         m_IsVariadic = true;
     }

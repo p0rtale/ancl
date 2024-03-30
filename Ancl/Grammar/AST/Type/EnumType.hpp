@@ -11,6 +11,10 @@ public:
     EnumType(EnumDeclaration* declaration)
         : m_Declaration(declaration) {}
 
+    void Accept(AstVisitor& visitor) override {
+        visitor.Visit(*this);
+    }
+
     EnumDeclaration* GetDeclaration() const {
         return m_Declaration;
     }

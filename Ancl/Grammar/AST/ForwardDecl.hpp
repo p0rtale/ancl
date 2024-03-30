@@ -54,4 +54,17 @@ class SizeofTypeExpression;
 class StringExpression;
 class UnaryExpression;
 
+
+// Type
+class ArrayType;
+class BuiltinType;
+class EnumType;
+class FunctionType;
+class PointerType;
+class QualType;
+class RecordType;
+class TagType;
+class Type;
+class TypedefType;
+
 }  // namespace ast

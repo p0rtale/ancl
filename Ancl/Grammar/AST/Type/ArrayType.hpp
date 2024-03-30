@@ -13,6 +13,10 @@ public:
     ArrayType(QualType* subType, IntValue size)
         : m_SubType(subType), m_Size(size) {}
 
+    void Accept(AstVisitor& visitor) override {
+        visitor.Visit(*this);
+    }
+
     void SetSubType(QualType* subType) override {
         m_SubType = subType;
     }
