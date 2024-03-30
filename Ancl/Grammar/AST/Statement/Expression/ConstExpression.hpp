@@ -17,6 +17,10 @@ public:
         visitor.Visit(*this);
     }
 
+    Expression* GetExpression() const {
+        return m_Expression;
+    }
+
     void SetValue(Value value) {
         m_Value = value;
         m_IsEvaluated = true;

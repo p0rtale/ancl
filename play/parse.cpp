@@ -8,6 +8,8 @@
 #include <Ancl/Visitor/BuildAstVisitor.hpp>
 #include <Ancl/Grammar/AST/Program.hpp>
 
+#include <Ancl/Visitor/AstDotVisitor.hpp>
+
 
 using namespace anclgrammar;
 using namespace antlr4;
@@ -29,10 +31,12 @@ int main(int argc, const char** argv) {
 
     std::cout << tree->toStringTree(&parser) << std::endl << std::endl;
 
-    // Program program;
-    // BuildAstVisitor visitor(program);
+    Program program;
+    BuildAstVisitor buildVisitor(program);
+    buildVisitor.visitTranslationUnit(tree);
 
-    // visitor.visitTranslationUnit(tree);
+    AstDotVisitor dotVisitor("astdot.txt");
+    dotVisitor.Visit(*program.GetTranslationUnit());
 
     return 0;
 }

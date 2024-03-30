@@ -73,6 +73,24 @@ public:
     virtual void Visit(SizeofTypeExpression&) = 0;
     virtual void Visit(StringExpression&) = 0;
     virtual void Visit(UnaryExpression&) = 0;
+
+
+    /*
+    =================================================================
+                                Type
+    =================================================================
+    */
+
+    virtual void Visit(ArrayType&) = 0;
+    virtual void Visit(BuiltinType&) = 0;
+    virtual void Visit(EnumType&) = 0;
+    virtual void Visit(FunctionType&) = 0;
+    virtual void Visit(PointerType&) = 0;
+    virtual void Visit(QualType&) = 0;
+    virtual void Visit(RecordType&) = 0;
+    virtual void Visit(TagType&) = 0;
+    virtual void Visit(Type&) = 0;
+    virtual void Visit(TypedefType&) = 0;
 };
 
 }  // namespace ast

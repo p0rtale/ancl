@@ -93,7 +93,7 @@ public:
     std::any visitEnumerationConstant(CParser::EnumerationConstantContext *ctx) override {
         auto name = ctx->getText();
         auto enumConstDecl = m_Program.CreateAstNode<EnumConstDeclaration>();
-        enumConstDecl->SetName(std::move(name));
+        enumConstDecl->SetName(name);
 
         // 6.7.2.2 - Enumerators have type int
         auto intType = m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kInt);
@@ -262,10 +262,10 @@ public:
             return visitCastExpression(ctx->castexpr);
         }
 
-        auto leftExpressionAny = visitCastExpression(ctx->castExpression());
+        auto leftExpressionAny = visitMultiplicativeExpression(ctx->multiplicativeExpression());
         auto leftExpression = std::any_cast<Expression*>(leftExpressionAny);
 
-        auto rightExpressionAny = visitMultiplicativeExpression(ctx->multiplicativeExpression());
+        auto rightExpressionAny = visitCastExpression(ctx->castExpression());
         auto rightExpression = std::any_cast<Expression*>(rightExpressionAny);
 
         auto op = BinaryExpression::OpType::kNone;
@@ -288,10 +288,10 @@ public:
             return visitMultiplicativeExpression(ctx->mulexpr);
         }
 
-        auto leftExpressionAny = visitMultiplicativeExpression(ctx->multiplicativeExpression());
+        auto leftExpressionAny = visitAdditiveExpression(ctx->additiveExpression());
         auto leftExpression = std::any_cast<Expression*>(leftExpressionAny);
 
-        auto rightExpressionAny = visitAdditiveExpression(ctx->additiveExpression());
+        auto rightExpressionAny = visitMultiplicativeExpression(ctx->multiplicativeExpression());
         auto rightExpression = std::any_cast<Expression*>(rightExpressionAny);
 
         auto op = BinaryExpression::OpType::kNone;
@@ -312,10 +312,10 @@ public:
             return visitAdditiveExpression(ctx->addexpr);
         }
 
-        auto leftExpressionAny = visitAdditiveExpression(ctx->additiveExpression());
+        auto leftExpressionAny = visitShiftExpression(ctx->shiftExpression());
         auto leftExpression = std::any_cast<Expression*>(leftExpressionAny);
 
-        auto rightExpressionAny = visitShiftExpression(ctx->shiftExpression());
+        auto rightExpressionAny = visitAdditiveExpression(ctx->additiveExpression());
         auto rightExpression = std::any_cast<Expression*>(rightExpressionAny);
 
         auto op = BinaryExpression::OpType::kNone;
@@ -336,10 +336,10 @@ public:
             return visitShiftExpression(ctx->shiftexpr);
         }
 
-        auto leftExpressionAny = visitShiftExpression(ctx->shiftExpression());
+        auto leftExpressionAny = visitRelationalExpression(ctx->relationalExpression());
         auto leftExpression = std::any_cast<Expression*>(leftExpressionAny);
 
-        auto rightExpressionAny = visitRelationalExpression(ctx->relationalExpression());
+        auto rightExpressionAny = visitShiftExpression(ctx->shiftExpression());
         auto rightExpression = std::any_cast<Expression*>(rightExpressionAny);
 
         auto op = BinaryExpression::OpType::kNone;
@@ -364,10 +364,10 @@ public:
             return visitRelationalExpression(ctx->relexpr);
         }
 
-        auto leftExpressionAny = visitRelationalExpression(ctx->relationalExpression());
+        auto leftExpressionAny = visitEqualityExpression(ctx->equalityExpression());
         auto leftExpression = std::any_cast<Expression*>(leftExpressionAny);
 
-        auto rightExpressionAny = visitEqualityExpression(ctx->equalityExpression());
+        auto rightExpressionAny = visitRelationalExpression(ctx->relationalExpression());
         auto rightExpression = std::any_cast<Expression*>(rightExpressionAny);
 
         auto op = BinaryExpression::OpType::kNone;
@@ -388,10 +388,10 @@ public:
             return visitEqualityExpression(ctx->eqexpr);
         }
 
-        auto leftExpressionAny = visitEqualityExpression(ctx->equalityExpression());
+        auto leftExpressionAny = visitAndExpression(ctx->andExpression());
         auto leftExpression = std::any_cast<Expression*>(leftExpressionAny);
 
-        auto rightExpressionAny = visitAndExpression(ctx->andExpression());
+        auto rightExpressionAny = visitEqualityExpression(ctx->equalityExpression());
         auto rightExpression = std::any_cast<Expression*>(rightExpressionAny);
 
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
@@ -405,7 +405,7 @@ public:
             return visitAndExpression(ctx->andexpr);
         }
 
-        auto leftExpressionAny = visitAndExpression(ctx->andExpression());
+        auto leftExpressionAny = visitExclusiveOrExpression(ctx->exclusiveOrExpression());
         auto leftExpression = std::any_cast<Expression*>(leftExpressionAny);
 
         auto rightExpressionAny = visitAndExpression(ctx->andExpression());
@@ -422,10 +422,10 @@ public:
             return visitExclusiveOrExpression(ctx->exorexpr);
         }
 
-        auto leftExpressionAny = visitExclusiveOrExpression(ctx->exclusiveOrExpression());
+        auto leftExpressionAny = visitInclusiveOrExpression(ctx->inclusiveOrExpression());
         auto leftExpression = std::any_cast<Expression*>(leftExpressionAny);
 
-        auto rightExpressionAny = visitInclusiveOrExpression(ctx->inclusiveOrExpression());
+        auto rightExpressionAny = visitExclusiveOrExpression(ctx->exclusiveOrExpression());
         auto rightExpression = std::any_cast<Expression*>(rightExpressionAny);
 
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
@@ -439,10 +439,10 @@ public:
             return visitInclusiveOrExpression(ctx->incorexpr);
         }
 
-        auto leftExpressionAny = visitInclusiveOrExpression(ctx->inclusiveOrExpression());
+        auto leftExpressionAny = visitLogicalAndExpression(ctx->logicalAndExpression());
         auto leftExpression = std::any_cast<Expression*>(leftExpressionAny);
 
-        auto rightExpressionAny = visitLogicalAndExpression(ctx->logicalAndExpression());
+        auto rightExpressionAny = visitInclusiveOrExpression(ctx->inclusiveOrExpression());
         auto rightExpression = std::any_cast<Expression*>(rightExpressionAny);
 
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
@@ -456,10 +456,10 @@ public:
             return visitLogicalAndExpression(ctx->logandexpr);
         }
 
-        auto leftExpressionAny = visitLogicalAndExpression(ctx->logicalAndExpression());
+        auto leftExpressionAny = visitLogicalOrExpression(ctx->logicalOrExpression());
         auto leftExpression = std::any_cast<Expression*>(leftExpressionAny);
 
-        auto rightExpressionAny = visitLogicalOrExpression(ctx->logicalOrExpression());
+        auto rightExpressionAny = visitLogicalAndExpression(ctx->logicalAndExpression());
         auto rightExpression = std::any_cast<Expression*>(rightExpressionAny);
 
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
@@ -581,35 +581,74 @@ public:
         Expression* Init = nullptr;
     };
 
-public:
-    std::any visitDeclaration(CParser::DeclarationContext *ctx) override {
-        // DeclarationSpecifiers:
-        // 1) Declaration (struct, union, enum) -> add and wrap with var declaration
-        // 2) Type -> just wrap with declaration with declarator
+    enum class FunctionSpecifier {
+        kNone = 0,
+        kInline,
+    };
 
-        std::vector<Declaration*> decls;
-        auto declSpecsAny = visitDeclarationSpecifiers(ctx->declspecs);
+    enum class StorageClassInfo {
+        kNone = 0,
+        kTypedef,
+        kExtern,
+        kStatic,
+        kAuto,
+        kRegister,
+    };
 
-        QualType* qualType = nullptr;
-        auto declPtr = std::any_cast<Declaration*>(&declSpecsAny);
-        if (declPtr) {  // is declaration
-            auto decl = *declPtr;
-            decls.push_back(decl);
-            auto typeDecl = static_cast<TypeDeclaration*>(decl);
-            qualType = typeDecl->GetType();
-        } else {  // is type
-            qualType = std::any_cast<QualType*>(declSpecsAny);
+    struct DeclSpecifiers {
+        bool IsTypeDef = false;
+        StorageClassInfo Storage = StorageClassInfo::kNone;
+        FunctionSpecifier FunSpec = FunctionSpecifier::kNone;
+        QualType* Type = nullptr;
+    };
+
+    struct DeclarationInfo {
+        TagDeclaration* TagPreDecl = nullptr;
+        Declaration* Decl = nullptr;
+    };
+
+private:
+    DeclarationInfo createDeclaration(const DeclSpecifiers& declSpecs,
+                                      const std::vector<DeclaratorInfo>& declList) {
+        auto initDeclList = std::vector<InitDeclaratorInfo>{};
+        initDeclList.reserve(declList.size());
+
+        for (const auto& decl : declList) {
+            initDeclList.push_back(InitDeclaratorInfo{
+                .DeclInfo=decl,
+                .Init=nullptr,
+            });
         }
 
-        if (!ctx->initdecl) {
-            return decls;
+        return createDeclaration(declSpecs, initDeclList);
+    }
+
+    DeclarationInfo createDeclaration(const DeclSpecifiers& declSpecs,
+                                      const std::vector<InitDeclaratorInfo>& initDeclList) {
+        auto resInfo = DeclarationInfo{};
+        
+        auto qualType = declSpecs.Type;
+        auto type = qualType->GetSubType();
+        auto recordTypePtr = dynamic_cast<RecordType*>(type);
+        if (recordTypePtr) {
+            auto recordType = *recordTypePtr;
+            auto recordDecl = recordType.GetDeclaration();
+            resInfo.TagPreDecl = recordDecl;
         }
 
-        auto initDeclListAny = visitInitDeclaratorList(ctx->initdecl);
-        auto initDeclList = std::any_cast<std::vector<InitDeclaratorInfo>>(initDeclListAny);
+        auto enumTypePtr = dynamic_cast<EnumType*>(type);
+        if (enumTypePtr) {
+            auto enumType = *enumTypePtr;
+            auto enumDecl = enumType.GetDeclaration();
+            resInfo.TagPreDecl = enumDecl;
+        }
+
+        if (initDeclList.empty()) {
+            return resInfo;
+        }
 
         for (auto& initDecl : initDeclList) {
-            auto& declInfo = initDecl.DeclInfo;
+            auto declInfo = initDecl.DeclInfo;
 
             if (declInfo.TailType) {
                 auto tailQualType = declInfo.TailType;
@@ -620,33 +659,95 @@ public:
                 declInfo.TailType = declInfo.HeadType;
             }
 
-            if (declInfo.FunctionDecl) {
+            if (declSpecs.IsTypeDef) {
+                auto typedefDecl = m_Program.CreateAstNode<TypedefDeclaration>();
+
                 if (initDecl.Init) {
                     // TODO: handle error
                 }
-                decls.push_back(declInfo.FunctionDecl);
+
+                typedefDecl->SetName(declInfo.Identifier);
+                typedefDecl->SetType(declInfo.HeadType);
+
+                resInfo.Decl = typedefDecl;
+            } else if (declInfo.FunctionDecl) {
+                if (initDecl.Init) {
+                    // TODO: handle error
+                }
+                auto funDecl = declInfo.FunctionDecl;
+
+                if (declSpecs.FunSpec == FunctionSpecifier::kInline) {
+                    funDecl->SetInline();
+                }
+
+                switch (declSpecs.Storage) {
+                case StorageClassInfo::kExtern:
+                    funDecl->SetStorageClass(StorageClass::kExtern);
+                    break;
+                case StorageClassInfo::kStatic:
+                    funDecl->SetStorageClass(StorageClass::kStatic);
+                    break;
+                case StorageClassInfo::kAuto:
+                    funDecl->SetStorageClass(StorageClass::kAuto);
+                    break;
+                case StorageClassInfo::kRegister:
+                    funDecl->SetStorageClass(StorageClass::kRegister);
+                    break;
+                }
+
+                resInfo.Decl = funDecl;
             } else {
+                if (declSpecs.FunSpec != FunctionSpecifier::kNone) {
+                    // TODO: handle error
+                }
+
                 auto varDecl = m_Program.CreateAstNode<VariableDeclaration>();
-                varDecl->SetName(std::move(declInfo.Identifier));
+                varDecl->SetName(declInfo.Identifier);
                 varDecl->SetType(declInfo.HeadType);
                 varDecl->SetInit(initDecl.Init);
-                decls.push_back(varDecl);
+
+                switch (declSpecs.Storage) {
+                case StorageClassInfo::kExtern:
+                    varDecl->SetStorageClass(StorageClass::kExtern);
+                    break;
+                case StorageClassInfo::kStatic:
+                    varDecl->SetStorageClass(StorageClass::kStatic);
+                    break;
+                case StorageClassInfo::kAuto:
+                    varDecl->SetStorageClass(StorageClass::kAuto);
+                    break;
+                case StorageClassInfo::kRegister:
+                    varDecl->SetStorageClass(StorageClass::kRegister);
+                    break;
+                }
+
+                resInfo.Decl = varDecl;
             }
         }
 
-        return decls;
+        return resInfo;
     }
 
 public:
-    enum class StorageClass {
-        kNone = 0,
-        kTypedef,
-        kExtern,
-        kStatic,
-        kAuto,
-        kRegister,
-    };
+    std::any visitDeclaration(CParser::DeclarationContext *ctx) override {
+        // DeclarationSpecifiers:
+        // 1) Declaration (struct, union, enum) -> add and wrap with var declaration
+        // 2) Type -> just wrap with declaration with declarator
 
+        auto declSpecsAny = visitDeclarationSpecifiers(ctx->declspecs);
+        auto declSpecs = std::any_cast<DeclSpecifiers>(declSpecsAny);
+
+        auto initDeclList = std::vector<InitDeclaratorInfo>{};
+        if (ctx->initdecl) {
+            auto initDeclListAny = visitInitDeclaratorList(ctx->initdecl);
+            initDeclList = std::any_cast<std::vector<InitDeclaratorInfo>>(initDeclListAny);
+        }
+
+        auto declarationInfo = createDeclaration(declSpecs, initDeclList);
+        return declarationInfo;
+    }
+
+public:
     enum class BuiltinTypeSpecifier {
         kVoid = 0,
         kChar,
@@ -666,39 +767,125 @@ public:
         kVolatile,
     };
 
-    enum class FunctionSpecifier {
-        kNone = 0,
-        kInline,
+    struct BuiltinTypeInfo {
+        enum class SizeModifier {
+            kNone, kShort, kLong, kLongLong,
+        } Size;
+
+        enum class BasicType {
+            kNone, kVoid, kChar, kInt, kFloat, kDouble,
+        } Type;
+
+        enum class SignModifier {
+            kNone, kSigned, kUnsigned,
+        } Sign;
     };
 
-    struct DeclSpecifiers {
-        StorageClass Storage = StorageClass::kNone;
-        FunctionSpecifier FunSpec = FunctionSpecifier::kNone;
-        QualType* Type = nullptr;
-    };
+private:
+    Type* createBuiltinTypeFromInfo(const BuiltinTypeInfo& info) {
+        if (info.Type == BuiltinTypeInfo::BasicType::kNone &&
+                info.Size == BuiltinTypeInfo::SizeModifier::kNone) {
+            if (info.Sign == BuiltinTypeInfo::SignModifier::kSigned) {
+                return m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kInt);
+            }
+            if (info.Sign == BuiltinTypeInfo::SignModifier::kUnsigned) {
+                return m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kUInt);
+            }
+            return nullptr;
+        }
 
-public:
-    std::any visitDeclarationSpecifiers(CParser::DeclarationSpecifiersContext *ctx) override {
+        if (info.Type == BuiltinTypeInfo::BasicType::kVoid) {
+            if (info.Size != BuiltinTypeInfo::SizeModifier::kNone) {
+                // TODO: handle error
+            }
+            if (info.Sign != BuiltinTypeInfo::SignModifier::kNone) {
+                // TODO: handle error
+            }
+            return m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kVoid);
+        }
+
+        if (info.Type == BuiltinTypeInfo::BasicType::kChar) {
+            if (info.Size != BuiltinTypeInfo::SizeModifier::kNone) {
+                // TODO: handle error
+            }
+            if (info.Sign == BuiltinTypeInfo::SignModifier::kUnsigned) {
+                return m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kUChar);
+            }
+            return m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kChar);
+        }
+
+        if (info.Type == BuiltinTypeInfo::BasicType::kFloat) {
+            if (info.Size != BuiltinTypeInfo::SizeModifier::kNone) {
+                // TODO: handle error
+            }
+            if (info.Sign != BuiltinTypeInfo::SignModifier::kNone) {
+                // TODO: handle error
+            }
+            return m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kFloat);
+        }
+
+        if (info.Type == BuiltinTypeInfo::BasicType::kDouble) {
+            if (info.Sign != BuiltinTypeInfo::SignModifier::kNone) {
+                // TODO: handle error
+            }
+            if (info.Size == BuiltinTypeInfo::SizeModifier::kShort) {
+                // TODO: handle error
+            } else if (info.Size == BuiltinTypeInfo::SizeModifier::kLong) {
+                return m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kLongDouble);
+            }
+            return m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kDouble);
+        }
+
+        if (info.Size == BuiltinTypeInfo::SizeModifier::kShort) {
+            if (info.Sign == BuiltinTypeInfo::SignModifier::kUnsigned) {
+                return m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kUShort);
+            }
+            return m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kShort);
+        }
+
+        if (info.Size == BuiltinTypeInfo::SizeModifier::kLong ||
+                info.Size == BuiltinTypeInfo::SizeModifier::kLongLong) {
+            if (info.Sign == BuiltinTypeInfo::SignModifier::kUnsigned) {
+                return m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kULong);
+            }
+            return m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kLong);  
+        }
+
+        if (info.Type == BuiltinTypeInfo::BasicType::kInt) {
+            if (info.Sign == BuiltinTypeInfo::SignModifier::kUnsigned) {
+                return m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kUInt);
+            }
+            return m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kInt);  
+        }
+
+        return nullptr;
+    }
+
+private:
+    DeclSpecifiers createDeclSpecs(const std::vector<std::any>& declSpecsAny) {
         auto declSpecs = DeclSpecifiers{};
 
         auto qualType = m_Program.CreateType<QualType>();
         declSpecs.Type = qualType;
 
-        for (auto specCtx : ctx->specs) {
-            auto declSpecAny = visitDeclarationSpecifier(specCtx);
+        Type* declSpecType = nullptr;
+        auto builtinTypeInfo = BuiltinTypeInfo{};
 
-            auto storageClassPtr = std::any_cast<StorageClass>(&declSpecAny);
+        for (const auto& declSpecAny : declSpecsAny) {
+            auto storageClassPtr = std::any_cast<StorageClassInfo>(&declSpecAny);
             if (storageClassPtr) {
                 auto storageClass = *storageClassPtr;
 
-                if (storageClass == StorageClass::kTypedef) {
-                    // TODO: check typedef
+                if (storageClass == StorageClassInfo::kTypedef) {
+                    if (declSpecs.IsTypeDef || declSpecs.Storage != StorageClassInfo::kNone) {
+                        // TODO: handle error
+                    }
+                    declSpecs.IsTypeDef = true;
                 } else {
-                    if (storageClass != StorageClass::kNone &&
-                            declSpecs.Storage != StorageClass::kNone) {
+                    if (storageClass != StorageClassInfo::kNone &&
+                            declSpecs.Storage != StorageClassInfo::kNone) {
                         // TODO: handle static + extern, static + static, ... errors
                     }
-
                     declSpecs.Storage = storageClass;
                 }
             }
@@ -707,47 +894,53 @@ public:
             if (builtinTypeSpecPtr) {
                 auto builtinTypeSpec = *builtinTypeSpecPtr;
 
-                auto builtinType = m_Program.CreateType<BuiltinType>();
-
-                switch (builtinTypeSpec) {
-                case BuiltinTypeSpecifier::kVoid:
-                    builtinType->SetKind(BuiltinType::Kind::kVoid);
-                    break;
-                case BuiltinTypeSpecifier::kChar:
-                    builtinType->SetKind(BuiltinType::Kind::kChar);
-                    break;
-                case BuiltinTypeSpecifier::kShort:
-                    builtinType->SetKind(BuiltinType::Kind::kShort);
-                    break;
-                case BuiltinTypeSpecifier::kInt:
-                    builtinType->SetKind(BuiltinType::Kind::kInt);
-                    break;
-                case BuiltinTypeSpecifier::kLong:
-                    builtinType->SetKind(BuiltinType::Kind::kLong);
-                    break;
-                case BuiltinTypeSpecifier::kFloat:
-                    builtinType->SetKind(BuiltinType::Kind::kFloat);
-                    break;
-                case BuiltinTypeSpecifier::kDouble:
-                    builtinType->SetKind(BuiltinType::Kind::kDouble);
-                    break;
-                case BuiltinTypeSpecifier::kSigned:
-                    builtinType->SetKind(BuiltinType::Kind::kInt);
-                    break;
-                case BuiltinTypeSpecifier::kUnsigned:
-                    if (builtinType->GetKind() == BuiltinType::Kind::kChar) {
-                        builtinType->SetKind(BuiltinType::Kind::kUChar);
-                    } else if (builtinType->GetKind() == BuiltinType::Kind::kInt) {
-                        builtinType->SetKind(BuiltinType::Kind::kUInt);
-                    } else if (builtinType->GetKind() == BuiltinType::Kind::kShort) {
-                        builtinType->SetKind(BuiltinType::Kind::kUShort);
-                    } else if (builtinType->GetKind() == BuiltinType::Kind::kLong) {
-                        builtinType->SetKind(BuiltinType::Kind::kULong);
+                if (builtinTypeSpec == BuiltinTypeSpecifier::kSigned) {
+                    if (builtinTypeInfo.Sign != BuiltinTypeInfo::SignModifier::kNone) {
+                        // TODO: handle error
                     }
-                    break;
-                default:
-                    // TODO: handle error
-                    break;
+                    builtinTypeInfo.Sign = BuiltinTypeInfo::SignModifier::kSigned;
+                } else if (builtinTypeSpec == BuiltinTypeSpecifier::kUnsigned) {
+                    if (builtinTypeInfo.Sign != BuiltinTypeInfo::SignModifier::kNone) {
+                        // TODO: handle error
+                    }
+                    builtinTypeInfo.Sign = BuiltinTypeInfo::SignModifier::kUnsigned;
+                } else if (builtinTypeSpec == BuiltinTypeSpecifier::kShort) {
+                    if (builtinTypeInfo.Size != BuiltinTypeInfo::SizeModifier::kNone) {
+                        // TODO: handle error
+                    }
+                    builtinTypeInfo.Size = BuiltinTypeInfo::SizeModifier::kShort;
+                } else if (builtinTypeSpec == BuiltinTypeSpecifier::kLong) {
+                    if (builtinTypeInfo.Size == BuiltinTypeInfo::SizeModifier::kLong) {
+                        builtinTypeInfo.Size = BuiltinTypeInfo::SizeModifier::kLongLong; 
+                    } else if (builtinTypeInfo.Size != BuiltinTypeInfo::SizeModifier::kNone) {
+                        // TODO: handle error
+                    } else {
+                        builtinTypeInfo.Size = BuiltinTypeInfo::SizeModifier::kLong; 
+                    }
+                } else {  // basic type
+                    if (builtinTypeInfo.Type != BuiltinTypeInfo::BasicType::kNone) {
+                        // TODO: handle error
+                    }
+                    switch (builtinTypeSpec) {
+                    case BuiltinTypeSpecifier::kVoid:
+                        builtinTypeInfo.Type = BuiltinTypeInfo::BasicType::kVoid;
+                        break;
+                    case BuiltinTypeSpecifier::kChar:
+                        builtinTypeInfo.Type = BuiltinTypeInfo::BasicType::kChar;
+                        break;
+                    case BuiltinTypeSpecifier::kInt:
+                        builtinTypeInfo.Type = BuiltinTypeInfo::BasicType::kInt;
+                        break;
+                    case BuiltinTypeSpecifier::kFloat:
+                        builtinTypeInfo.Type = BuiltinTypeInfo::BasicType::kFloat;
+                        break;
+                    case BuiltinTypeSpecifier::kDouble:
+                        builtinTypeInfo.Type = BuiltinTypeInfo::BasicType::kDouble;
+                        break;
+                    default:
+                        // TODO: handle error
+                        break;
+                    }
                 }
             }
 
@@ -755,7 +948,10 @@ public:
             if (namedTypeSpecPtr) {
                 auto namedType = *namedTypeSpecPtr;
                 auto qualType = declSpecs.Type;
-                qualType->SetSubType(namedType);
+                if (declSpecType) {
+                    // TODO: handle error
+                }
+                declSpecType = namedType;
             }
 
             auto qualifierPtr = std::any_cast<Qualifier>(&declSpecAny);
@@ -787,17 +983,43 @@ public:
 
             auto functionSpecPtr = std::any_cast<FunctionSpecifier>(&declSpecAny);
             if (functionSpecPtr) {
+                if (declSpecs.FunSpec != FunctionSpecifier::kNone) {
+                    // TODO: handle error
+                }
                 declSpecs.FunSpec = *functionSpecPtr;
             }
         }
 
+        Type* builtinType = createBuiltinTypeFromInfo(builtinTypeInfo);
+        if (builtinType) {
+            if (declSpecType) {
+                // TODO: handle error
+            }
+            declSpecType = builtinType;
+        }
+
+        qualType->SetSubType(declSpecType);
+
         return declSpecs;
+    }
+
+public:
+    std::any visitDeclarationSpecifiers(CParser::DeclarationSpecifiersContext *ctx) override {
+        auto specsCtx = ctx->specs;
+        auto declSpecsAny = std::vector<std::any>{};
+        declSpecsAny.reserve(specsCtx.size());
+        for (auto specCtx : specsCtx) {
+            auto declSpecAny = visitDeclarationSpecifier(specCtx);
+            declSpecsAny.push_back(declSpecAny);
+        }
+
+        return createDeclSpecs(declSpecsAny);
     }
 
     std::any visitDeclarationSpecifier(CParser::DeclarationSpecifierContext *ctx) override {
         if (ctx->storage) {
             auto storageClassAny = visitStorageClassSpecifier(ctx->storage);
-            auto storageClass = std::any_cast<StorageClass>(storageClassAny);
+            auto storageClass = std::any_cast<StorageClassInfo>(storageClassAny);
             return storageClass;
         }
 
@@ -817,6 +1039,7 @@ public:
         if (ctx->qualifier) {
             auto typeQualifierAny = visitTypeQualifier(ctx->qualifier);
             auto typeQualifier = std::any_cast<Qualifier>(typeQualifierAny);
+            return typeQualifier;
         }
 
         if (ctx->funcspec) {
@@ -862,22 +1085,22 @@ public:
     std::any visitStorageClassSpecifier(CParser::StorageClassSpecifierContext *ctx) override {
         auto storageStr = ctx->getText();
         if (storageStr == "typedef") {
-            return StorageClass::kTypedef;
+            return StorageClassInfo::kTypedef;
         }
 
         if (storageStr == "extern") {
-            return StorageClass::kExtern;
+            return StorageClassInfo::kExtern;
         }
         if (storageStr == "static") {
-            return StorageClass::kStatic;
+            return StorageClassInfo::kStatic;
         }
         if (storageStr == "auto") {
-            return StorageClass::kAuto;
+            return StorageClassInfo::kAuto;
         }
         if (storageStr == "register") {
-            return StorageClass::kRegister;
+            return StorageClassInfo::kRegister;
         }
-        return StorageClass::kNone;
+        return StorageClassInfo::kNone;
     }
 
     std::any visitTypeSpecifier(CParser::TypeSpecifierContext *ctx) override {
@@ -932,6 +1155,13 @@ public:
         return BuiltinTypeSpecifier::kVoid;
     }
 
+public:
+    struct FieldInfo {
+        TagDeclaration* TagPreDecl;
+        FieldDeclaration* FieldDecl;
+    };
+
+public:
     std::any visitStructOrUnionSpecifier(CParser::StructOrUnionSpecifierContext *ctx) override {
         bool isUnion = false;
         auto structOrUnionCtx = ctx->structOrUnion();
@@ -945,21 +1175,30 @@ public:
             name = ident->getText();
         }
 
-        std::vector<FieldDeclaration*> fields;
+        std::vector<FieldInfo> fieldsInfo;
         if (ctx->body) {
-            auto fieldsAny = visitStructDeclarationList(ctx->body);
-            fields = std::any_cast<std::vector<FieldDeclaration*>>(fieldsAny);
+            auto fieldsInfoAny = visitStructDeclarationList(ctx->body);
+            fieldsInfo = std::any_cast<std::vector<FieldInfo>>(fieldsInfoAny);
+            if (fieldsInfo.empty()) {
+                // TODO: handle error
+            }
         }
 
-        auto recordDecl = m_Program.CreateAstNode<RecordDeclaration>(std::move(fields), isUnion);
+        auto recordDecl = m_Program.CreateAstNode<RecordDeclaration>(isUnion);
+        
+        for (const auto& fieldInfo : fieldsInfo) {
+            if (fieldInfo.TagPreDecl) {
+                recordDecl->AddInternalTagDecl(fieldInfo.TagPreDecl);
+            }
+            if (fieldInfo.FieldDecl) {
+                recordDecl->AddField(fieldInfo.FieldDecl);
+            }
+        }
+
         auto recordType = m_Program.CreateType<RecordType>(recordDecl);
         auto recordQualType = m_Program.CreateType<QualType>(recordType);
         recordDecl->SetName(name);
         recordDecl->SetType(recordQualType);
-
-        // if (ctx->body) {
-        //     return recordDecl;
-        // }
 
         return recordType;
     }
@@ -970,29 +1209,100 @@ public:
     }
 
     std::any visitStructDeclarationList(CParser::StructDeclarationListContext *ctx) override {
-        std::vector<FieldDeclaration*> fields;
+        std::vector<FieldInfo> fieldsInfo;
         for (auto declCtx : ctx->decls) {
-            auto fieldAny = visitStructDeclaration(declCtx);
-            auto field = std::any_cast<FieldDeclaration*>(fieldAny);
-            fields.push_back(field);
+            auto declarationInfoAny = visitStructDeclaration(declCtx);
+            auto declarationInfo = std::any_cast<DeclarationInfo>(declarationInfoAny);
+
+            FieldDeclaration* fieldDecl = nullptr;
+            if (declarationInfo.Decl) {
+                auto varDecl = dynamic_cast<VariableDeclaration*>(declarationInfo.Decl);
+                if (!varDecl) {
+                    // TODO: handle error
+                }
+
+                fieldDecl = m_Program.CreateAstNode<FieldDeclaration>(
+                    varDecl->GetName(), varDecl->GetType());
+            }
+
+            auto fieldInfo = FieldInfo{
+                .TagPreDecl = declarationInfo.TagPreDecl,
+                .FieldDecl = fieldDecl,
+            };
+
+            fieldsInfo.push_back(fieldInfo);
         }
-        return fields;
+        return fieldsInfo;
     }
 
     std::any visitStructDeclaration(CParser::StructDeclarationContext *ctx) override {
-        return visitChildren(ctx);
+        auto declSpecsAny = visitSpecifierQualifierList(ctx->specqual);
+        auto declSpecs = std::any_cast<DeclSpecifiers>(declSpecsAny);
+
+        auto declList = std::vector<DeclaratorInfo>{};
+        if (ctx->decls) {
+            auto declListAny = visitStructDeclaratorList(ctx->decls);
+            declList = std::any_cast<std::vector<DeclaratorInfo>>(declListAny);
+        }
+
+        auto declarationInfo = createDeclaration(declSpecs, declList);
+        return declarationInfo;
     }
 
     std::any visitSpecifierQualifierList(CParser::SpecifierQualifierListContext *ctx) override {
-        return visitChildren(ctx);
+        auto specsCtx = ctx->specs;
+        auto declSpecsAny = std::vector<std::any>{};
+        declSpecsAny.reserve(specsCtx.size());
+        for (auto specCtx : specsCtx) {
+            auto declSpecAny = visitSpecifierQualifier(specCtx);
+            declSpecsAny.push_back(declSpecAny);
+        }
+
+        return createDeclSpecs(declSpecsAny);
+    }
+
+    std::any visitSpecifierQualifier(CParser::SpecifierQualifierContext *ctx) override {
+        if (ctx->typespec) {
+            auto typeSpecifierAny = visitTypeSpecifier(ctx->typespec);
+
+            auto builtinTypeSpecPtr = std::any_cast<BuiltinTypeSpecifier>(&typeSpecifierAny);
+            if (builtinTypeSpecPtr) {
+                return *builtinTypeSpecPtr;
+            }
+
+            auto namedTypeSpecifierPtr = std::any_cast<Type*>(&typeSpecifierAny);
+            return *namedTypeSpecifierPtr;
+        }
+
+        if (ctx->qualifier) {
+            auto typeQualifierAny = visitTypeQualifier(ctx->qualifier);
+            auto typeQualifier = std::any_cast<Qualifier>(typeQualifierAny);
+            return typeQualifier;
+        }
+        
+        return nullptr;
     }
 
     std::any visitStructDeclaratorList(CParser::StructDeclaratorListContext *ctx) override {
-        return visitChildren(ctx);
+        auto firstDeclInfoAny = visitStructDeclarator(ctx->decl);
+        auto firstDeclInfo = std::any_cast<DeclaratorInfo>(firstDeclInfoAny);
+
+        auto declsInfo = std::vector<DeclaratorInfo>{std::move(firstDeclInfo)};
+        auto declTail = ctx->declTail;
+        declsInfo.reserve(declTail.size() + 1);
+        for (auto declCtx : declTail) {
+            auto declInfoAny = visitStructDeclarator(declCtx);
+            auto declInfo = std::any_cast<DeclaratorInfo>(firstDeclInfoAny);
+            declsInfo.push_back(std::move(declInfo));
+        }
+
+        return declsInfo;
     }
 
     std::any visitStructDeclarator(CParser::StructDeclaratorContext *ctx) override {
-        return visitChildren(ctx);
+        auto declaratorInfoAny = visitDeclarator(ctx->declarator());
+        auto declaratorInfo = std::any_cast<DeclaratorInfo>(declaratorInfoAny);
+        return declaratorInfo;
     }
 
     std::any visitEnumSpecifier(CParser::EnumSpecifierContext *ctx) override {
@@ -1006,16 +1316,16 @@ public:
         if (ctx->enumerators) {
             auto enumeratorsAny = visitEnumeratorList(ctx->enumerators);
             enumerators = std::any_cast<std::vector<EnumConstDeclaration*>>(enumeratorsAny);
+        
+            if (enumerators.empty()) {
+                // TODO: handle error
+            }
         }
 
         auto enumDecl = m_Program.CreateAstNode<EnumDeclaration>(std::move(enumerators));
         auto enumType = m_Program.CreateType<EnumType>(enumDecl);
         auto enumQualType = m_Program.CreateType<QualType>(enumType);
         enumDecl->SetType(enumQualType);
-
-        // if (ctx->enumerators) {
-        //     return enumDecl;
-        // }
 
         return enumType;
     }
@@ -1091,11 +1401,15 @@ public:
         auto ptrInfo = PointerInfo{};
         if (pointerCtx) {
             auto ptrInfoAny = visitPointer(pointerCtx);
-            auto ptrInfo = std::any_cast<PointerInfo>(ptrInfoAny);
+            ptrInfo = std::any_cast<PointerInfo>(ptrInfoAny);
         }
 
         auto declaratorAny = visitDirectDeclarator(ctx->directDeclarator());
         auto declarator = std::any_cast<DeclaratorInfo>(declaratorAny);
+
+        if (!ptrInfo.HeadType) {  // no pointers
+            return declarator;
+        }
 
         if (declarator.TailType) {
             auto declTailQualType = declarator.TailType;
@@ -1147,7 +1461,8 @@ public:
                 return declInfo;
             }
 
-            auto tailNodeType = dynamic_cast<INodeType*>(declInfo.TailType);
+            auto declTailQualType = declInfo.TailType;
+            auto tailNodeType = dynamic_cast<INodeType*>(declTailQualType->GetSubType());
             if (tailNodeType->IsFunctionType()) {
                 // TODO: handle error
             }
@@ -1181,6 +1496,7 @@ public:
             }
             if (!declInfo.HeadType) {  // is function declaration
                 auto funcDecl = m_Program.CreateAstNode<FunctionDeclaration>();
+                funcDecl->SetName(declInfo.Identifier);
                 funcDecl->SetType(funQualType);
                 declInfo.FunctionDecl = funcDecl;
                 if (funType->IsVariadic()) {  // TODO: make easier
@@ -1193,7 +1509,8 @@ public:
                 return declInfo;
             }
 
-            auto tailNodeType = dynamic_cast<INodeType*>(declInfo.TailType);
+            auto declTailQualType = declInfo.TailType;
+            auto tailNodeType = dynamic_cast<INodeType*>(declTailQualType->GetSubType());
             if (tailNodeType->IsFunctionType()) {
                 // TODO: handle error
             }
@@ -1212,27 +1529,33 @@ public:
 public:
     std::any visitPointer(CParser::PointerContext *ctx) override {
         auto pointerInfo = PointerInfo{};
-        auto qualsCtx = ctx->quals;
-        for (auto qualCtx : qualsCtx) {
-            auto ptrType = m_Program.CreateType<PointerType>(pointerInfo.HeadType);
-            auto ptrQualType = m_Program.CreateType<QualType>(ptrType);
-            if (qualCtx) {
-                auto typeQualifiersAny = visitTypeQualifierList(qualCtx);
-                auto typeQualifiers = std::any_cast<TypeQualifiers>(typeQualifiersAny);
-                if (typeQualifiers.Const) {
-                    ptrQualType->AddConst();
-                }
-                if (typeQualifiers.Restrict) {
-                    ptrQualType->AddRestrict();
-                }
-                if (typeQualifiers.Volatile) {
-                    ptrQualType->AddVolatile();
-                }
+        auto pointerCtx = ctx->pointer();
+        if (pointerCtx) {
+            auto pointerInfoAny = visitPointer(pointerCtx);
+            pointerInfo = std::any_cast<PointerInfo>(pointerInfoAny);
+        }
+        
+        auto ptrType = m_Program.CreateType<PointerType>(pointerInfo.HeadType);
+        auto ptrQualType = m_Program.CreateType<QualType>(ptrType);
+        
+        auto qualCtx = ctx->qual;
+        if (qualCtx) {
+            auto typeQualifiersAny = visitTypeQualifierList(qualCtx);
+            auto typeQualifiers = std::any_cast<TypeQualifiers>(typeQualifiersAny);
+            if (typeQualifiers.Const) {
+                ptrQualType->AddConst();
             }
-            pointerInfo.HeadType = ptrQualType;
-            if (!pointerInfo.TailType) {
-                pointerInfo.TailType = ptrQualType;
+            if (typeQualifiers.Restrict) {
+                ptrQualType->AddRestrict();
             }
+            if (typeQualifiers.Volatile) {
+                ptrQualType->AddVolatile();
+            }
+        }
+
+        pointerInfo.HeadType = ptrQualType;
+        if (!pointerInfo.TailType) {
+            pointerInfo.TailType = ptrQualType;
         }
 
         return pointerInfo;
@@ -1288,35 +1611,83 @@ public:
 
     std::any visitParameterList(CParser::ParameterListContext *ctx) override {
         auto firstDeclAny = visitParameterDeclaration(ctx->decl);
-        auto firstDecl = std::any_cast<Declaration*>(firstDeclAny);
-        std::vector<Declaration*> declList{firstDecl};
+        auto firstDecl = std::any_cast<VariableDeclaration*>(firstDeclAny);
+        std::vector<VariableDeclaration*> paramList{firstDecl};
 
-        declList.reserve(ctx->declTail.size() + 1);
+        paramList.reserve(ctx->declTail.size() + 1);
         for (auto declCtx : ctx->declTail) {
             auto declAny = visitParameterDeclaration(declCtx);
-            auto decl = std::any_cast<Declaration*>(declAny);
-            declList.push_back(decl);
-        }
-
-        std::vector<VariableDeclaration*> paramList;
-        paramList.reserve(declList.size());
-        for (const auto& decl : declList) {
-            if (decl->IsValueDecl()) {
-                paramList.push_back(static_cast<VariableDeclaration*>(decl));
-            } else {
-                // TODO: handle error
-            }
+            auto decl = std::any_cast<VariableDeclaration*>(declAny);
+            paramList.push_back(decl);
         }
 
         return paramList;
     }
 
     std::any visitParameterDeclaration(CParser::ParameterDeclarationContext *ctx) override {
-        return visitChildren(ctx);
+        auto declSpecsAny = visitDeclarationSpecifiers(ctx->declspecs);
+        auto declSpecs = std::any_cast<DeclSpecifiers>(declSpecsAny);
+
+        auto declList = std::vector<DeclaratorInfo>{};
+        if (ctx->decl) {
+            auto declInfoAny = visitDeclarator(ctx->decl);
+            auto declInfo = std::any_cast<DeclaratorInfo>(declInfoAny);
+            declList.push_back(declInfo);
+        }
+
+        if (ctx->abstrdecl) {
+            auto abstrDeclInfoAny = visitAbstractDeclarator(ctx->abstrdecl);
+            auto abstrDeclInfo = std::any_cast<AbstractDeclaratorInfo>(abstrDeclInfoAny);
+
+            auto declInfo = DeclaratorInfo{
+                .Identifier = "",
+                .HeadType = abstrDeclInfo.HeadType,
+                .TailType = abstrDeclInfo.TailType,
+                .FunctionDecl = nullptr,
+            };
+
+            declList.push_back(declInfo);
+        }
+
+        auto declarationInfo = createDeclaration(declSpecs, declList);
+
+        // TODO: handle declarationInfo.TagPreDecl
+        auto decl = declarationInfo.Decl;
+        if (!decl) {
+            auto varDecl = m_Program.CreateAstNode<VariableDeclaration>();
+            varDecl->SetType(declSpecs.Type);
+            return varDecl;
+        }
+
+        if (!decl->IsValueDecl()) {
+            // TODO: handle error
+        }
+
+        return static_cast<VariableDeclaration*>(decl);
     }
 
     std::any visitTypeName(CParser::TypeNameContext *ctx) override {
-        return visitChildren(ctx);
+        auto declSpecsAny = visitSpecifierQualifierList(ctx->specqual);
+        auto declSpecs = std::any_cast<DeclSpecifiers>(declSpecsAny);
+
+        auto qualType = declSpecs.Type;
+        auto abstrDeclCtx = ctx->abstrdecl;
+        auto abstrDeclInfo = AbstractDeclaratorInfo{};
+        if (abstrDeclCtx) {
+            auto abstrDeclInfoAny = visitAbstractDeclarator(abstrDeclCtx);
+            abstrDeclInfo = std::any_cast<AbstractDeclaratorInfo>(abstrDeclInfoAny);
+        }
+        
+        if (abstrDeclInfo.TailType) {
+            auto tailQualType = abstrDeclInfo.TailType;
+            auto tailType = dynamic_cast<INodeType*>(tailQualType->GetSubType());
+            tailType->SetSubType(qualType);
+        } else {  // declspecs only
+            abstrDeclInfo.HeadType = qualType;
+            abstrDeclInfo.TailType = abstrDeclInfo.HeadType;
+        }
+
+        return abstrDeclInfo.HeadType;
     }
 
     std::any visitAbstractDeclarator(CParser::AbstractDeclaratorContext *ctx) override {
@@ -1332,7 +1703,7 @@ public:
             auto abstrDeclInfoAny = visitDirectAbstractDeclarator(ctx->decl);
             abstrDeclInfo = std::any_cast<AbstractDeclaratorInfo>(abstrDeclInfoAny);
             auto tailQualType = abstrDeclInfo.TailType;
-            auto tailType = dynamic_cast<INodeType*>(tailQualType);
+            auto tailType = dynamic_cast<INodeType*>(tailQualType->GetSubType());
             tailType->SetSubType(ptrInfo.HeadType);
         } else {
             abstrDeclInfo.HeadType = ptrInfo.HeadType;
@@ -1370,7 +1741,8 @@ public:
                 return declInfo;
             }
 
-            auto tailNodeType = dynamic_cast<INodeType*>(declInfo.TailType);
+            auto declTailQualType = declInfo.TailType;
+            auto tailNodeType = dynamic_cast<INodeType*>(declTailQualType->GetSubType());
             if (tailNodeType->IsFunctionType()) {
                 // TODO: handle error
             }
@@ -1412,7 +1784,8 @@ public:
                 return declInfo;
             }
 
-            auto tailNodeType = dynamic_cast<INodeType*>(declInfo.TailType);
+            auto declTailQualType = declInfo.TailType;
+            auto tailNodeType = dynamic_cast<INodeType*>(declTailQualType->GetSubType());
             if (tailNodeType->IsFunctionType()) {
                 // TODO: handle error
             }
@@ -1542,9 +1915,14 @@ public:
         }
 
         if (ctx->declaration()) {
-            auto declarationAny = visitDeclaration(ctx->declaration());
-            auto declaration = std::any_cast<Declaration*>(declarationAny);
-            auto declStatement = m_Program.CreateAstNode<DeclStatement>(declaration);
+            auto declarationInfoAny = visitDeclaration(ctx->declaration());
+            auto declarationInfo = std::any_cast<DeclarationInfo>(declarationInfoAny);
+            auto decls = std::vector<Declaration*>{};
+            if (declarationInfo.TagPreDecl) {
+                decls.push_back(declarationInfo.TagPreDecl);
+            }
+            decls.push_back(declarationInfo.Decl);
+            auto declStatement = m_Program.CreateAstNode<DeclStatement>(decls);
             return static_cast<Statement*>(declStatement);
         }
 
@@ -1638,9 +2016,14 @@ public:
     std::any visitForCondition(CParser::ForConditionContext *ctx) override {
         Statement* initStatement = nullptr;
         if (ctx->decl) {
-            auto declAny = visitForDeclaration(ctx->decl);
-            auto decl = std::any_cast<Declaration*>(declAny);
-            initStatement = m_Program.CreateAstNode<DeclStatement>(decl);
+            auto declarationInfoAny = visitForDeclaration(ctx->decl);
+            auto declarationInfo = std::any_cast<DeclarationInfo>(declarationInfoAny);
+            auto decls = std::vector<Declaration*>{};
+            if (declarationInfo.TagPreDecl) {
+                decls.push_back(declarationInfo.TagPreDecl);
+            }
+            decls.push_back(declarationInfo.Decl);
+            initStatement = m_Program.CreateAstNode<DeclStatement>(decls);
         } else if (ctx->expr) {
             auto exprAny = visitExpression(ctx->expr);
             initStatement = std::any_cast<Expression*>(exprAny);
@@ -1662,8 +2045,17 @@ public:
     }
 
     std::any visitForDeclaration(CParser::ForDeclarationContext *ctx) override {
-        // TODO: declaration
-        return visitChildren(ctx);
+        auto declSpecsAny = visitDeclarationSpecifiers(ctx->declspecs);
+        auto declSpecs = std::any_cast<DeclSpecifiers>(declSpecsAny);
+
+        auto initDeclList = std::vector<InitDeclaratorInfo>{};
+        if (ctx->initdecl) {
+            auto initDeclListAny = visitInitDeclaratorList(ctx->initdecl);
+            initDeclList = std::any_cast<std::vector<InitDeclaratorInfo>>(initDeclListAny);
+        }
+
+        auto declarationInfo = createDeclaration(declSpecs, initDeclList);
+        return declarationInfo;
     }
 
     std::any visitForExpression(CParser::ForExpressionContext *ctx) override {
@@ -1718,10 +2110,18 @@ public:
         auto translationUnit = m_Program.CreateAstNode<TranslationUnit>();
         for (auto declCtx : ctx->decls) {
             auto declarationAny = visitExternalDeclaration(declCtx);
-            auto declaration = std::any_cast<Declaration*>(declarationAny);
-            translationUnit->AddDeclaration(declaration);
+            auto declarationInfo = std::any_cast<DeclarationInfo>(declarationAny);
+            if (declarationInfo.TagPreDecl) {
+                translationUnit->AddDeclaration(declarationInfo.TagPreDecl);
+            }
+            if (declarationInfo.Decl) {
+                translationUnit->AddDeclaration(declarationInfo.Decl);
+            }
         }
-        return translationUnit;
+
+        m_Program.SetTranslationUnit(translationUnit);
+
+        return nullptr;
     }
 
     // Dispatch
@@ -1730,13 +2130,33 @@ public:
     }
 
     std::any visitFunctionDefinition(CParser::FunctionDefinitionContext *ctx) override {
-        auto functionDecl = m_Program.CreateAstNode<FunctionDeclaration>();
+        auto declSpecsAny = visitDeclarationSpecifiers(ctx->declspecs);
+        auto declSpecs = std::any_cast<DeclSpecifiers>(declSpecsAny);
+
+        auto declList = std::vector<DeclaratorInfo>{};
+        if (ctx->decl) {
+            auto declInfoAny = visitDeclarator(ctx->decl);
+            auto declInfo = std::any_cast<DeclaratorInfo>(declInfoAny);
+            declList.push_back(declInfo);
+        }
+
+        auto declarationInfo = createDeclaration(declSpecs, declList);
+
+        auto decl = declarationInfo.Decl;
+        if (!decl) {
+            // TODO: handle error
+        }
+
+        auto functionDecl = dynamic_cast<FunctionDeclaration*>(decl);
+        if (!functionDecl) {
+            // TODO: handle error
+        }
 
         auto bodyAny = visitCompoundStatement(ctx->body);
         auto body = std::any_cast<Statement*>(bodyAny);
         functionDecl->SetBody(body);
 
-        return functionDecl;
+        return declarationInfo;
     }
 
 private:
