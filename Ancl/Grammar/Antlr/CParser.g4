@@ -264,12 +264,17 @@ structDeclarationList
     ;
 
 structDeclaration // The first two rules have priority order and cannot be simplified to one expression.
-    : specifierQualifierList structDeclaratorList ';'
-    | specifierQualifierList ';'  // avoid last typeSpecifier -> typedefName instead of declarator
+    : specqual=specifierQualifierList decls=structDeclaratorList ';'
+    | specqual=specifierQualifierList ';'  // avoid last typeSpecifier -> typedefName instead of declarator
     ;
 
 specifierQualifierList
-    : (typeSpecifier | typeQualifier) specifierQualifierList?
+    : specs+=specifierQualifier+
+    ;
+
+specifierQualifier
+    : typespec=typeSpecifier
+    | qualifier=typeQualifier
     ;
 
 structDeclaratorList
@@ -324,8 +329,13 @@ directDeclarator
     // | Identifier ':' DigitSequence         // bit field  ???????????
     ;
 
+// pointer
+//     : ('*' typeQualifierList?)+
+//     ;
+
 pointer
-    : ('*' quals+=typeQualifierList?)+
+    : '*' qual=typeQualifierList?
+    | pointer '*' qual=typeQualifierList?
     ;
 
 typeQualifierList
@@ -341,8 +351,8 @@ parameterList
     ;
 
 parameterDeclaration
-    : declarationSpecifiers declarator
-    | declarationSpecifiers abstractDeclarator?
+    : declspecs=declarationSpecifiers decl=declarator
+    | declspecs=declarationSpecifiers abstrdecl=abstractDeclarator?
     ;
 
 // identifierList
@@ -351,7 +361,7 @@ parameterDeclaration
 /* for directDeclarator */
 
 typeName
-    : specifierQualifierList abstractDeclarator?
+    : specqual=specifierQualifierList abstrdecl=abstractDeclarator?
     ;
 
 abstractDeclarator
@@ -457,8 +467,8 @@ forCondition
 
 forDeclaration
     // : declarationSpecifiers initDeclaratorList?   ?????????????
-    : declarationSpecifiers initDeclaratorList
-    | declarationSpecifiers
+    : declspecs=declarationSpecifiers initdecl=initDeclaratorList
+    | declspecs=declarationSpecifiers
     ;
 
 forExpression
@@ -492,7 +502,7 @@ functionDefinition
         and declarationList before compound statement
 
     */
-    : declspecs=declarationSpecifiers declarator body=compoundStatement
+    : declspecs=declarationSpecifiers decl=declarator body=compoundStatement
     ;
 
 // declarationList
