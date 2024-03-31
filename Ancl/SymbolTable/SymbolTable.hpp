@@ -7,8 +7,6 @@
 #include <Ancl/SymbolTable/Scope.hpp>
 
 
-namespace ancl {
-
 class SymbolTable {
 public:
     SymbolTable(): m_GlobalScope(m_Tracker.Allocate<Scope>("global")) {}
@@ -59,5 +57,3 @@ private:
 
     Scope* m_GlobalScope;
 };
-
-}  // namespace ancl

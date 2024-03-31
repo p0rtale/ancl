@@ -3,15 +3,12 @@
 #include <Ancl/Grammar/AST/AST.hpp>
 #include <Ancl/Visitor/AstVisitor.hpp>
 
-#include <Ancl/SymbolTable/Scope.hpp>
-#include <Ancl/SymbolTable/SymbolTable.hpp>
-
 
 namespace ast {
 
-class SemanticAstVisitor: public AstVisitor {
+class ConstExprAstVisitor: public AstVisitor {
 public:
-    SemanticAstVisitor() = default;
+    ConstExprAstVisitor() = default;
 
 public:
     /*
@@ -40,11 +37,7 @@ public:
         // Base class
     }
 
-    void Visit(TranslationUnit& unit) override {
-        for (const auto& decl : unit.GetDeclarations()) {
-            decl->Accept(*this);
-        }
-    }
+    void Visit(TranslationUnit& unit) override {}
 
     void Visit(TypeDeclaration&) override {
         // Base class
@@ -69,64 +62,21 @@ public:
         // Base class
     }
 
-    void Visit(CaseStatement& caseStmt) override {
-        auto constExpr = caseStmt.GetExpression();
-        
+    void Visit(CaseStatement& caseStmt) override {}
 
-        auto body = caseStmt.GetBody();
-        body->Accept(*this);
-    }
+    void Visit(CompoundStatement& compoundStmt) override {}
 
-    void Visit(CompoundStatement& compoundStmt) override {
-        m_CurrentScope = m_SymbolTable.CreateScope(/*name=*/"", m_CurrentScope);
-        for (const auto& stmt : compoundStmt.GetBody()) {
-            stmt->Accept(*this);
-        }
-        m_CurrentScope = m_CurrentScope->GetParentScope();   
-    }
-
-    void Visit(DeclStatement& declStmt) override {
-        for (const auto& decl : declStmt.GetDeclarations()) {
-            decl->Accept(*this);
-        }
-    }
+    void Visit(DeclStatement& declStmt) override {}
 
     void Visit(DefaultStatement& defaultStmt) override {}
 
-    void Visit(DoStatement& doStmt) override {
-        auto cond = doStmt.GetCondition();
-        cond->Accept(*this);
+    void Visit(DoStatement& doStmt) override {}
 
-        auto body = doStmt.GetBody();
-        body->Accept(*this);    
-    }
-
-    void Visit(ForStatement& forStmt) override {
-        auto init = forStmt.GetInit();
-        init->Accept(*this);
-
-        auto cond = forStmt.GetCondition();
-        cond->Accept(*this);
-
-        auto step = forStmt.GetStep();
-        step->Accept(*this);
-
-        auto body = forStmt.GetBody();
-        body->Accept(*this); 
-    }
+    void Visit(ForStatement& forStmt) override {}
 
     void Visit(GotoStatement& gotoStmt) override {}
 
-    void Visit(IfStatement& ifStmt) override {
-        auto cond = ifStmt.GetCondition();
-        cond->Accept(*this);
-
-        auto thenStmt = ifStmt.GetThen();
-        thenStmt->Accept(*this);
-
-        auto elseStmt = ifStmt.GetThen();
-        elseStmt->Accept(*this);
-    }
+    void Visit(IfStatement& ifStmt) override {}
 
     void Visit(LabelStatement& labelStmt) override {}
 
@@ -144,13 +94,7 @@ public:
         // Base class
     }
 
-    void Visit(WhileStatement& whileStmt) override {
-        auto cond = whileStmt.GetCondition();
-        cond->Accept(*this);
-
-        auto body = whileStmt.GetBody();
-        body->Accept(*this);
-    }
+    void Visit(WhileStatement& whileStmt) override {}
 
 
     /*
@@ -173,7 +117,9 @@ public:
 
     void Visit(ConditionalExpression& condExpr) override {}
 
-    void Visit(ConstExpression& constExpr) override {}
+    void Visit(ConstExpression& constExpr) override {
+        
+    }
 
     void Visit(DeclRefExpression& declrefExpr) override {}
 
@@ -223,8 +169,7 @@ public:
     void Visit(TypedefType& typedefType) override {}
 
 private:
-    SymbolTable m_SymbolTable;
-    Scope* m_CurrentScope = m_SymbolTable.GetGlobalScope();
+
 };
 
 }  // namespace ast

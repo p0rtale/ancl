@@ -10,10 +10,6 @@
 #include <Ancl/Grammar/AST/Declaration/TagDeclaration.hpp>
 
 
-namespace ancl {
-
-using namespace ast;
-
 class Scope {
 public:
     using Symbol = std::string;
@@ -134,5 +130,3 @@ private:
     std::unordered_map<Symbol, TagDeclaration*> m_TagNamespace;
     std::unordered_map<Symbol, Declaration*> m_IdentNamespace;
 };
-
-}  // namespace ancl
