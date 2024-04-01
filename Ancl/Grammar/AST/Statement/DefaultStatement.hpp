@@ -8,8 +8,7 @@ namespace ast {
 
 class DefaultStatement: public SwitchCase {
 public:
-    DefaultStatement(Statement* body)
-        : m_Body(body) {}
+    DefaultStatement(Statement* body): m_Body(body) {}
 
     void Accept(AstVisitor& visitor) override {
         visitor.Visit(*this);

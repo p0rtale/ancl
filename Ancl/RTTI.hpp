@@ -3,7 +3,6 @@
 #include <cassert>
 
 
-// TODO: specialize upcasting and cast to same type
 template <typename To, typename From>
 bool InstanceOf(const From* from) {
     return To::InstanceOf(from);

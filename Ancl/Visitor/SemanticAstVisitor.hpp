@@ -2,6 +2,7 @@
 
 #include <Ancl/Grammar/AST/AST.hpp>
 #include <Ancl/Visitor/AstVisitor.hpp>
+#include <Ancl/Visitor/ConstExprAstVisitor.hpp>
 
 #include <Ancl/SymbolTable/Scope.hpp>
 #include <Ancl/SymbolTable/SymbolTable.hpp>
@@ -24,17 +25,45 @@ public:
         // Base class
     }
 
-    void Visit(EnumConstDeclaration& enumConstDecl) override {}
+    void Visit(EnumConstDeclaration& enumConstDecl) override {
+        // TODO: add enum constant declaration to scope
 
-    void Visit(EnumDeclaration& enumDecl) override {}
+        auto initExpr = enumConstDecl.GetInit();
+        initExpr->Accept(*this);
+    }
 
-    void Visit(FieldDeclaration& fieldDecl) override {}
+    void Visit(EnumDeclaration& enumDecl) override {
+        // TODO: add enum declaration to scope
 
-    void Visit(FunctionDeclaration& funcDecl) override {}
+        for (const auto& enumConstDecl : enumDecl.GetEnumerators()) {
+            enumConstDecl->Accept(*this);
+        }
+    }
 
-    void Visit(LabelDeclaration& labelDecl) override {}
+    void Visit(FieldDeclaration& fieldDecl) override {
+        // TODO: add field declaration to scope of record
+    }
 
-    void Visit(RecordDeclaration& recordDecl) override {}
+    void Visit(FunctionDeclaration& funcDecl) override {
+        // TODO: handle declaration/definition, static/extern
+
+        auto body = funcDecl.GetBody();
+        if (body) {
+            body->Accept(*this);
+        }
+    }
+
+    void Visit(LabelDeclaration& labelDecl) override {
+        // TODO: add label declaration to scope
+
+        auto labelStmt = labelDecl.GetStatement();
+        labelStmt->Accept(*this);
+    }
+
+    void Visit(RecordDeclaration& recordDecl) override {
+        // TODO: add record declaration to scope and
+        //       create scope for record
+    }
 
     void Visit(TagDeclaration&) override {
         // Base class
@@ -50,13 +79,17 @@ public:
         // Base class
     }
 
-    void Visit(TypedefDeclaration& typedefDecl) override {}
+    void Visit(TypedefDeclaration& typedefDecl) override {
+        // TODO: add typedef declaration to scope
+    }
 
     void Visit(ValueDeclaration& valueDecl) override {
         // Base class
     }
 
-    void Visit(VariableDeclaration& varDecl) override {}
+    void Visit(VariableDeclaration& varDecl) override {
+        // TODO: add variable declaration to scope
+    }
 
 
     /*
@@ -70,8 +103,14 @@ public:
     }
 
     void Visit(CaseStatement& caseStmt) override {
-        auto constExpr = caseStmt.GetExpression();
+        // TODO: check for outer switch statement
         
+        auto constExpr = caseStmt.GetExpression();
+        constExpr->Accept(*this);
+
+        // TODO: evaluate constant expression
+        auto constExprVisitor = ConstExprAstVisitor();
+        constExprVisitor.Visit(*constExpr);
 
         auto body = caseStmt.GetBody();
         body->Accept(*this);
@@ -91,7 +130,12 @@ public:
         }
     }
 
-    void Visit(DefaultStatement& defaultStmt) override {}
+    void Visit(DefaultStatement& defaultStmt) override {
+        // TODO: check for outer switch statement
+
+        auto body = defaultStmt.GetBody();
+        body->Accept(*this);
+    }
 
     void Visit(DoStatement& doStmt) override {
         auto cond = doStmt.GetCondition();
@@ -115,7 +159,10 @@ public:
         body->Accept(*this); 
     }
 
-    void Visit(GotoStatement& gotoStmt) override {}
+    void Visit(GotoStatement& gotoStmt) override {
+        auto labelDecl = gotoStmt.GetLabel();
+        // TODO: update label decl
+    }
 
     void Visit(IfStatement& ifStmt) override {
         auto cond = ifStmt.GetCondition();
@@ -128,17 +175,34 @@ public:
         elseStmt->Accept(*this);
     }
 
-    void Visit(LabelStatement& labelStmt) override {}
+    void Visit(LabelStatement& labelStmt) override {
+        auto labelDecl = labelStmt.GetLabel();
+        // TODO: add label decl to scope
 
-    void Visit(LoopJumpStatement& loopJmpStmt) override {}
+        auto body = labelStmt.GetBody();
+        body->Accept(*this);
+    }
 
-    void Visit(ReturnStatement& returnStmt) override {}
+    void Visit(LoopJumpStatement& loopJmpStmt) override {
+        // TODO: check for outer loop statement
+    }
+
+    void Visit(ReturnStatement& returnStmt) override {
+        auto retExpr = returnStmt.GetReturnExpression();
+        retExpr->Accept(*this);
+    }
 
     void Visit(SwitchCase& switchCase) override {
         // Base class
     }
 
-    void Visit(SwitchStatement& switchStmt) override {}
+    void Visit(SwitchStatement& switchStmt) override {
+        auto expr = switchStmt.GetExpression();
+        expr->Accept(*this);
+
+        auto body = switchStmt.GetBody();
+        body->Accept(*this);
+    }
 
     void Visit(ValueStatement& valueStmt) override {
         // Base class
@@ -163,33 +227,85 @@ public:
         // Base class
     }
 
-    void Visit(BinaryExpression& binaryExpr) override {}
+    void Visit(BinaryExpression& binaryExpr) override {
+        auto leftOperand = binaryExpr.GetLeftOperand();
+        leftOperand->Accept(*this);        
 
-    void Visit(CallExpression& callExpr) override {}
+        auto rightOperand = binaryExpr.GetRightOperand();
+        rightOperand->Accept(*this);
+    }
 
-    void Visit(CastExpression& castExpr) override {}
+    void Visit(CallExpression& callExpr) override {
+        auto calleeExpr = callExpr.GetCallee();
+        calleeExpr->Accept(*this);
 
+        for (const auto& argExpr : callExpr.GetArguments()) {
+            argExpr->Accept(*this);
+        }
+    }
+
+    void Visit(CastExpression& castExpr) override {
+        auto subExpr = castExpr.GetSubExpression();
+        subExpr->Accept(*this);
+
+        auto toType = castExpr.GetToType();
+        toType->Accept(*this);
+    }
+
+    // Skip
     void Visit(CharExpression& charExpr) override {}
 
-    void Visit(ConditionalExpression& condExpr) override {}
+    void Visit(ConditionalExpression& condExpr) override {
+        auto condition = condExpr.GetCondition();
+        condition->Accept(*this);
 
-    void Visit(ConstExpression& constExpr) override {}
+        auto trueExpr = condExpr.GetTrueExpression();
+        trueExpr->Accept(*this);
 
-    void Visit(DeclRefExpression& declrefExpr) override {}
+        auto falseExpr = condExpr.GetFalseExpression();
+        falseExpr->Accept(*this);
+    }
 
-    void Visit(ExpressionList& exprList) override {}
+    void Visit(ConstExpression& constExpr) override {
+        auto expr = constExpr.GetExpression();
+        expr->Accept(*this);
+    }
 
+    void Visit(DeclRefExpression& declrefExpr) override {
+        auto decl = declrefExpr.GetDeclaration();
+        auto declName = decl->GetName();
+
+        // TODO: get declaration type from symbol table
+    }
+
+    void Visit(ExpressionList& exprList) override {
+        for (const auto& expr : exprList.GetExpressions()) {
+            expr->Accept(*this);
+        }
+    }
+
+    // Skip
     void Visit(FloatExpression& floatExpr) override {}
 
-    void Visit(InitializerList& initList) override {}
+    void Visit(InitializerList& initList) override {
+        for (const auto& init : initList.GetInits()) {
+            init->Accept(*this);
+        }
+    }
 
+    // Skip
     void Visit(IntExpression& intExpr) override {}
 
+    // Skip
     void Visit(SizeofTypeExpression& sizeofTypeExpr) override {}
 
+    // Skip
     void Visit(StringExpression& stringExpr) override {}
 
-    void Visit(UnaryExpression& unaryExpr) override {}
+    void Visit(UnaryExpression& unaryExpr) override {
+        auto operand = unaryExpr.GetOperand();
+        operand->Accept(*this);
+    }
 
 
     /*
@@ -198,19 +314,43 @@ public:
     =================================================================
     */
 
-    void Visit(ArrayType& arrayType) override {}
+    void Visit(ArrayType& arrayType) override {
+        // TODO: evaluate constant expression for array size
 
+        auto subType = arrayType.GetSubType();
+        subType->Accept(*this);
+    }
+
+    // Skip
     void Visit(BuiltinType& builtinType) override {}
 
-    void Visit(EnumType& enumType) override {}
+    void Visit(EnumType& enumType) override {
+        // TODO: check for enum declaration in scope
+    }
 
-    void Visit(FunctionType& funcType) override {}
+    void Visit(FunctionType& funcType) override {
+        auto retType = funcType.GetSubType();
+        retType->Accept(*this);
 
-    void Visit(PointerType& ptrType) override {}
+        for (const auto& paramType : funcType.GetParamTypes()) {
+            paramType->Accept(*this);
+        }
+    }
 
-    void Visit(QualType& qualType) override {}
+    void Visit(PointerType& ptrType) override {
+        auto subType = ptrType.GetSubType();
+        subType->Accept(*this); 
+    }
 
-    void Visit(RecordType& recordType) override {}
+    void Visit(QualType& qualType) override {
+        auto subType = qualType.GetSubType();
+        subType->Accept(*this);
+    }
+
+    void Visit(RecordType& recordType) override {
+        // TODO: check for record declaration/definition
+        //       and update info
+    }
 
     void Visit(TagType&) override {
         // Base class
@@ -220,7 +360,9 @@ public:
         // Base class
     }
 
-    void Visit(TypedefType& typedefType) override {}
+    void Visit(TypedefType& typedefType) override {
+        // TODO: check for typedef declaration in scope
+    }
 
 private:
     SymbolTable m_SymbolTable;
