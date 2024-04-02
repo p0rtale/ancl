@@ -14,6 +14,10 @@ public:
         visitor.Visit(*this);
     }
 
+    void SetLabel(LabelDeclaration* label) {
+        m_Label = label;
+    }
+
     LabelDeclaration* GetLabel() const {
         return m_Label;
     }

@@ -26,14 +26,22 @@ public:
     }
 
     void Visit(EnumConstDeclaration& enumConstDecl) override {
-        // TODO: add enum constant declaration to scope
+        auto enumName = enumConstDecl.GetName();
+        if (m_CurrentScope->FindSymbol(Scope::NamespaceType::Ident, enumName)) {
+            // TODO: handle error
+        }
+        m_CurrentScope->AddSymbol(Scope::NamespaceType::Ident, enumName, &enumConstDecl);
 
         auto initExpr = enumConstDecl.GetInit();
         initExpr->Accept(*this);
     }
 
     void Visit(EnumDeclaration& enumDecl) override {
-        // TODO: add enum declaration to scope
+        auto enumName = enumDecl.GetName();
+        if (m_CurrentScope->FindSymbol(Scope::NamespaceType::Tag, enumName)) {
+            // TODO: handle error
+        }
+        m_CurrentScope->AddSymbol(Scope::NamespaceType::Tag, enumName, &enumDecl);
 
         for (const auto& enumConstDecl : enumDecl.GetEnumerators()) {
             enumConstDecl->Accept(*this);
@@ -54,7 +62,11 @@ public:
     }
 
     void Visit(LabelDeclaration& labelDecl) override {
-        // TODO: add label declaration to scope
+        auto labelName = labelDecl.GetName();
+        if (m_CurrentScope->FindSymbol(Scope::NamespaceType::Label, labelName)) {
+            // TODO: handle error
+        }
+        m_CurrentScope->AddSymbol(Scope::NamespaceType::Label, labelName, &labelDecl);
 
         auto labelStmt = labelDecl.GetStatement();
         labelStmt->Accept(*this);
@@ -80,7 +92,11 @@ public:
     }
 
     void Visit(TypedefDeclaration& typedefDecl) override {
-        // TODO: add typedef declaration to scope
+        auto typedefName = typedefDecl.GetName();
+        if (m_CurrentScope->FindSymbol(Scope::NamespaceType::Ident, typedefName)) {
+            // TODO: handle error
+        }
+        m_CurrentScope->AddSymbol(Scope::NamespaceType::Ident, typedefName, &typedefDecl);
     }
 
     void Visit(ValueDeclaration& valueDecl) override {
@@ -88,7 +104,11 @@ public:
     }
 
     void Visit(VariableDeclaration& varDecl) override {
-        // TODO: add variable declaration to scope
+        auto varName = varDecl.GetName();
+        if (m_CurrentScope->FindSymbol(Scope::NamespaceType::Ident, varName)) {
+            // TODO: handle error
+        }
+        m_CurrentScope->AddSymbol(Scope::NamespaceType::Ident, varName, &varDecl);
     }
 
 
@@ -160,8 +180,21 @@ public:
     }
 
     void Visit(GotoStatement& gotoStmt) override {
-        auto labelDecl = gotoStmt.GetLabel();
-        // TODO: update label decl
+        auto labelOldDecl = gotoStmt.GetLabel();
+        auto declName = labelOldDecl->GetName();
+
+        auto declOpt = m_CurrentScope->FindSymbol(Scope::NamespaceType::Label, declName);
+        if (!declOpt) {
+            // TODO: handle error
+        }
+
+        auto decl = *declOpt;
+        auto labelDecl = dynamic_cast<LabelDeclaration*>(decl);
+        if (!labelDecl) {
+            // TODO: handle error
+        }
+
+        gotoStmt.SetLabel(labelDecl);
     }
 
     void Visit(IfStatement& ifStmt) override {
@@ -176,9 +209,6 @@ public:
     }
 
     void Visit(LabelStatement& labelStmt) override {
-        auto labelDecl = labelStmt.GetLabel();
-        // TODO: add label decl to scope
-
         auto body = labelStmt.GetBody();
         body->Accept(*this);
     }
@@ -272,10 +302,21 @@ public:
     }
 
     void Visit(DeclRefExpression& declrefExpr) override {
-        auto decl = declrefExpr.GetDeclaration();
-        auto declName = decl->GetName();
+        auto oldDecl = declrefExpr.GetDeclaration();
+        auto declName = oldDecl->GetName();
 
-        // TODO: get declaration type from symbol table
+        auto declOpt = m_CurrentScope->FindSymbol(Scope::NamespaceType::Ident, declName);
+        if (!declOpt) {
+            // TODO: handle error
+        }
+
+        auto decl = *declOpt;
+        auto valDecl = dynamic_cast<ValueDeclaration*>(decl);
+        if (!valDecl) {
+            // TODO: handle error
+        }
+
+        declrefExpr.SetDeclaration(valDecl);
     }
 
     void Visit(ExpressionList& exprList) override {
