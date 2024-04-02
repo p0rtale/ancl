@@ -15,6 +15,10 @@ public:
         visitor.Visit(*this);
     }
 
+    void SetDeclaration(TypedefDeclaration* declaration) {
+        m_Declaration = declaration;
+    }
+
     TypedefDeclaration* GetDeclaration() const {
         return m_Declaration;
     }

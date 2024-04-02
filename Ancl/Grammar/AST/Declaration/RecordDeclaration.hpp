@@ -15,6 +15,10 @@ public:
         visitor.Visit(*this);
     }
 
+    bool IsDefinition() const {
+        return !m_InternalDecls.empty();
+    }
+
     void AddInternalTagDecl(TagDeclaration* tagDecl) {
         m_InternalDecls.push_back(tagDecl);
     }

@@ -17,6 +17,10 @@ public:
         visitor.Visit(*this);
     }
 
+    bool IsDefinition() const {
+        return !m_Body;
+    }
+
     void SetBody(Statement* body) {
         m_Body = body;
     }

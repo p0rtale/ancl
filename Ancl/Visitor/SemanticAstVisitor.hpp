@@ -7,14 +7,30 @@
 #include <Ancl/SymbolTable/Scope.hpp>
 #include <Ancl/SymbolTable/SymbolTable.hpp>
 
+#include <Ancl/Grammar/AST/Program.hpp>
+
 
 namespace ast {
 
 class SemanticAstVisitor: public AstVisitor {
 public:
-    SemanticAstVisitor() = default;
+    enum class Status {
+        kNone = 0,
+        kOk,
+        kError,
+    };
 
 public:
+    SemanticAstVisitor() = default;
+
+    Status Run(Program& program) {
+        m_Status = Status::kOk;
+        Visit(*program.GetTranslationUnit());
+
+        return m_Status;
+    }
+
+private:
     /*
     =================================================================
                                 Declaration
@@ -49,7 +65,8 @@ public:
     }
 
     void Visit(FieldDeclaration& fieldDecl) override {
-        // TODO: add field declaration to scope of record
+        auto fieldName = fieldDecl.GetName();
+        m_CurrentScope->AddSymbol(Scope::NamespaceType::Ident, fieldName, &fieldDecl);
     }
 
     void Visit(FunctionDeclaration& funcDecl) override {
@@ -73,8 +90,26 @@ public:
     }
 
     void Visit(RecordDeclaration& recordDecl) override {
-        // TODO: add record declaration to scope and
-        //       create scope for record
+        auto recordName = recordDecl.GetName();
+        m_CurrentScope->AddSymbol(Scope::NamespaceType::Tag, recordName, &recordDecl);
+
+        if (recordDecl.IsDefinition()) {
+            // TODO: handle record definition
+        } else {  // is declaration
+            // TODO: handle record declaration
+        }
+
+        auto recordScope = m_SymbolTable.CreateScope("record", m_CurrentScope);
+        for (const auto& decl : recordDecl.GetInternalDecls()) {
+            if (auto fieldDecl = dynamic_cast<FieldDeclaration*>(decl)) {
+                m_CurrentScope = recordScope;
+                fieldDecl->Accept(*this);
+                m_CurrentScope = m_CurrentScope->GetParentScope();
+            } else {
+                // internal Tag declaration
+                decl->Accept(*this);
+            }
+        }
     }
 
     void Visit(TagDeclaration&) override {
@@ -124,7 +159,7 @@ public:
 
     void Visit(CaseStatement& caseStmt) override {
         // TODO: check for outer switch statement
-        
+
         auto constExpr = caseStmt.GetExpression();
         constExpr->Accept(*this);
 
@@ -402,10 +437,31 @@ public:
     }
 
     void Visit(TypedefType& typedefType) override {
-        // TODO: check for typedef declaration in scope
+        auto oldDecl = typedefType.GetDeclaration();
+        auto typedefName = oldDecl->GetName();
+
+        auto declOpt = m_CurrentScope->FindSymbol(Scope::NamespaceType::Ident, typedefName);
+        if (!declOpt) {
+            // TODO: handle error
+        }
+
+        auto decl = *declOpt;
+        auto typedefDecl = dynamic_cast<TypedefDeclaration*>(decl);
+        if (!typedefDecl) {
+            // TODO: handle error
+        }
+
+        typedefType.SetDeclaration(typedefDecl);
     }
 
 private:
+    void handleCompileError() {
+        m_Status = Status::kError;
+    }
+
+private:
+    Status m_Status;
+
     SymbolTable m_SymbolTable;
     Scope* m_CurrentScope = m_SymbolTable.GetGlobalScope();
 };
