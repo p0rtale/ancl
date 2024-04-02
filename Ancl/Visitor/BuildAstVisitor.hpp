@@ -6,6 +6,8 @@
 #include <Ancl/Grammar/AST/AST.hpp>
 #include <Ancl/Grammar/AST/Program.hpp>
 
+#include <Ancl/Grammar/AST/Base/Location.hpp>
+
 
 using namespace ast;
 
@@ -19,8 +21,9 @@ public:
     std::any visitPrimaryExpression(CParser::PrimaryExpressionContext *ctx) override {
         if (ctx->Identifier()) {
             auto name = ctx->getText();
-            auto valueDecl = m_Program.CreateAstNode<ValueDeclaration>(std::move(name));           
+            auto valueDecl = m_Program.CreateAstNode<ValueDeclaration>(std::move(name));
             auto declExpression = m_Program.CreateAstNode<DeclRefExpression>(valueDecl);
+            declExpression->SetLocation(createASTLocation(ctx));
             return static_cast<Expression*>(declExpression);
         }
         if (ctx->numberConstant()) {
@@ -37,6 +40,7 @@ public:
         std::string literalWithQuotes = stringLiterals[0]->getText();
         std::string literal = literalWithQuotes.substr(1, literalWithQuotes.size() - 2);
         auto stringExpr = m_Program.CreateAstNode<StringExpression>(std::move(literal));
+        stringExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(stringExpr);
     }
 
@@ -59,6 +63,7 @@ public:
             if (errno == 0 && *endPtr == 0) {
                 // TODO: handle suffix
                 Expression* intExpr = m_Program.CreateAstNode<IntExpression>(IntValue(integer));
+                intExpr->SetLocation(createASTLocation(ctx));
                 return intExpr;
             }
             throw std::runtime_error(std::format("invalid integer constant \"{}\"", str));
@@ -79,12 +84,14 @@ public:
             if (errno == 0 && *endPtr == 0) {
                 // TODO: handle suffix
                 Expression* floatExpr = m_Program.CreateAstNode<FloatExpression>(FloatValue(real));
+                floatExpr->SetLocation(createASTLocation(ctx));
                 return floatExpr;
             }
             throw std::runtime_error(std::format("invalid real number constant \"{}\"", str));
         } else if (ctx->CharacterConstant()) {
             // TODO: handle multichar
             Expression* charExpr = m_Program.CreateAstNode<CharExpression>(str[1]);
+            charExpr->SetLocation(createASTLocation(ctx));
             return charExpr;
         }
         return nullptr;
@@ -93,6 +100,7 @@ public:
     std::any visitEnumerationConstant(CParser::EnumerationConstantContext *ctx) override {
         auto name = ctx->getText();
         auto enumConstDecl = m_Program.CreateAstNode<EnumConstDeclaration>();
+        enumConstDecl->SetLocation(createASTLocation(ctx));
         enumConstDecl->SetName(name);
 
         // 6.7.2.2 - Enumerators have type int
@@ -120,6 +128,7 @@ public:
             auto callExpr = m_Program.CreateAstNode<CallExpression>(
                 leftExpression, argsExpression
             );
+            callExpr->SetLocation(createASTLocation(ctx));
             return static_cast<Expression*>(callExpr);      
         }
 
@@ -129,6 +138,7 @@ public:
                 leftExpression, indexExpression,
                 BinaryExpression::OpType::kArrSubscript
             );
+            binaryExpr->SetLocation(createASTLocation(ctx));
             return static_cast<Expression*>(binaryExpr);
         }
 
@@ -136,6 +146,7 @@ public:
             auto name = ctx->Identifier()->getText();
             auto memberDecl = m_Program.CreateAstNode<FieldDeclaration>(std::move(name));
             auto memberExpression = m_Program.CreateAstNode<DeclRefExpression>(memberDecl);
+            memberExpression->SetLocation(createASTLocation(ctx));
 
             auto op = BinaryExpression::OpType::kNone;
             if (ctx->member->getText() == ".") {
@@ -147,6 +158,7 @@ public:
             auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
                 leftExpression, memberExpression, op
             );
+            binaryExpr->SetLocation(createASTLocation(ctx));
             return static_cast<Expression*>(binaryExpr);
         }
 
@@ -160,6 +172,7 @@ public:
         auto unaryExpr = m_Program.CreateAstNode<UnaryExpression>(
             leftExpression, op
         );
+        unaryExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(unaryExpr);   
     }
 
@@ -197,6 +210,7 @@ public:
         auto unaryExpr = m_Program.CreateAstNode<UnaryExpression>(
             expression, op
         );
+        unaryExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(unaryExpr);
     }
 
@@ -227,6 +241,7 @@ public:
             auto unaryExpr = m_Program.CreateAstNode<UnaryExpression>(
                 expression, op
             );
+            unaryExpr->SetLocation(createASTLocation(ctx));
             return static_cast<Expression*>(unaryExpr);
         }
 
@@ -234,6 +249,7 @@ public:
         auto typeName = std::any_cast<QualType*>(typeNameAny);
 
         auto sizeofExpr = m_Program.CreateAstNode<SizeofTypeExpression>(typeName);
+        sizeofExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(sizeofExpr);
     }
 
@@ -254,6 +270,7 @@ public:
         auto subExpression = std::any_cast<Expression*>(subExpressionAny);
 
         auto castExpr = m_Program.CreateAstNode<CastExpression>(subExpression, typeName);
+        castExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(castExpr);
     }
 
@@ -280,6 +297,7 @@ public:
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
             leftExpression, rightExpression, op
         );
+        binaryExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(binaryExpr);
     }
 
@@ -304,6 +322,7 @@ public:
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
             leftExpression, rightExpression, op
         );
+        binaryExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(binaryExpr);
     }
 
@@ -328,6 +347,7 @@ public:
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
             leftExpression, rightExpression, op
         );
+        binaryExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(binaryExpr);
     }
 
@@ -356,6 +376,7 @@ public:
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
             leftExpression, rightExpression, op
         );
+        binaryExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(binaryExpr);
     }
 
@@ -380,6 +401,7 @@ public:
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
             leftExpression, rightExpression, op
         );
+        binaryExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(binaryExpr);
     }
 
@@ -397,6 +419,7 @@ public:
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
             leftExpression, rightExpression, BinaryExpression::OpType::kAnd
         );
+        binaryExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(binaryExpr);
     }
 
@@ -414,6 +437,7 @@ public:
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
             leftExpression, rightExpression, BinaryExpression::OpType::kXor
         );
+        binaryExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(binaryExpr);
     }
 
@@ -431,6 +455,7 @@ public:
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
             leftExpression, rightExpression, BinaryExpression::OpType::kOr
         );
+        binaryExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(binaryExpr);
     }
 
@@ -448,6 +473,7 @@ public:
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
             leftExpression, rightExpression, BinaryExpression::OpType::kLogAnd
         );
+        binaryExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(binaryExpr);
     }
 
@@ -465,6 +491,7 @@ public:
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
             leftExpression, rightExpression, BinaryExpression::OpType::kLogOr
         );
+        binaryExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(binaryExpr);
     }
 
@@ -485,6 +512,7 @@ public:
         auto condExpr = m_Program.CreateAstNode<ConditionalExpression>(
             condition, trueExpression, falseExpression
         );
+        condExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(condExpr);
     }
 
@@ -528,6 +556,7 @@ public:
         auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
             leftExpression, rightExpression, op
         );
+        binaryExpr->SetLocation(createASTLocation(ctx));
         return static_cast<Expression*>(binaryExpr);
     }
 
@@ -538,6 +567,7 @@ public:
 
     std::any visitExpression(CParser::ExpressionContext *ctx) override {
         auto exprList = m_Program.CreateAstNode<ExpressionList>();
+        exprList->SetLocation(createASTLocation(ctx));
 
         auto firstExpressionAny = visitAssignmentExpression(ctx->expr);
         auto firstExpression = std::any_cast<Expression*>(firstExpressionAny);
@@ -557,6 +587,7 @@ public:
         auto expression = std::any_cast<Expression*>(expressionAny);
 
         auto constExpr = m_Program.CreateAstNode<ConstExpression>(expression);
+        constExpr->SetLocation(createASTLocation(ctx));
         return constExpr;
     }
 
@@ -1185,7 +1216,8 @@ public:
         }
 
         auto recordDecl = m_Program.CreateAstNode<RecordDeclaration>(isUnion);
-        
+        recordDecl->SetLocation(createASTLocation(ctx));
+
         for (const auto& fieldInfo : fieldsInfo) {
             if (fieldInfo.TagPreDecl) {
                 recordDecl->AddInternalTagDecl(fieldInfo.TagPreDecl);
@@ -1223,6 +1255,7 @@ public:
 
                 fieldDecl = m_Program.CreateAstNode<FieldDeclaration>(
                     varDecl->GetName(), varDecl->GetType());
+                fieldDecl->SetLocation(createASTLocation(declCtx));
             }
 
             auto fieldInfo = FieldInfo{
@@ -1323,6 +1356,7 @@ public:
         }
 
         auto enumDecl = m_Program.CreateAstNode<EnumDeclaration>(std::move(enumerators));
+        enumDecl->SetLocation(createASTLocation(ctx));
         auto enumType = m_Program.CreateType<EnumType>(enumDecl);
         auto enumQualType = m_Program.CreateType<QualType>(enumType);
         enumDecl->SetType(enumQualType);
@@ -1356,6 +1390,7 @@ public:
         }
 
         auto enumConstDecl = m_Program.CreateAstNode<EnumConstDeclaration>(init);
+        enumConstDecl->SetLocation(createASTLocation(ctx));
         enumConstDecl->SetName(name);
 
         auto intType = m_Program.CreateType<BuiltinType>(BuiltinType::Kind::kInt);
@@ -1677,7 +1712,7 @@ public:
             auto abstrDeclInfoAny = visitAbstractDeclarator(abstrDeclCtx);
             abstrDeclInfo = std::any_cast<AbstractDeclaratorInfo>(abstrDeclInfoAny);
         }
-        
+
         if (abstrDeclInfo.TailType) {
             auto tailQualType = abstrDeclInfo.TailType;
             auto tailType = dynamic_cast<INodeType*>(tailQualType->GetSubType());
@@ -1857,6 +1892,7 @@ public:
             labelDecl->SetStatement(statement);
             
             auto labelStmt = m_Program.CreateAstNode<LabelStatement>(labelDecl, statement);
+            labelStmt->SetLocation(createASTLocation(ctx));
             return static_cast<Statement*>(labelStmt);
         }
 
@@ -1868,6 +1904,7 @@ public:
             auto body = std::any_cast<Statement*>(bodyAny);
 
             auto caseStmt = m_Program.CreateAstNode<CaseStatement>(constExpr, body);
+            caseStmt->SetLocation(createASTLocation(ctx));
             return static_cast<Statement*>(caseStmt);
         }
         
@@ -1876,6 +1913,7 @@ public:
             auto body = std::any_cast<Statement*>(bodyAny);
 
             auto defaultStmt = m_Program.CreateAstNode<DefaultStatement>(body);
+            defaultStmt->SetLocation(createASTLocation(ctx));
             return static_cast<Statement*>(defaultStmt);
         }
 
@@ -1885,22 +1923,19 @@ public:
     std::any visitCompoundStatement(CParser::CompoundStatementContext *ctx) override {
         if (!ctx->blockItemList()) {
             auto compoundStmt = m_Program.CreateAstNode<CompoundStatement>();
+            compoundStmt->SetLocation(createASTLocation(ctx));
             return static_cast<Statement*>(compoundStmt);
         }
 
-        // auto outerScope = m_CurrentScope;
-        // m_CurrentScope = m_SymbolTable.CreateScope("", m_CurrentScope);
-
         auto compoundStmtAny = visitBlockItemList(ctx->blockItemList());
         auto compoundStmt = std::any_cast<Statement*>(compoundStmtAny);
-
-        // m_CurrentScope = outerScope;
-
         return static_cast<Statement*>(compoundStmt);
     }
 
     std::any visitBlockItemList(CParser::BlockItemListContext *ctx) override {
         auto compoundStmt = m_Program.CreateAstNode<CompoundStatement>();
+        // TODO: block item list context --> compound context
+        compoundStmt->SetLocation(createASTLocation(ctx));
         for (const auto& item : ctx->items) {
             auto statementAny = visitBlockItem(item);
             auto statement = std::any_cast<Statement*>(statementAny);
@@ -1923,6 +1958,7 @@ public:
             }
             decls.push_back(declarationInfo.Decl);
             auto declStatement = m_Program.CreateAstNode<DeclStatement>(decls);
+            declStatement->SetLocation(createASTLocation(ctx));
             return static_cast<Statement*>(declStatement);
         }
 
@@ -1955,6 +1991,7 @@ public:
             auto ifStmt = m_Program.CreateAstNode<IfStatement>(
                 condExpression, thenStatement, elseStatement
             );
+            ifStmt->SetLocation(createASTLocation(ctx));
             return static_cast<Statement*>(ifStmt);
         }
 
@@ -1968,6 +2005,7 @@ public:
             auto switchStmt = m_Program.CreateAstNode<SwitchStatement>(
                 expression, statement
             );
+            switchStmt->SetLocation(createASTLocation(ctx));
             return static_cast<Statement*>(switchStmt);  
         }
 
@@ -1983,6 +2021,7 @@ public:
             auto body = std::any_cast<Statement*>(bodyAny);
 
             auto whileStmt = m_Program.CreateAstNode<WhileStatement>(condition, body);
+            whileStmt->SetLocation(createASTLocation(ctx));
             return static_cast<Statement*>(whileStmt);
         }
         
@@ -1994,6 +2033,7 @@ public:
             auto body = std::any_cast<Statement*>(bodyAny);
 
             auto doStmt = m_Program.CreateAstNode<DoStatement>(condition, body);
+            doStmt->SetLocation(createASTLocation(ctx));
             return static_cast<Statement*>(doStmt);
         }
 
@@ -2007,6 +2047,7 @@ public:
             auto body = std::any_cast<Statement*>(bodyAny);
 
             auto forStmt = m_Program.CreateAstNode<ForStatement>(init, cond, step, body);
+            forStmt->SetLocation(createASTLocation(ctx));
             return static_cast<Statement*>(forStmt);
         }
 
@@ -2060,6 +2101,7 @@ public:
 
     std::any visitForExpression(CParser::ForExpressionContext *ctx) override {
         auto exprList = m_Program.CreateAstNode<ExpressionList>();
+        exprList->SetLocation(createASTLocation(ctx));
 
         auto firstExpressionAny = visitAssignmentExpression(ctx->expr);
         auto firstExpression = std::any_cast<Expression*>(firstExpressionAny);
@@ -2080,16 +2122,19 @@ public:
             auto name = ctx->Identifier()->getText();
             labelDecl->SetName(name);
             auto gotoStmt = m_Program.CreateAstNode<GotoStatement>(labelDecl);
+            gotoStmt->SetLocation(createASTLocation(ctx));
             return static_cast<Statement*>(gotoStmt);
         }
 
         if (ctx->Continue()) {
             auto continueStmt = m_Program.CreateAstNode<LoopJumpStatement>(LoopJumpStatement::Type::kContinue);
+            continueStmt->SetLocation(createASTLocation(ctx));
             return static_cast<Statement*>(continueStmt);
         }
 
         if (ctx->Break()) {
             auto breakStmt = m_Program.CreateAstNode<LoopJumpStatement>(LoopJumpStatement::Type::kBreak);
+            breakStmt->SetLocation(createASTLocation(ctx));
             return static_cast<Statement*>(breakStmt);
         }
 
@@ -2100,6 +2145,7 @@ public:
                 expression = std::any_cast<Expression*>(expressionAny);
             }
             auto returnStmt = m_Program.CreateAstNode<ReturnStatement>(expression);
+            returnStmt->SetLocation(createASTLocation(ctx));
             return static_cast<Statement*>(returnStmt);
         }
     
@@ -2108,6 +2154,7 @@ public:
 
     std::any visitTranslationUnit(CParser::TranslationUnitContext *ctx) override {
         auto translationUnit = m_Program.CreateAstNode<TranslationUnit>();
+        translationUnit->SetLocation(createASTLocation(ctx));
         for (auto declCtx : ctx->decls) {
             auto declarationAny = visitExternalDeclaration(declCtx);
             auto declarationInfo = std::any_cast<DeclarationInfo>(declarationAny);
@@ -2157,6 +2204,24 @@ public:
         functionDecl->SetBody(body);
 
         return declarationInfo;
+    }
+
+private:
+    Location createASTLocation(antlr4::ParserRuleContext* ctx) {
+        auto startToken = ctx->getStart();
+        size_t startLine = startToken->getLine();
+        size_t startColumn = startToken->getCharPositionInLine();
+
+        auto stopToken = ctx->getStop();
+        size_t stopLine = startToken->getLine();
+        size_t stopColumn = startToken->getCharPositionInLine();
+
+        auto inputStream = startToken->getInputStream();
+        auto sourceName = inputStream->getSourceName();
+
+        auto start = Position(sourceName, startLine, startColumn);
+        auto stop = Position(std::move(sourceName), stopLine, stopColumn);
+        return Location(std::move(start), std::move(stop));
     }
 
 private:
