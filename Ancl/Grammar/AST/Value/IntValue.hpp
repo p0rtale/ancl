@@ -5,8 +5,6 @@
 #include <Ancl/Grammar/AST/Value/Value.hpp>
 
 
-namespace ast {
-
 class IntValue: public Value {
 public:
     IntValue(uint64_t value, bool isSigned = true)
@@ -24,5 +22,3 @@ private:
     uint64_t m_Value;
     bool m_IsSigned = true;
 };
-
-}  // namespace ast

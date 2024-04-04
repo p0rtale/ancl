@@ -3,8 +3,6 @@
 #include <Ancl/Grammar/AST/Value/Value.hpp>
 
 
-namespace ast {
-
 class FloatValue: public Value {
 public:
     FloatValue(float value)
@@ -25,5 +23,3 @@ private:
     double m_Value;
     bool m_IsDoublePrecision = false;
 };
-
-}  // namespace ast

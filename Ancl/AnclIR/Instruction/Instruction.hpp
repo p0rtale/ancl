@@ -1,6 +1,9 @@
 #pragma once
 
 #include <Ancl/AnclIR/Value.hpp>
+#include <Ancl/AnclIR/Type/Type.hpp>
+#include <Ancl/AnclIR/BasicBlock.hpp>
+
 
 namespace ir {
 
@@ -12,7 +15,15 @@ namespace ir {
 */
 class Instruction: public Value {
 public:
-    Instruction() = default;
+    Instruction(Type* type, BasicBlock* basicBlock)
+        : Value(type), m_BasicBlock(basicBlock) {}
+
+    BasicBlock* GetBasicBlock() const {
+        return m_BasicBlock;
+    }
+
+private:
+    BasicBlock* m_BasicBlock;
 };
 
 }  // namespace ir
