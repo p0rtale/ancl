@@ -5,7 +5,7 @@
 #include <Ancl/Grammar/AST/Base/ASTNode.hpp>
 #include <Ancl/Grammar/AST/Declaration/TranslationUnit.hpp>
 
-#include <Ancl/Grammar/AST/Tracker.hpp>
+#include <Ancl/Tracker.hpp>
 
 
 using namespace ast;

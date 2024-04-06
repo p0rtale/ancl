@@ -4,6 +4,7 @@
 
 #include <Ancl/AnclIR/Constant/GlobalVariable.hpp>
 #include <Ancl/AnclIR/Constant/Function.hpp>
+#include <Ancl/Tracker.hpp>
 
 
 namespace ir {
@@ -33,10 +34,23 @@ public:
         return m_Functions;
     }
 
+    template<typename T, typename... Args>
+    T* CreateValue(Args&&... args) {
+        return m_ValueTracker.Allocate<T>(std::forward<Args>(args)...);
+    }
+
+    template<typename T, typename... Args>
+    T* CreateType(Args&&... args) {
+        return m_TypeTracker.Allocate<T>(std::forward<Args>(args)...);
+    }
+
 private:
     // TODO: symbol tables
     std::vector<GlobalVariable*> m_GlobalVars;
     std::vector<Function*> m_Functions;
+
+    Tracker<Value> m_ValueTracker;
+    Tracker<Type> m_TypeTracker;
 };
 
 }  // namespace ir
