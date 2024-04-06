@@ -2,13 +2,21 @@
 
 #include <Ancl/Grammar/AST/AST.hpp>
 #include <Ancl/Visitor/AstVisitor.hpp>
+#include <Ancl/Grammar/AST/ASTProgram.hpp>
+#include <Ancl/AnclIR/IRProgram.hpp>
 
+
+using namespace ir;
 
 namespace ast {
 
 class IRGenAstVisitor: public AstVisitor {
 public:
-    IRGenAstVisitor() = default;
+    IRGenAstVisitor(IRProgram& irProgram): m_IRProgram(irProgram) {}
+
+    void Run(const ASTProgram& astProgram) {
+        Visit(*astProgram.GetTranslationUnit());
+    }
 
 public:
     /*
@@ -167,7 +175,7 @@ public:
     void Visit(TypedefType& typedefType) override {}
 
 private:
-
+    IRProgram& m_IRProgram;
 };
 
 }  // namespace ast

@@ -9,12 +9,12 @@
 
 namespace ir {
 
-class Program {
+class IRProgram {
 public:
-    Program() = default;
+    IRProgram() = default;
 
-    Program(const std::vector<GlobalVariable*>& globalVars,
-            const std::vector<Function*>& functions)
+    IRProgram(const std::vector<GlobalVariable*>& globalVars,
+              const std::vector<Function*>& functions)
         : m_GlobalVars(globalVars),
           m_Functions(functions) {}
 

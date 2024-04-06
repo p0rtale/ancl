@@ -10,10 +10,10 @@
 
 using namespace ast;
 
-class Program {
+class ASTProgram {
 public:
-    Program() = default;
-    ~Program() = default;
+    ASTProgram() = default;
+    ~ASTProgram() = default;
 
     void SetTranslationUnit(TranslationUnit* translationUnit) {
         m_TranslationUnit = translationUnit;

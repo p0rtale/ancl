@@ -4,7 +4,6 @@
 
 #include <Ancl/AnclIR/Value.hpp>
 #include <Ancl/AnclIR/Type/LabelType.hpp>
-#include <Ancl/AnclIR/Constant/Function.hpp>
 #include <Ancl/AnclIR/Instruction/Instruction.hpp>
 
 

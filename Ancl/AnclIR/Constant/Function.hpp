@@ -10,8 +10,6 @@
 
 namespace ir {
 
-class BasicBlock;
-
 class Function: public GlobalValue {
 public:
     Function(FunctionType* type, LinkageType linkage, const std::string& name)

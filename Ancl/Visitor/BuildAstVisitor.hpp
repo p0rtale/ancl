@@ -4,7 +4,7 @@
 #include "CParserBaseVisitor.h"
 
 #include <Ancl/Grammar/AST/AST.hpp>
-#include <Ancl/Grammar/AST/Program.hpp>
+#include <Ancl/Grammar/AST/ASTProgram.hpp>
 
 #include <Ancl/Grammar/AST/Base/Location.hpp>
 
@@ -15,7 +15,7 @@ namespace anclgrammar {
 
 class BuildAstVisitor: public CParserBaseVisitor {
 public:
-    BuildAstVisitor(Program& program): m_Program(program) {}
+    BuildAstVisitor(ASTProgram& program): m_Program(program) {}
 
 public:
     std::any visitPrimaryExpression(CParser::PrimaryExpressionContext *ctx) override {
@@ -2225,7 +2225,7 @@ private:
     }
 
 private:
-    Program& m_Program;
+    ASTProgram& m_Program;
 };
 
 };

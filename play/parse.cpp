@@ -6,13 +6,17 @@
 #include "CParser.h"
 
 #include <Ancl/Visitor/BuildAstVisitor.hpp>
-#include <Ancl/Grammar/AST/Program.hpp>
+#include <Ancl/Grammar/AST/ASTProgram.hpp>
 
 #include <Ancl/Visitor/AstDotVisitor.hpp>
+#include <Ancl/Visitor/IRGenAstVisitor.hpp>
 
+#include <Ancl/AnclIR/IRProgram.hpp>
 
 using namespace anclgrammar;
 using namespace antlr4;
+
+using namespace ir;
 
 
 int main(int argc, const char** argv) {
@@ -23,7 +27,7 @@ int main(int argc, const char** argv) {
 
     tokens.fill();
     for (auto token : tokens.getTokens()) {
-      std::cout << token->toString() << std::endl;
+        std::cout << token->toString() << std::endl;
     }
 
     CParser parser(&tokens);
@@ -31,12 +35,16 @@ int main(int argc, const char** argv) {
 
     std::cout << tree->toStringTree(&parser) << std::endl << std::endl;
 
-    Program program;
-    BuildAstVisitor buildVisitor(program);
+    ASTProgram astProgram;
+    BuildAstVisitor buildVisitor(astProgram);
     buildVisitor.visitTranslationUnit(tree);
 
-    AstDotVisitor dotVisitor("astdot.txt");
-    dotVisitor.Visit(*program.GetTranslationUnit());
+    // AstDotVisitor dotVisitor("astdot.txt");
+    // dotVisitor.Visit(*astProgram.GetTranslationUnit());
+
+    IRProgram irProgram;
+    IRGenAstVisitor irGenVisitor(irProgram);
+    irGenVisitor.Run(astProgram);
 
     return EXIT_SUCCESS;
 }

@@ -2,10 +2,11 @@
 
 #include <Ancl/AnclIR/Value.hpp>
 #include <Ancl/AnclIR/Type/Type.hpp>
-#include <Ancl/AnclIR/BasicBlock.hpp>
 
 
 namespace ir {
+
+class BasicBlock;
 
 /*
     %add = add %0 %1
