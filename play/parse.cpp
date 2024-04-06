@@ -38,5 +38,5 @@ int main(int argc, const char** argv) {
     AstDotVisitor dotVisitor("astdot.txt");
     dotVisitor.Visit(*program.GetTranslationUnit());
 
-    return 0;
+    return EXIT_SUCCESS;
 }
