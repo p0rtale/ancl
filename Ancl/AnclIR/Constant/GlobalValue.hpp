@@ -1,7 +1,8 @@
 #pragma once
 
-#include <Ancl/AnclIR/Constant.hpp>
+#include <Ancl/AnclIR/Constant/Constant.hpp>
 #include <Ancl/AnclIR/Type/Type.hpp>
+
 
 namespace ir {
 

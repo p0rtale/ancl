@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include <AnclIR/Type/Type.hpp>
+#include <Ancl/AnclIR/Type/Type.hpp>
 
 
 namespace ir {

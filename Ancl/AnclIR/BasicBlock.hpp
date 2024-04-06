@@ -10,6 +10,8 @@
 
 namespace ir {
 
+class Function;
+
 // Represents block label
 class BasicBlock: public Value {
 public:

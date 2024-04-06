@@ -5,9 +5,9 @@
 
 namespace ir {
 
-class LabelType: public Type {
+class VoidType: public Type {
 public:
-    LabelType() = default;
+    VoidType() = default;
 };
 
 }  // namespace ir

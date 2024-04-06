@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <Ancl/AnclIR/Constant/GlobalVariable.hpp>
+#include <Ancl/AnclIR/Constant/Function.hpp>
 
 
 namespace ir {

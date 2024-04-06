@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 
 #include <Ancl/AnclIR/Constant/GlobalValue.hpp>
 #include <Ancl/AnclIR/Type/FunctionType.hpp>
@@ -8,6 +9,8 @@
 
 
 namespace ir {
+
+class BasicBlock;
 
 class Function: public GlobalValue {
 public:
