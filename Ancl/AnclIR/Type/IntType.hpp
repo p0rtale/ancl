@@ -7,14 +7,14 @@ namespace ir {
 
 class IntType: public Type {
 public:
-    IntType(size_t bitsNumber): m_BitsNumber(bitsNumber) {}
+    IntType(size_t bytesNumber): m_BytesNumber(bytesNumber) {}
 
-    size_t GetBitsNumber() const {
-        return m_BitsNumber;
+    size_t GetBytesNumber() const {
+        return m_BytesNumber;
     }
 
 private:
-    size_t m_BitsNumber = 0;
+    size_t m_BytesNumber = 0;
 };
 
 }  // namespace ir

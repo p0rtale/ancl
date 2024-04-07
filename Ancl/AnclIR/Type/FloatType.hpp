@@ -7,10 +7,22 @@ namespace ir {
 
 class FloatType: public Type {
 public:
-    FloatType(bool isDouble = false): m_IsDouble(isDouble) {}
+    enum class Kind {
+        kNone = 0,
+        kFloat,
+        kDouble,
+        kLongDouble,
+    };
+
+public:
+    FloatType(Kind kind): m_Kind(kind) {}
+
+    Kind GetKind() const {
+        return m_Kind;
+    }
 
 private:
-    bool m_IsDouble = false;
+    Kind m_Kind = Kind::kNone;
 };
 
 }  // namespace ir
