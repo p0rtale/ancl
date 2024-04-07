@@ -29,6 +29,13 @@ public:
         m_BasicBlocks.push_back(basicBlock);
     }
 
+    BasicBlock* GetEntryBlock() const {
+        if (m_BasicBlocks.empty()) {
+            return nullptr;
+        }
+        return m_BasicBlocks[0];
+    }
+
     std::vector<BasicBlock*> GetBasicBlocks() const {
         return m_BasicBlocks;
     }

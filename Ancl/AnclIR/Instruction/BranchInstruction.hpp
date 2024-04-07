@@ -19,6 +19,10 @@ public:
     BranchInstruction(BasicBlock* trueBB, Type* type, BasicBlock* basicBlock)
         : TerminatorInstruction(type, basicBlock), m_TrueBB(trueBB) {}
 
+    bool IsConditional() const {
+        return m_Condition;
+    }
+
     bool IsUnconditional() const {
         return !m_Condition;
     }

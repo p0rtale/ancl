@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include <Ancl/Grammar/AST/AST.hpp>
 #include <Ancl/Visitor/AstVisitor.hpp>
 #include <Ancl/Grammar/AST/ASTProgram.hpp>
@@ -37,22 +39,23 @@ public:
     // Skip
     void Visit(EnumDeclaration& enumDecl) override {}
 
+    // Skip
     void Visit(FieldDeclaration& fieldDecl) override {}
 
     void Visit(FunctionDeclaration& funcDecl) override {
-        auto type = funcDecl.GetType();
-        auto funcType = dynamic_cast<FunctionType*>(type);
-        if (!funcType) {
+        auto qualType = funcDecl.GetType();
+        auto funcIRType = dynamic_cast<ir::FunctionType*>(Accept(*qualType));
+        if (!funcIRType) {
             // TODO: handle error
         }
 
-        auto returnSubType = funcType->GetSubType();
+        auto storageClass = funcDecl.GetStorageClass();
+        auto linkage = ir::GlobalValue::LinkageType::kExtern;
+        if (storageClass == StorageClass::kStatic) {
+            linkage = ir::GlobalValue::LinkageType::kStatic;
+        }
 
-        bool isVariadic = funcType->IsVariadic();
-
-        // m_IRProgram.CreateType<ir::FunctionType>();
-
-        // m_IRProgram.CreateValue<ir::Function>();
+        m_IRProgram.CreateValue<ir::Function>(funcIRType, linkage, funcDecl.GetName());
 
         auto body = funcDecl.GetBody();
         if (body) {
@@ -60,8 +63,17 @@ public:
         }
     }
 
-    void Visit(LabelDeclaration& labelDecl) override {}
+    void Visit(LabelDeclaration& labelDecl) override {
+        auto nextBB = createBasicBlock(labelDecl.GetName());
 
+        auto voidType = m_IRProgram.CreateType<ir::VoidType>();
+        auto branch = m_IRProgram.CreateValue<ir::BranchInstruction>(nextBB, voidType, m_CurrentBB);
+        m_CurrentBB->AddInstruction(branch);
+
+        m_CurrentBB = nextBB;
+    }
+
+    // Skip
     void Visit(RecordDeclaration& recordDecl) override {}
 
     void Visit(TagDeclaration&) override {
@@ -85,7 +97,12 @@ public:
         // Base class
     }
 
-    void Visit(VariableDeclaration& varDecl) override {}
+    void Visit(VariableDeclaration& varDecl) override {
+        auto varIRType = Accept(*varDecl.GetType());
+        auto name = varDecl.GetName();
+        auto alloca = m_IRProgram.CreateValue<ir::AllocaInstruction>(varIRType, name, m_CurrentBB);
+        m_CurrentBB->AddInstruction(alloca);
+    }
 
 
     /*
@@ -100,21 +117,151 @@ public:
 
     void Visit(CaseStatement& caseStmt) override {}
 
-    void Visit(CompoundStatement& compoundStmt) override {}
+    void Visit(CompoundStatement& compoundStmt) override {
+        for (const auto& stmt : compoundStmt.GetBody()) {
+            stmt->Accept(*this);
+        }
+    }
 
-    void Visit(DeclStatement& declStmt) override {}
+    void Visit(DeclStatement& declStmt) override {
+        for (const auto& decl : declStmt.GetDeclarations()) {
+            decl->Accept(*this);
+        } 
+    }
 
     void Visit(DefaultStatement& defaultStmt) override {}
 
-    void Visit(DoStatement& doStmt) override {}
+    void Visit(DoStatement& doStmt) override {
+        auto bodyBB = createBasicBlock("do.body");
+        auto condBB = createBasicBlock("do.cond");
+        auto endBB = createBasicBlock("do.end");
 
-    void Visit(ForStatement& forStmt) override {}
+        // Entry
+        auto voidType = m_IRProgram.CreateType<ir::VoidType>();
+        auto bodyBranch = m_IRProgram.CreateValue<ir::BranchInstruction>(bodyBB, voidType, m_CurrentBB);
+        m_CurrentBB->AddInstruction(bodyBranch);
+
+        // Body
+        m_CurrentBB = bodyBB;
+        auto body = doStmt.GetBody();
+        body->Accept(*this);
+        auto loopBranch = m_IRProgram.CreateValue<ir::BranchInstruction>(condBB, voidType, m_CurrentBB);
+        m_CurrentBB->AddInstruction(loopBranch);
+
+        // Condition
+        m_CurrentBB = condBB;
+        auto condValue = Accept(*doStmt.GetCondition());
+        auto condBranch = m_IRProgram.CreateValue<ir::BranchInstruction>(condValue, bodyBB, endBB, voidType, m_CurrentBB);
+        m_CurrentBB->AddInstruction(condBranch);
+
+        m_CurrentBB = endBB;
+    }
+
+    void Visit(ForStatement& forStmt) override {
+        auto condBB = createBasicBlock("for.cond");
+        
+        auto forCondition = forStmt.GetCondition();
+        ir::BasicBlock* bodyBB = nullptr;
+        if (forCondition) {
+            bodyBB = createBasicBlock("for.body");
+        }
+
+        auto stepExpr = forStmt.GetStep();
+        ir::BasicBlock* stepBB = nullptr;
+        if (stepExpr) {
+            stepBB = createBasicBlock("for.step");
+        }
+        
+        auto endBB = createBasicBlock("for.end");
+
+        // Init
+        auto initStmt = forStmt.GetInit();
+        initStmt->Accept(*this);
+
+        auto voidType = m_IRProgram.CreateType<ir::VoidType>();
+        auto entryBranch = m_IRProgram.CreateValue<ir::BranchInstruction>(condBB, voidType, m_CurrentBB);
+        m_CurrentBB->AddInstruction(entryBranch);
+
+        // Condition
+        m_CurrentBB = condBB;
+        if (forCondition) {
+            auto condValue = Accept(*forCondition);
+            auto condBranch = m_IRProgram.CreateValue<ir::BranchInstruction>(condValue, bodyBB, endBB, voidType, m_CurrentBB);
+            m_CurrentBB->AddInstruction(condBranch);
+            m_CurrentBB = bodyBB;
+        }
+
+        // Body
+        auto bodyStmt = forStmt.GetBody();
+        bodyStmt->Accept(*this);
+
+        if (stepBB) {
+            auto stepBranch = m_IRProgram.CreateValue<ir::BranchInstruction>(stepBB, voidType, m_CurrentBB);
+            m_CurrentBB->AddInstruction(stepBranch);
+
+            // Step
+            m_CurrentBB = stepBB;
+            stepExpr->Accept(*this);  // Ignore result value
+        }
+        auto condBranch = m_IRProgram.CreateValue<ir::BranchInstruction>(condBB, voidType, m_CurrentBB);
+        m_CurrentBB->AddInstruction(condBranch);
+
+        m_CurrentBB = endBB;
+    }
 
     void Visit(GotoStatement& gotoStmt) override {}
 
-    void Visit(IfStatement& ifStmt) override {}
+    void Visit(IfStatement& ifStmt) override {
+        auto thenBB = createBasicBlock("if.then");
 
-    void Visit(LabelStatement& labelStmt) override {}
+        auto elseStmt = ifStmt.GetElse();
+        ir::BasicBlock* elseBB = nullptr;
+        if (elseStmt) {
+            elseBB = createBasicBlock("if.else");
+        }
+
+        auto endBB = createBasicBlock("if.end");
+
+        // Condition
+        auto condValue = Accept(*ifStmt.GetCondition());
+        auto voidType = m_IRProgram.CreateType<ir::VoidType>();
+        ir::BranchInstruction* condBranch = nullptr;
+        if (elseBB) {
+            condBranch = m_IRProgram.CreateValue<ir::BranchInstruction>(condValue, thenBB, elseBB, voidType, m_CurrentBB);
+        } else {
+            condBranch = m_IRProgram.CreateValue<ir::BranchInstruction>(condValue, thenBB, endBB, voidType, m_CurrentBB);
+        }
+        m_CurrentBB->AddInstruction(condBranch);
+
+        // Then
+        m_CurrentBB = thenBB;
+
+        auto thenStmt = ifStmt.GetThen();
+        thenStmt->Accept(*this);
+
+        auto endBranch = m_IRProgram.CreateValue<ir::BranchInstruction>(endBB, voidType, m_CurrentBB);
+        m_CurrentBB->AddInstruction(endBranch);
+
+        // Else
+        if (elseBB) {
+            m_CurrentBB = elseBB;
+
+            elseStmt->Accept(*this);
+
+            auto endBranch = m_IRProgram.CreateValue<ir::BranchInstruction>(endBB, voidType, m_CurrentBB);
+            m_CurrentBB->AddInstruction(endBranch);
+        }
+
+        m_CurrentBB = endBB;
+    }
+
+    void Visit(LabelStatement& labelStmt) override {
+        auto labelDecl = labelStmt.GetLabel();
+        labelDecl->Accept(*this);
+
+        auto body = labelStmt.GetBody();
+        body->Accept(*this);
+    }
 
     void Visit(LoopJumpStatement& loopJmpStmt) override {}
 
@@ -130,7 +277,31 @@ public:
         // Base class
     }
 
-    void Visit(WhileStatement& whileStmt) override {}
+    void Visit(WhileStatement& whileStmt) override {
+        auto condBB = createBasicBlock("while.cond");
+        auto bodyBB = createBasicBlock("while.body");
+        auto endBB = createBasicBlock("while.end");
+
+        // Entry
+        auto voidType = m_IRProgram.CreateType<ir::VoidType>();
+        auto entryBranch = m_IRProgram.CreateValue<ir::BranchInstruction>(condBB, voidType, m_CurrentBB);
+        m_CurrentBB->AddInstruction(entryBranch);
+
+        // Condition
+        m_CurrentBB = condBB;
+        auto condValue = Accept(*whileStmt.GetCondition());
+        auto condBranch = m_IRProgram.CreateValue<ir::BranchInstruction>(condValue, bodyBB, endBB, voidType, m_CurrentBB);
+        m_CurrentBB->AddInstruction(condBranch);
+
+        // Body
+        m_CurrentBB = bodyBB;
+        auto body = whileStmt.GetBody();
+        body->Accept(*this);
+        auto loopBranch = m_IRProgram.CreateValue<ir::BranchInstruction>(condBB, voidType, m_CurrentBB);
+        m_CurrentBB->AddInstruction(loopBranch);
+
+        m_CurrentBB = endBB;
+    }
 
 
     /*
@@ -138,6 +309,12 @@ public:
                                 Expression
     =================================================================
     */
+
+    // TODO: template Visitor
+    ir::Value* Accept(Expression& expr) {
+        expr.Accept(*this);  // -> m_IRValue
+        return m_IRValue;
+    }
 
     void Visit(Expression&) override {
         // Base class
@@ -326,9 +503,39 @@ public:
     void Visit(TypedefType& typedefType) override {}
 
 private:
+    ir::BasicBlock* createBasicBlock(const std::string& name) {
+        auto labelType = m_IRProgram.CreateType<ir::LabelType>();
+        auto labelName = getLabelName(name);
+        auto basicBlock = m_IRProgram.CreateValue<ir::BasicBlock>(name, labelType, m_CurrentFunction);
+
+        m_FunBBMap[name] = basicBlock;
+        m_CurrentFunction->AddBasicBlock(basicBlock);
+
+        return basicBlock;
+    }
+
+    std::string getLabelName(const std::string& name) {
+        if (!m_FunLabelNames.contains(name)) {
+            m_FunLabelNames[name] = 1;
+            return name;
+        }
+        auto newName = name;
+        newName.append(std::to_string(m_FunLabelNames[name]++));
+        return newName;
+    }
+
+private:
     ir::IRProgram& m_IRProgram;
 
+    ir::Function* m_CurrentFunction = nullptr;
+    std::unordered_map<std::string, ir::BasicBlock*> m_FunBBMap;
+    std::unordered_map<std::string, unsigned int> m_FunLabelNames;
+    ir::BasicBlock* m_CurrentBB = nullptr;
+
+    std::unordered_map<std::string, ir::Value*> m_FunValuesMap;
+
     ir::Type* m_IRType = nullptr;
+    ir::Value* m_IRValue = nullptr;
 };
 
 }  // namespace ast

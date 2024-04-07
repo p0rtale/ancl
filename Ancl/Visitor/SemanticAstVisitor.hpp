@@ -84,9 +84,6 @@ private:
             // TODO: handle error
         }
         m_CurrentScope->AddSymbol(Scope::NamespaceType::Label, labelName, &labelDecl);
-
-        auto labelStmt = labelDecl.GetStatement();
-        labelStmt->Accept(*this);
     }
 
     void Visit(RecordDeclaration& recordDecl) override {
@@ -244,6 +241,9 @@ private:
     }
 
     void Visit(LabelStatement& labelStmt) override {
+        auto labelDecl = labelStmt.GetLabel();
+        labelDecl->Accept(*this);
+
         auto body = labelStmt.GetBody();
         body->Accept(*this);
     }

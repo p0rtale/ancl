@@ -9,7 +9,7 @@ namespace ast {
 class IfStatement: public Statement {
 public:
     IfStatement(Expression* condition, Statement* thenStmt,
-                         Statement* elseStmt = nullptr)
+                Statement* elseStmt = nullptr)
         : m_Condition(condition), m_Then(thenStmt), m_Else(elseStmt) {}
 
     void Accept(AstVisitor& visitor) override {
