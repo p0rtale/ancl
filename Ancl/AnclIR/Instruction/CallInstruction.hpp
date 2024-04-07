@@ -18,12 +18,12 @@ public:
     CallInstruction(Function* function, std::vector<Value*> arguments, const std::string& name,
                     BasicBlock* basicBlock)
             : Instruction(dynamic_cast<FunctionType*>(function->GetType())->GetReturnType(), basicBlock),
-              m_Caller(function), m_Arguments(arguments) {
+              m_Callee(function), m_Arguments(arguments) {
         SetName(name);
     }
 
-    Function* GetCaller() const {
-        return m_Caller;
+    Function* GetCallee() const {
+        return m_Callee;
     }
 
     std::vector<Value*> GetArguments() const {
@@ -35,7 +35,7 @@ public:
     }
 
 private:
-    Function* m_Caller;
+    Function* m_Callee;
     std::vector<Value*> m_Arguments;
 };
 

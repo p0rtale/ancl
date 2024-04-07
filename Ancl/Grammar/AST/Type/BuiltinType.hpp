@@ -35,6 +35,10 @@ public:
         return m_Kind == Kind::kVoid;
     }
 
+    bool IsInteger() const {
+        return IsSignedInteger() || IsUnsignedInteger();
+    }
+
     bool IsSignedInteger() const {
         switch (m_Kind) {
             case Kind::kChar:

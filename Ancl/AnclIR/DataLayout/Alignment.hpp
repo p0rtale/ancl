@@ -18,6 +18,10 @@ public:
 
     static StructLayout GetStructLayout(StructType* structType);
 
+    static constexpr size_t GetPointerTypeSize() {
+        return 8;
+    }
+
     static size_t GetTypeSize(Type* type);
 
     static size_t GetTypeAlignment(Type* type);

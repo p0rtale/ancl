@@ -34,6 +34,10 @@ public:
         return m_Operand;
     }
 
+    OpType GetOpType() const {
+        return m_OpType;
+    }
+
     std::string GetOpTypeStr() const {
         switch (m_OpType) {
             case OpType::kNone:  return "None";
