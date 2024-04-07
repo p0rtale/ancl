@@ -9,12 +9,17 @@ class BinaryExpression: public Expression {
 public:
     enum class OpType {
         kNone = 0,
+
         kMul, kDiv, kRem, kAdd, kSub,
         kShiftL, kShiftR,
+
+        kAnd, kXor, kOr,
+
+        kLogAnd, kLogOr,
+
         kLess, kGreater, kLessEq, kGreaterEq,
         kEqual, kNEqual,
-        kAnd, kXor, kOr,
-        kLogAnd, kLogOr,
+
         kAssign, kMulAssign, kDivAssign,
         kRemAssign, kAddAssign, kSubAssign,
         kShiftLAssign, kShiftRAssign,
@@ -44,6 +49,10 @@ public:
         return m_RightOperand;
     }
 
+    OpType GetOpType() const {
+        return m_OpType;
+    }
+
     std::string GetOpTypeStr() const {
         switch (m_OpType) {
             case OpType::kNone:  return "None";
@@ -56,18 +65,19 @@ public:
             case OpType::kShiftL:  return "<<";
             case OpType::kShiftR:  return ">>";
 
+            case OpType::kAnd:     return "&";
+            case OpType::kXor:     return "^";
+            case OpType::kOr:      return "|";
+
+            case OpType::kLogAnd:  return "&&";
+            case OpType::kLogOr:   return "||";
+
             case OpType::kLess:       return "<";
             case OpType::kGreater:    return ">";
             case OpType::kLessEq:     return "<=";
             case OpType::kGreaterEq:  return ">=";
             case OpType::kEqual:      return "==";
             case OpType::kNEqual:     return "!=";
-
-            case OpType::kAnd:     return "&";
-            case OpType::kXor:     return "^";
-            case OpType::kOr:      return "|";
-            case OpType::kLogAnd:  return "&&";
-            case OpType::kLogOr:   return "||";
 
             case OpType::kAssign:        return "=";
             case OpType::kMulAssign:     return "*=";

@@ -31,6 +31,42 @@ public:
         visitor.Visit(*this);
     }
 
+    bool IsVoid() const {
+        return m_Kind == Kind::kVoid;
+    }
+
+    bool IsSignedInteger() const {
+        switch (m_Kind) {
+            case Kind::kChar:
+            case Kind::kShort:
+            case Kind::kInt:
+            case Kind::kLong:
+                return true;
+        }
+        return false;  
+    }
+
+    bool IsUnsignedInteger() const {
+        switch (m_Kind) {
+            case Kind::kUChar:
+            case Kind::kUShort:
+            case Kind::kUInt:
+            case Kind::kULong:
+                return true;
+        }
+        return false;  
+    }
+
+    bool IsFloat() const {
+        switch (m_Kind) {
+            case Kind::kFloat:
+            case Kind::kDouble:
+            case Kind::kLongDouble:
+                return true;
+        }
+        return false;
+    }
+
     void SetKind(Kind kind) {
         m_Kind = kind;
     }  

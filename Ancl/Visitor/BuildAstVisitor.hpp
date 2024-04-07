@@ -133,6 +133,7 @@ public:
         }
 
         if (ctx->array) {
+            // TODO: check index position
             auto indexExpression = std::any_cast<Expression*>(visitExpression(ctx->index));
             auto binaryExpr = m_Program.CreateAstNode<BinaryExpression>(
                 leftExpression, indexExpression,
