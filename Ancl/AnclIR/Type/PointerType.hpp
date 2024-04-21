@@ -5,13 +5,15 @@
 
 namespace ir {
 
+class IRProgram;
+
 class PointerType: public Type {
 public:
-    PointerType(Type* subType): m_SubType(subType) {}
+    PointerType(IRProgram& program, Type* subType);
 
-    Type* GetSubType() {
-        return m_SubType;
-    }
+    static PointerType* Create(Type* subType);
+
+    Type* GetSubType();
 
 private:
     Type* m_SubType;

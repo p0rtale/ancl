@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Ancl/AnclIR/Value.hpp>
 #include <Ancl/AnclIR/BasicBlock.hpp>
+#include <Ancl/AnclIR/Parameter.hpp>
 
 
 /*

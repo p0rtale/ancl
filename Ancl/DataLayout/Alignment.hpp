@@ -18,6 +18,7 @@ public:
 
     static StructLayout GetStructLayout(StructType* structType);
 
+    // TODO: move to Target Machine
     static constexpr size_t GetPointerTypeSize() {
         return 8;
     }

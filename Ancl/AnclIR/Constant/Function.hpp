@@ -5,6 +5,7 @@
 
 #include <Ancl/AnclIR/Constant/GlobalValue.hpp>
 #include <Ancl/AnclIR/Type/FunctionType.hpp>
+#include <Ancl/AnclIR/Parameter.hpp>
 #include <Ancl/AnclIR/BasicBlock.hpp>
 
 
@@ -17,12 +18,28 @@ public:
         SetName(name);
     }
 
+    void SetDeclaration() {
+        m_IsDeclaration = true;
+    }
+
+    bool IsDeclaration() const {
+        return m_IsDeclaration;
+    }
+
     void SetInline() {
         m_IsInline = true;
     }
 
     bool IsInline() const {
         return m_IsInline;
+    }
+
+    void AddParameter(Parameter* parameter) {
+        m_Parameters.push_back(parameter);
+    }
+
+    std::vector<Parameter*> GetParameters() const {
+        return m_Parameters;
     }
 
     void AddBasicBlock(BasicBlock* basicBlock) {
@@ -40,10 +57,26 @@ public:
         return m_BasicBlocks;
     }
 
+    void SetReturnValue(Value* value) {
+        m_ReturnValue = value;
+    }
+
+    bool HasReturnValue() const {
+        return m_ReturnValue;
+    }
+
+    Value* GetReturnValue() const {
+        return m_ReturnValue;
+    }
+
 private:
     bool m_IsInline = false;
+    bool m_IsDeclaration = false;
 
     std::vector<BasicBlock*> m_BasicBlocks;
+
+    std::vector<Parameter*> m_Parameters;
+    Value* m_ReturnValue = nullptr;
 };
 
 }  // namespace ir

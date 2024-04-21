@@ -25,6 +25,7 @@ public:
 
     void AddField(FieldDeclaration* field) {
         m_InternalDecls.push_back(field);
+        field->SetPosition(m_FieldsNum++);
     }
 
     std::vector<FieldDeclaration*> GetFields() const {
@@ -58,6 +59,8 @@ private:
     // TODO: simplify
     // FieldDeclaration | TagDeclaration
     std::vector<Declaration*> m_InternalDecls;
+
+    size_t m_FieldsNum = 0;
 
     // std::vector<FieldDeclaration*> m_Fields;
     // std::vector<TagDeclaration*> m_InternalDecls;

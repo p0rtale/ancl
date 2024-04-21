@@ -10,34 +10,20 @@ namespace ir {
 
 class BranchInstruction: public TerminatorInstruction {
 public:
-    // TODO: create VoidType
     BranchInstruction(Value* condition, BasicBlock* trueBB, BasicBlock* falseBB,
-                      Type* type, BasicBlock* basicBlock)
-        : TerminatorInstruction(type, basicBlock),
-          m_Condition(condition), m_TrueBB(trueBB), m_FalseBB(falseBB) {}
+                      BasicBlock* basicBlock);
 
-    BranchInstruction(BasicBlock* trueBB, Type* type, BasicBlock* basicBlock)
-        : TerminatorInstruction(type, basicBlock), m_TrueBB(trueBB) {}
+    BranchInstruction(BasicBlock* trueBB, BasicBlock* basicBlock);
 
-    bool IsConditional() const {
-        return m_Condition;
-    }
+    bool IsConditional() const;
 
-    bool IsUnconditional() const {
-        return !m_Condition;
-    }
+    bool IsUnconditional() const;
 
-    Value* GetCondition() const {
-        return m_Condition;
-    }
+    Value* GetCondition() const;
 
-    BasicBlock* GetTrueBasicBlock() const {
-        return m_TrueBB;
-    }
+    BasicBlock* GetTrueBasicBlock() const;
 
-    BasicBlock* GetFalseBasicBlock() const {
-        return m_FalseBB;
-    }
+    BasicBlock* GetFalseBasicBlock() const;
 
 private:
     Value* m_Condition = nullptr;

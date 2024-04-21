@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include <Ancl/AnclIR/Value.hpp>
@@ -13,52 +14,25 @@
 namespace ir {
 
 class Function;
+class IRProgram;
+
 
 // Represents block label
 class BasicBlock: public Value {
 public:
-    BasicBlock(const std::string& name, LabelType* type, Function* function):
-            Value(type), m_Function(function) {
-        SetName(name);
-    }
+    BasicBlock(const std::string& name, LabelType* type, Function* function);
 
-    Function* GetFunction() const {
-        return m_Function;
-    }
+    IRProgram& GetProgram() const;
 
-    void AddInstruction(Instruction* instruction) {
-        m_Instructions.push_back(instruction);
-    }
+    Function* GetFunction() const;
 
-    TerminatorInstruction* GetTerminator() const {
-        if (m_Instructions.empty()) {
-            return nullptr;
-        }
-        auto instruction = m_Instructions[m_Instructions.size() - 1];
-        return dynamic_cast<TerminatorInstruction*>(instruction);
-    }
+    void AddInstruction(Instruction* instruction);
 
-    std::vector<BasicBlock*> GetNextBlocks() const {
-        auto terminator = GetTerminator();
-        std::vector<BasicBlock*> nextBlocks;
-        if (auto branchInstr = dynamic_cast<BranchInstruction*>(terminator)) {
-            nextBlocks.push_back(branchInstr->GetTrueBasicBlock());
-            if (branchInstr->IsConditional()) {
-                nextBlocks.push_back(branchInstr->GetFalseBasicBlock());
-            }
-        } else if (auto switchInstr = dynamic_cast<SwitchInstruction*>(terminator)) {
-            nextBlocks.push_back(switchInstr->GetDefaultBasicBlock());
-            for (const auto switchCase : switchInstr->GetCases()) {
-                nextBlocks.push_back(switchCase.CaseBasicBlock);
-            }
-        }
+    TerminatorInstruction* GetTerminator() const;
 
-        return nextBlocks;
-    }
+    std::vector<BasicBlock*> GetNextBlocks() const;
 
-    std::vector<Instruction*> GetInstructions() const {
-        return m_Instructions;
-    }    
+    std::vector<Instruction*> GetInstructions() const;
 
 private:
     Function* m_Function;

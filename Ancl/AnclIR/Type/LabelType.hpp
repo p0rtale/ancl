@@ -5,9 +5,13 @@
 
 namespace ir {
 
+class IRProgram;
+
 class LabelType: public Type {
 public:
-    LabelType() = default;
+    LabelType(IRProgram& program);
+
+    static LabelType* Create(IRProgram& program);
 };
 
 }  // namespace ir

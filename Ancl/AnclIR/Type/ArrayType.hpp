@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include <Ancl/AnclIR/Type/Type.hpp>
 
 
@@ -7,16 +9,13 @@ namespace ir {
 
 class ArrayType: public Type {
 public:
-    ArrayType(Type* subType, size_t size)
-        : m_SubType(subType), m_Size(size) {}
+    ArrayType(Type* subType, size_t size);
 
-    Type* GetSubType() const {
-        return m_SubType;
-    }
+    static ArrayType* Create(Type* subType, size_t size);
 
-    size_t GetSize() const {
-        return m_Size;
-    }
+    Type* GetSubType() const;
+
+    size_t GetSize() const;
 
 private:
     Type* m_SubType;

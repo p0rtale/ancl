@@ -4,7 +4,7 @@
 
 #include <Ancl/AnclIR/Instruction/TerminatorInstruction.hpp>
 #include <Ancl/AnclIR/Value.hpp>
-#include <Ancl/AnclIR/Type/Type.hpp>
+#include <Ancl/AnclIR/Type/VoidType.hpp>
 #include <Ancl/AnclIR/BasicBlock.hpp>
 
 
@@ -18,9 +18,8 @@ public:
     };
 
 public:
-    // TODO: create VoidType
-    SwitchInstruction(Value* value, Type* type, BasicBlock* basicBlock)
-        : TerminatorInstruction(type, basicBlock),
+    SwitchInstruction(Value* value, BasicBlock* basicBlock)
+        : TerminatorInstruction(VoidType::Create(value->GetProgram()), basicBlock),
           m_Value(value) {}
 
     Value* GetValue() const {

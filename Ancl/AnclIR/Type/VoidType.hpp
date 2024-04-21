@@ -5,9 +5,13 @@
 
 namespace ir {
 
+class IRProgram;
+
 class VoidType: public Type {
 public:
-    VoidType() = default;
+    VoidType(IRProgram& program);
+
+    static VoidType* Create(IRProgram& program);
 };
 
 }  // namespace ir

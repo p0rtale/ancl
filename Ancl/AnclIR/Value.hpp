@@ -7,6 +7,9 @@
 
 namespace ir {
 
+class IRProgram;
+
+
 class Value {
 public:
     Value(Type* type): m_Type(type) {} 
@@ -27,6 +30,10 @@ public:
 
     Type* GetType() const {
         return m_Type;
+    }
+
+    IRProgram& GetProgram() const {
+        return m_Type->GetProgram();
     }
 
 private:

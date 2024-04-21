@@ -4,7 +4,7 @@
 
 #include <Ancl/AnclIR/Instruction/Instruction.hpp>
 #include <Ancl/AnclIR/Value.hpp>
-#include <Ancl/AnclIR/Type/Type.hpp>
+#include <Ancl/AnclIR/Type/VoidType.hpp>
 #include <Ancl/AnclIR/BasicBlock.hpp>
 
 
@@ -12,24 +12,23 @@ namespace ir {
 
 class StoreInstruction: public Instruction {
 public:
-    // TODO: create VoidType
-    StoreInstruction(Value* fromPtr, Value* toValue, const std::string& name, Type* type, BasicBlock* basicBlock)
-            : Instruction(type, basicBlock),
-              m_FromPtrOperand(fromPtr), m_ToValueOperand(toValue) {
+    StoreInstruction(Value* fromValue, Value* toValue, const std::string& name, BasicBlock* basicBlock)
+            : Instruction(VoidType::Create(fromValue->GetProgram()), basicBlock),
+              m_FromOperand(fromValue), m_ToOperand(toValue) {
         SetName(name);
     }
 
-    Value* GetFromPtrOperand() const {
-        return m_FromPtrOperand;
+    Value* GetFromOperand() const {
+        return m_FromOperand;
     }
 
-    Value* GetToValueOperand() const {
-        return m_ToValueOperand;
+    Value* GetToOperand() const {
+        return m_ToOperand;
     }
 
 private:
-    Value* m_FromPtrOperand;
-    Value* m_ToValueOperand;
+    Value* m_FromOperand;
+    Value* m_ToOperand;
 };
 
 }  // namespace ir

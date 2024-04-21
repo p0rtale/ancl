@@ -1,6 +1,6 @@
 #include <vector>
 
-#include <Ancl/AnclIR/DataLayout/Alignment.hpp>
+#include <Ancl/DataLayout/Alignment.hpp>
 
 
 namespace ir {

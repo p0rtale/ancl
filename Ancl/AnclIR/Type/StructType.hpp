@@ -8,26 +8,25 @@
 
 namespace ir {
 
+class IRProgram;
+
 class StructType: public Type {
 public:
-    StructType(const std::vector<Type*>& elementTypes)
-        : m_ElementTypes(elementTypes) {}
+    StructType(IRProgram& program, const std::vector<Type*>& elementTypes);
 
-    void SetName(const std::string& name) {
-        m_Name = name;
+    static StructType* Create(const std::vector<Type*>& elementTypes);
+
+    void SetName(const std::string& name);
+
+    std::string GetName() const;
+
+    Type* GetElementType(size_t index) const {
+        return m_ElementTypes.at(index);
     }
 
-    std::string GetName() const {
-        return m_Name;
-    }
+    std::vector<Type*> GetElementTypes() const;
 
-    std::vector<Type*> GetElementTypes() const {
-        return m_ElementTypes;
-    }
-
-    size_t GetElementsNumber() const {
-        return m_ElementTypes.size();
-    }
+    size_t GetElementsNumber() const;
 
 private:
     std::string m_Name;

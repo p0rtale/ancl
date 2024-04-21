@@ -3,7 +3,7 @@
 #include <string>
 
 #include <Ancl/AnclIR/Instruction/Instruction.hpp>
-#include <Ancl/AnclIR/Type/Type.hpp>
+#include <Ancl/AnclIR/Type/IntType.hpp>
 #include <Ancl/AnclIR/Value.hpp>
 #include <Ancl/AnclIR/BasicBlock.hpp>
 
@@ -24,12 +24,10 @@ public:
     };
 
 public:
-    // TODO: create IntType 1
     CompareInstruction(OpType opType, const std::string& name,
-                       Value* left, Value* right,
-                       Type* type, BasicBlock* basicBlock)
-            : Instruction(type, basicBlock), m_OpType(opType),
-              m_LeftOperand(left), m_RightOperand(right) {
+                       Value* left, Value* right, BasicBlock* basicBlock)
+            : Instruction(IntType::Create(left->GetProgram(), 1), basicBlock),
+              m_OpType(opType), m_LeftOperand(left), m_RightOperand(right) {
         SetName(name);
     }
 
@@ -39,6 +37,49 @@ public:
 
     Value* GetRightOperand() const {
         return m_RightOperand;
+    }
+
+    OpType GetOpType() const {
+        return m_OpType;
+    }
+
+    bool IsEqual() const {
+        return m_OpType == OpType::kIEqual || m_OpType == OpType::kFEqual;
+    }
+
+    bool IsNEqual() const {
+        return m_OpType == OpType::kINEqual || m_OpType == OpType::kFNEqual;
+    }
+
+    bool IsLess() const {
+        return m_OpType == OpType::kISLess || m_OpType == OpType::kIULess ||
+               m_OpType == OpType::kFLess;
+    }
+
+    bool IsLessEq() const {
+        return m_OpType == OpType::kISLessEq || m_OpType == OpType::kIULessEq ||
+               m_OpType == OpType::kFLessEq; 
+    }
+
+    bool IsGreater() const {
+        return m_OpType == OpType::kISGreater || m_OpType == OpType::kIUGreater ||
+               m_OpType == OpType::kFGreater;
+    }
+
+    bool IsGreaterEq() const {
+        return m_OpType == OpType::kISGreaterEq || m_OpType == OpType::kIUGreaterEq ||
+               m_OpType == OpType::kFGreaterEq;
+    }
+
+    bool IsUnsigned() const {
+        return m_OpType == OpType::kIULess || m_OpType == OpType::kIUGreater ||
+               m_OpType == OpType::kIULessEq || m_OpType == OpType::kIUGreaterEq;
+    }
+
+    bool IsFloat() const {
+        return m_OpType == OpType::kFLess || m_OpType == OpType::kFGreater ||
+               m_OpType == OpType::kFLessEq || m_OpType == OpType::kFGreaterEq ||
+               m_OpType == OpType::kFEqual || m_OpType == OpType::kFNEqual;
     }
 
     std::string GetOpTypeStr() const {

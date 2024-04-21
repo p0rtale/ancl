@@ -19,6 +19,10 @@ public:
         visitor.Visit(*this);
     }
 
+    Type GetType() const {
+        return m_Type;
+    }
+
     std::string GetTypeStr() const {
         switch (m_Type) {
             case Type::kContinue: return "continue";

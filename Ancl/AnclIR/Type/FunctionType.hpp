@@ -10,25 +10,18 @@ namespace ir {
 class FunctionType: public Type {
 public:
     FunctionType(Type* retType, const std::vector<Type*>& paramTypes,
-                 bool isVariadic = false)
-        : m_ReturnType(retType), m_ParamTypes(paramTypes),
-          m_IsVariadic(isVariadic) {}
+                 bool isVariadic = false);
 
-    Type* GetReturnType() const {
-        return m_ReturnType;
-    }
+    static FunctionType* Create(Type* retType, const std::vector<Type*>& paramTypes,
+                                bool isVariadic = false);
 
-    std::vector<Type*> GetParamTypes() const {
-        return m_ParamTypes;
-    }
+    Type* GetReturnType() const;
 
-    size_t GetParamNumber() const {
-        return m_ParamTypes.size();
-    }
+    std::vector<Type*> GetParamTypes() const;
 
-    bool IsVariadic() const {
-        return m_IsVariadic;
-    }
+    size_t GetParamNumber() const;
+
+    bool IsVariadic() const;
 
 private:
     Type* m_ReturnType;

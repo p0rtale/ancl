@@ -5,6 +5,8 @@
 
 namespace ir {
 
+class IRProgram;
+
 class FloatType: public Type {
 public:
     enum class Kind {
@@ -15,11 +17,11 @@ public:
     };
 
 public:
-    FloatType(Kind kind): m_Kind(kind) {}
+    FloatType(IRProgram& program, Kind kind);
 
-    Kind GetKind() const {
-        return m_Kind;
-    }
+    static FloatType* Create(IRProgram& program, Kind kind);
+
+    Kind GetKind() const;
 
 private:
     Kind m_Kind = Kind::kNone;

@@ -15,6 +15,17 @@ public:
     void Accept(AstVisitor& visitor) override {
         visitor.Visit(*this);
     }
+
+    void SetPosition(size_t position) {
+        m_Position = position;
+    }
+
+    size_t GetPosition() const {
+        return m_Position;
+    }
+
+private:
+    size_t m_Position = 0;
 };
 
 }  // namespace ast
