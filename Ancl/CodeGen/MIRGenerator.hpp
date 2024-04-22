@@ -45,29 +45,32 @@ private:
         return m_IRValueToVReg.at(value->GetName());
     }
 
-private:
-    MOperand genMOperandFromIRGlobalValueUse(ir::GlobalValue* irGlobalValue, MBasicBlock* mirBasicBlock) {
-        auto* mirFunction = mirBasicBlock->GetFunction();
+    void addDefinition(MInstruction instr, MOperand operand, MBasicBlock* basicBlock) {
 
-        if (auto* irGlobalVar = dynamic_cast<ir::GlobalVariable*>(irGlobalValue)) {
-            auto globalAddressInstr = MInstruction(MInstruction::OpType::kGlobalAddress, mirBasicBlock);
-
-            uint vreg = mirFunction->NextVReg();
-            globalAddressInstr.AddRegister(vreg, m_TargetMachine->GetPointerByteSize(), /*isScalar=*/false);
-            globalAddressInstr.AddGlobalSymbol(irGlobalVar->GetName());
-            mirBasicBlock->AddInstruction(globalAddressInstr);
-
-            return globalAddressInstr.GetDefinition();
-        }
-
-        if (auto* irFunction = dynamic_cast<ir::Function*>(irGlobalValue)) {
-            // TODO: ...
-        }
-
-        assert(false);
     }
 
-    MOperand genMOperandFromIRConstant(ir::Value* irConstant) {
+private:
+    MOperand genMVRegisterFromIRGlobalValueUse(ir::GlobalValue* irGlobalValue, MBasicBlock* mirBasicBlock) {
+        auto* mirFunction = mirBasicBlock->GetFunction();
+
+        auto globalAddressInstr = MInstruction(MInstruction::OpType::kGlobalAddress, mirBasicBlock);
+
+        uint vreg = mirFunction->NextVReg();
+        globalAddressInstr.AddRegister(vreg, m_TargetMachine->GetPointerByteSize(), /*isScalar=*/false);
+
+        if (dynamic_cast<ir::Function*>(irGlobalValue)) {
+            globalAddressInstr.AddFunction(irGlobalValue->GetName());
+        } else {
+            globalAddressInstr.AddGlobalSymbol(irGlobalValue->GetName());
+        }
+
+        // m_VRegToInstrDef[vreg] = mirBasicBlock->AddInstruction(globalAddressInstr);
+        mirBasicBlock->AddInstruction(globalAddressInstr);
+
+        return globalAddressInstr.GetDefinition();
+    }
+
+    MOperand genMVRegisterFromIRConstant(ir::Value* irConstant) {
         uint constantSize = ir::Alignment::GetTypeSize(irConstant->GetType());
 
         if (auto* irIntConstant = dynamic_cast<ir::IntConstant*>(irConstant)) {
@@ -87,7 +90,7 @@ private:
         assert(false);
     }
 
-    MOperand genMOperandFromIRParameterUse(ir::Parameter* irParameter, MBasicBlock* mirBasicBlock) {
+    MOperand genMVRegisterFromIRParameterUse(ir::Parameter* irParameter, MBasicBlock* mirBasicBlock) {
         auto mirFunction = mirBasicBlock->GetFunction();
 
         // TODO: handle spilled parameters
@@ -104,7 +107,7 @@ private:
         return mirOperand;
     }
 
-    MOperand genMOperandFromIRInstrDef(ir::Instruction* irInstruction, MBasicBlock* mirBasicBlock) {
+    MOperand genMVRegisterFromIRInstr(ir::Instruction* irInstruction, MBasicBlock* mirBasicBlock) {
         auto mirFunction = mirBasicBlock->GetFunction();
         uint vreg = 0;
 
@@ -130,7 +133,7 @@ private:
         return mirOperand;
     }
 
-    MOperand genMOperandFromIRAllocaUse(ir::AllocaInstruction* irAlloca, MBasicBlock* mirBasicBlock) {
+    MOperand genMVRegisterFromIRAllocaUse(ir::AllocaInstruction* irAlloca, MBasicBlock* mirBasicBlock) {
         auto* mirFunction = mirBasicBlock->GetFunction();
 
         auto stackAddress = MInstruction(MInstruction::OpType::kStackAddress, mirBasicBlock);
@@ -139,34 +142,35 @@ private:
         stackAddress.AddRegister(vreg, m_TargetMachine->GetPointerByteSize(), /*isScalar=*/false);
         stackAddress.AddStackIndex(getIRValueVReg(irAlloca));
 
+        // m_VRegToInstrDef[vreg] = mirBasicBlock->AddInstruction(stackAddress);
         mirBasicBlock->AddInstruction(stackAddress);
 
         return stackAddress.GetDefinition();
     }
 
-    MOperand genMOperandFromIRValue(ir::Value* irValue, MBasicBlock* mirBasicBlock) {
+    MOperand genMVRegisterFromIRValue(ir::Value* irValue, MBasicBlock* mirBasicBlock) {
         if (auto* irConstant = dynamic_cast<ir::Constant*>(irValue)) {
             if (auto* irGlobalValue = dynamic_cast<ir::GlobalValue*>(irConstant)) {
-                return genMOperandFromIRGlobalValueUse(irGlobalValue, mirBasicBlock);
+                return genMVRegisterFromIRGlobalValueUse(irGlobalValue, mirBasicBlock);
             }
-            return genMOperandFromIRConstant(irConstant);
+            return genMVRegisterFromIRConstant(irConstant);
         }
 
         if (auto* irParameter = dynamic_cast<ir::Parameter*>(irValue)) {
-            return genMOperandFromIRParameterUse(irParameter, mirBasicBlock);
+            return genMVRegisterFromIRParameterUse(irParameter, mirBasicBlock);
         }
 
         if (auto* irInstruction = dynamic_cast<ir::Instruction*>(irValue)) {
             if (auto* irAllocaInstr = dynamic_cast<ir::AllocaInstruction*>(irValue)) {
-                return genMOperandFromIRAllocaUse(irAllocaInstr, mirBasicBlock);
+                return genMVRegisterFromIRAllocaUse(irAllocaInstr, mirBasicBlock);
             }
-            return genMOperandFromIRInstrDef(irInstruction, mirBasicBlock);
+            return genMVRegisterFromIRInstr(irInstruction, mirBasicBlock);
         }
 
         assert(false);
     }
 
-    MInstruction genMFromIRBinaryInstr(ir::BinaryInstruction* irInstr, MBasicBlock* basicBlock) {
+    void genMFromIRBinaryInstr(ir::BinaryInstruction* irInstr, MBasicBlock* basicBlock) {
         auto mirOpType = MInstruction::OpType::kNone;
 
         // TODO: use regular enums?
@@ -229,18 +233,19 @@ private:
 
         auto mirInstr = MInstruction(mirOpType, basicBlock);
 
-        auto definition = genMOperandFromIRValue(irInstr, basicBlock);
-        auto useFirst = genMOperandFromIRValue(irInstr->GetLeftOperand(), basicBlock);
-        auto useSecond = genMOperandFromIRValue(irInstr->GetRightOperand(), basicBlock);
+        auto definition = genMVRegisterFromIRValue(irInstr, basicBlock);
+        auto useFirst = genMVRegisterFromIRValue(irInstr->GetLeftOperand(), basicBlock);
+        auto useSecond = genMVRegisterFromIRValue(irInstr->GetRightOperand(), basicBlock);
 
         mirInstr.AddOperand(definition);
         mirInstr.AddOperand(useFirst);
         mirInstr.AddOperand(useSecond);
 
-        return mirInstr;
+        // m_VRegToInstrDef[definition.GetVRegister()] = basicBlock->AddInstruction(mirInstr);
+        basicBlock->AddInstruction(mirInstr);
     }
 
-    MInstruction genMFromIRCompareInstr(ir::CompareInstruction* cmpInstr, MBasicBlock* basicBlock) {
+    void genMFromIRCompareInstr(ir::CompareInstruction* cmpInstr, MBasicBlock* basicBlock) {
         auto mirOpType = MInstruction::OpType::kCmp;
         if (cmpInstr->IsUnsigned()) {
             mirOpType = MInstruction::OpType::kUCmp;
@@ -263,76 +268,228 @@ private:
 
         auto mirInstr = MInstruction(mirOpType, compareKind, basicBlock);
 
-        auto definition = genMOperandFromIRValue(cmpInstr, basicBlock);
-        auto useFirst = genMOperandFromIRValue(cmpInstr->GetLeftOperand(), basicBlock);
-        auto useSecond = genMOperandFromIRValue(cmpInstr->GetRightOperand(), basicBlock);
+        auto definition = genMVRegisterFromIRValue(cmpInstr, basicBlock);
+        auto useFirst = genMVRegisterFromIRValue(cmpInstr->GetLeftOperand(), basicBlock);
+        auto useSecond = genMVRegisterFromIRValue(cmpInstr->GetRightOperand(), basicBlock);
 
         mirInstr.AddOperand(definition);
         mirInstr.AddOperand(useFirst);
         mirInstr.AddOperand(useSecond);
 
-        return mirInstr;
+        // m_VRegToInstrDef[definition.GetVRegister()] = basicBlock->AddInstruction(mirInstr);
+        basicBlock->AddInstruction(mirInstr);
     }
 
-    MInstruction genMFromIRStoreInstr(ir::StoreInstruction* storeInstr, MBasicBlock* basicBlock) {
-        auto mirInstr = MInstruction(MInstruction::OpType::kStore, basicBlock);
+    void genMFromIRStoreInstr(ir::StoreInstruction* storeInstr, MBasicBlock* basicBlock) {
+        auto mirStore = MInstruction(MInstruction::OpType::kStore, basicBlock);
 
         auto* toValue = storeInstr->GetToOperand();
-        if (dynamic_cast<ir::AllocaInstruction*>(toValue)) {
-            
-        }
+        auto toOperand = genMVRegisterFromIRValue(toValue, basicBlock);
+        mirStore.AddMemory(toOperand.GetVRegister());
 
-        return mirInstr;
+        auto* fromValue = storeInstr->GetFromOperand();
+        auto fromOperand = genMVRegisterFromIRValue(fromValue, basicBlock);
+        mirStore.AddOperand(fromOperand);
+
+        basicBlock->AddInstruction(mirStore);
     }
 
-    MInstruction genMFromIRInstruction(ir::Instruction* instruction, MBasicBlock* basicBlock) {
+    void genMFromIRLoadInstr(ir::LoadInstruction* loadInstr, MBasicBlock* basicBlock) {
+        auto mirFunction = basicBlock->GetFunction();
+
+        auto* toValue = loadInstr;
+        auto* fromValue = loadInstr->GetPtrOperand();
+
+        auto toValueType = toValue->GetType();
+        if (auto structType = dynamic_cast<ir::StructType*>(toValueType)) {
+            uint currentOffset = 0;
+            
+            auto fromOperand = genMVRegisterFromIRValue(fromValue, basicBlock);
+
+            auto vregList = std::vector<uint>{};
+            vregList.reserve(structType->GetElementsNumber());
+            for (auto* memberType : structType->GetElementTypes()) {
+                size_t memberSize = ir::Alignment::GetTypeSize(memberType);
+
+                auto mirLoad = MInstruction(MInstruction::OpType::kLoad, basicBlock);
+                uint vreg = mirFunction->NextVReg();
+                mirLoad.AddRegister(vreg, memberSize);
+
+                // TODO: deal with bitcast
+                mirLoad.AddStackIndex(fromOperand.GetVRegister(), currentOffset);
+                currentOffset += memberSize;
+
+                vregList.push_back(vreg);
+            }
+
+            m_IRValueToVRegList[loadInstr->GetName()] = std::move(vregList);
+            return;
+        }
+
+        auto mirLoad = MInstruction(MInstruction::OpType::kLoad, basicBlock);
+
+        auto toOperand = genMVRegisterFromIRValue(toValue, basicBlock);
+        mirLoad.AddOperand(toOperand);
+
+        auto fromOperand = genMVRegisterFromIRValue(fromValue, basicBlock);
+        mirLoad.AddMemory(fromOperand.GetVRegister());
+
+        // m_VRegToInstrDef[toOperand.GetVRegister()] = basicBlock->AddInstruction(mirLoad);
+        basicBlock->AddInstruction(mirLoad);
+    }
+
+    void genMFromIRMemberInstr(ir::MemberInstruction* memberInstr, MBasicBlock* basicBlock) {
+        auto mirFunction = basicBlock->GetFunction();
+
+        auto mirMember = MInstruction(MInstruction::OpType::kLoad, basicBlock);
+
+        auto* ptrValue = memberInstr->GetPtrOperand();
+        auto ptrOperand = genMVRegisterFromIRValue(ptrValue, basicBlock);
+
+        auto* indexValue = memberInstr->GetIndex();
+        auto indexOperand = genMVRegisterFromIRValue(indexValue, basicBlock);
+        
+        uint vregOffset = 0;
+
+        bool isImmediate = false;
+        int64_t immOffset = 0;
+        int64_t indexImmValue = 0;
+        if (indexOperand.IsImmediate()) {
+            assert(indexOperand.IsImmInteger());
+            indexImmValue = indexOperand.GetImmInteger();
+            isImmediate = true;
+        }
+
+        auto ptrType = dynamic_cast<ir::PointerType*>(ptrValue->GetType());
+        assert(ptrType);
+
+        auto ptrSubType = ptrType->GetSubType();
+        auto arrayTypeOpt = dynamic_cast<ir::ArrayType*>(ptrSubType);
+        if (!memberInstr->IsDeref() || arrayTypeOpt) {
+            // offset = index * sizeof(ptr_subtype) | offset = index * sizeof(arr_subtype)
+            size_t typeSize = ir::Alignment::GetTypeSize(ptrSubType);
+            if (arrayTypeOpt) {
+                auto memberType = arrayTypeOpt->GetSubType();
+                typeSize = ir::Alignment::GetTypeSize(memberType);
+            }
+            if (isImmediate) {
+                immOffset = indexImmValue * typeSize;
+            } else {
+                auto mirMul = MInstruction(MInstruction::OpType::kMul, basicBlock);
+                vregOffset = mirFunction->NextVReg();
+                mirMul.AddRegister(vregOffset, m_TargetMachine->GetPointerByteSize());
+                mirMul.AddOperand(indexOperand);
+                mirMul.AddImmInteger(typeSize, m_TargetMachine->GetPointerByteSize());
+
+                basicBlock->AddInstruction(mirMul);
+            }
+        } else {  // struct
+            // offset = member_offset
+            auto structType = dynamic_cast<ir::StructType*>(ptrSubType);
+            assert(structType);
+
+            auto layout = ir::Alignment::GetStructLayout(structType);
+            immOffset = layout.Offsets[indexImmValue];
+        }
+
+        auto mirAdd = MInstruction(MInstruction::OpType::kAdd, basicBlock);
+        mirAdd.AddOperand(ptrOperand);
+        mirAdd.AddOperand(genMVRegisterFromIRValue(ptrValue, basicBlock));
+        if (isImmediate) {
+            mirAdd.AddImmInteger(immOffset, m_TargetMachine->GetPointerByteSize());
+        } else {
+            mirAdd.AddRegister(vregOffset, m_TargetMachine->GetPointerByteSize());
+        }
+
+        linkIRValueWithVReg(memberInstr, ptrOperand.GetVRegister());
+
+        basicBlock->AddInstruction(mirMember);
+    }
+
+    void genMFromIRBranchInstr(ir::BranchInstruction* branchInstr, MBasicBlock* basicBlock) {
+        if (branchInstr->IsUnconditional()) {  // Jump
+            auto mirJump = MInstruction(MInstruction::OpType::kJump, basicBlock);
+            auto irBasicBlock = branchInstr->GetTrueBasicBlock();
+            mirJump.AddBasicBlock(m_MBBMap[irBasicBlock->GetName()]);
+            basicBlock->AddInstruction(mirJump);
+            return;
+        }
+
+        auto mirBranch = MInstruction(MInstruction::OpType::kBranch, basicBlock);
+
+        auto condValue = branchInstr->GetCondition();
+        auto condOperand = genMVRegisterFromIRValue(condValue, basicBlock);
+        mirBranch.AddOperand(condOperand);
+
+        auto irTrueBB = branchInstr->GetTrueBasicBlock();
+        mirBranch.AddBasicBlock(m_MBBMap[irTrueBB->GetName()]);
+
+        auto irFalseBB = branchInstr->GetFalseBasicBlock();
+        if (irFalseBB) {
+            mirBranch.AddBasicBlock(m_MBBMap[irFalseBB->GetName()]);
+        }
+
+        basicBlock->AddInstruction(mirBranch);
+    }
+
+    void genMFromIRCallInstr(ir::CallInstruction* callInstr, MBasicBlock* basicBlock) {
+        auto mirCall = MInstruction(MInstruction::OpType::kCall, basicBlock);
+        
+        auto calleeValue = callInstr->GetCallee();
+
+        for (auto* argValue : callInstr->GetArguments()) {
+            // TODO: handle struct param
+            // TODO: ...
+        }
+
+        // TODO: save return physical registers?
+
+        basicBlock->AddInstruction(mirCall);
+    }
+
+    void genMFromIRReturnInstr(ir::ReturnInstruction* returnInstr, MBasicBlock* basicBlock) {
+        auto mirReturn = MInstruction(MInstruction::OpType::kRet, basicBlock);
+        if (!returnInstr->HasReturnValue()) {
+            basicBlock->AddInstruction(mirReturn);
+            return;
+        }
+
+        auto returnValue = returnInstr->GetReturnValue();
+        auto returnOperand = genMVRegisterFromIRValue(returnValue, basicBlock);
+
+        // TODO: move to physical registers
+
+        basicBlock->AddInstruction(mirReturn);
+    }
+
+    void genMFromIRInstruction(ir::Instruction* instruction, MBasicBlock* basicBlock) {
         // TODO: memcpy
 
         // NB: allocas are processed in handleAllocaInstruction
 
         if (auto binaryInstr = dynamic_cast<ir::BinaryInstruction*>(instruction)) {
-            return genMFromIRBinaryInstr(binaryInstr, basicBlock);
+            genMFromIRBinaryInstr(binaryInstr, basicBlock);
+        } else if (auto compareInstr = dynamic_cast<ir::CompareInstruction*>(instruction)) {
+            genMFromIRCompareInstr(compareInstr, basicBlock);
+        } else if (auto castInstr = dynamic_cast<ir::CastInstruction*>(instruction)) {
+            // genMFromIRCastInstr(castInstr, basicBlock);
+        } else if (auto storeInstr = dynamic_cast<ir::StoreInstruction*>(instruction)) {
+            genMFromIRStoreInstr(storeInstr, basicBlock);
+        }else if (auto loadInstr = dynamic_cast<ir::LoadInstruction*>(instruction)) {
+            genMFromIRLoadInstr(loadInstr, basicBlock);
+        } else if (auto memberInstr = dynamic_cast<ir::MemberInstruction*>(instruction)) {
+            genMFromIRMemberInstr(memberInstr, basicBlock);
+        } else if (auto branchInstr = dynamic_cast<ir::BranchInstruction*>(instruction)) {
+            genMFromIRBranchInstr(branchInstr, basicBlock);
+        } else if (auto switchInstr = dynamic_cast<ir::SwitchInstruction*>(instruction)) {
+            // genMFromIRSwitchInstr(switchInstr, basicBlock);
+        } else if (auto callInstr = dynamic_cast<ir::CallInstruction*>(instruction)) {
+            genMFromIRCallInstr(callInstr, basicBlock);
+        } else if (auto returnInstr = dynamic_cast<ir::ReturnInstruction*>(instruction)) {
+            genMFromIRReturnInstr(returnInstr, basicBlock);
+        } else {
+            assert(false);
         }
-
-        if (auto compareInstr = dynamic_cast<ir::CompareInstruction*>(instruction)) {
-            return genMFromIRCompareInstr(compareInstr, basicBlock);
-        }   
-
-        // if (auto castInstr = dynamic_cast<ir::CastInstruction*>(instruction)) {
-        //     return genMFromIRCastInstr(castInstr, basicBlock);
-        // } 
-
-        if (auto storeInstr = dynamic_cast<ir::StoreInstruction*>(instruction)) {
-            return genMFromIRStoreInstr(storeInstr, basicBlock);
-        }
-
-        // if (auto loadInstr = dynamic_cast<ir::LoadInstruction*>(instruction)) {
-        //     return genMFromIRLoadInstr(loadInstr, basicBlock);
-        // }
-
-        // if (auto memberInstr = dynamic_cast<ir::MemberInstruction*>(instruction)) {
-        //     return genMFromIRMemberInstr(memberInstr, basicBlock);
-        // }
-
-        // if (auto branchInstr = dynamic_cast<ir::BranchInstruction*>(instruction)) {
-        //     return genMFromIRBranchInstr(branchInstr, basicBlock);
-        // }     
-
-        // if (auto switchInstr = dynamic_cast<ir::SwitchInstruction*>(instruction)) {
-        //     return genMFromIRSwitchInstr(switchInstr, basicBlock);
-        // }   
-
-        // if (auto callInstr = dynamic_cast<ir::CallInstruction*>(instruction)) {
-        //     return genMFromIRCallInstr(callInstr, basicBlock);
-        // }       
-
-        // if (auto returnInstr = dynamic_cast<ir::ReturnInstruction*>(instruction)) {
-        //     return genMFromIRReturnInstr(returnInstr, basicBlock);
-        // } 
-
-        assert(false);
-
-        return MInstruction(MInstruction::OpType::kNone, basicBlock);
     }
 
     GlobalDataArea genGlobalDataArea(ir::GlobalVariable* globalVar) {
@@ -457,9 +614,11 @@ private:
         updateMIRFunctionParameters(irFunction, mirFunction);
 
         for (auto* basicBlock : irFunction->GetBasicBlocks()) {
-            mirFunction->AddBasicBlock(MBasicBlock(basicBlock->GetName(), mirFunction));
+            auto name = basicBlock->GetName();
+            auto MBB = CreateScope<MBasicBlock>(name, mirFunction);
+            mirFunction->AddBasicBlock(std::move(MBB));
+            m_MBBMap[name] = mirFunction->GetLastBasicBlock();
         }
-        auto& mirBasicBlocksRef = mirFunction->GetBasicBlocks();            
 
         size_t basicBlockIdx = 0;
         for (auto* basicBlock : irFunction->GetBasicBlocks()) {
@@ -469,13 +628,9 @@ private:
                     continue;
                 }
 
-                auto mirInstruction = genMFromIRInstruction(instruction, &mirBasicBlocksRef[basicBlockIdx]);
-                mirBasicBlocksRef[basicBlockIdx].AddInstruction(mirInstruction);
+                genMFromIRInstruction(instruction, mirFunction->GetBasicBlock(basicBlockIdx));
 
-                // TODO: proccess it in AnclIR?
-                if (mirInstruction.IsReturn()) {
-                    break;
-                }
+                // TODO: delete instructions after the terminator?
             }
             ++basicBlockIdx;
         }
@@ -491,6 +646,7 @@ private:
 
         uint vreg = mirFunction->NextVReg();
         linkIRValueWithVReg(allocaInstr, vreg);
+        
         mirFunction->AddLocalData(vreg, ir::Alignment::GetTypeSize(elementType),
                                         ir::Alignment::GetTypeAlignment(elementType));
     }
@@ -562,8 +718,11 @@ private:
     target::TargetMachine* m_TargetMachine = nullptr;
 
     std::unordered_map<std::string, uint> m_IRValueToVReg;
+    std::unordered_map<std::string, std::vector<uint>> m_IRValueToVRegList;
 
-    // std::unordered_map<std::string, std::vector<uint>> m_IRParamToVRegs;
+    std::unordered_map<std::string, MBasicBlock*> m_MBBMap;
+
+    // std::unordered_map<uint, MBasicBlock::TInstructionIt> m_VRegToInstrDef;
 };
 
 }  // namespace gen

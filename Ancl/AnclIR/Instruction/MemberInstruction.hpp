@@ -20,6 +20,14 @@ public:
         SetName(name);
     }
 
+    void SetDeref(bool deref) {
+        m_IsDeref = deref;
+    }
+
+    bool IsDeref() const {
+        return m_IsDeref;
+    }
+
     Value* GetPtrOperand() const {
         return m_PtrOperand;
     }
@@ -31,6 +39,8 @@ public:
 private:
     Value* m_PtrOperand;
     Value* m_Index;
+
+    bool m_IsDeref = false;
 };
 
 }  // namespace ir

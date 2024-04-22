@@ -23,7 +23,7 @@ public:
         kFunction,
 
         kStackIndex,
-        kMemoryAddress,  // TODO: equivalent to a register?     
+        kMemory,
     };
 
 public:
@@ -46,7 +46,7 @@ public:
     static MOperand CreateRegister(uint regNumber, uint bytes = 8, bool isScalar = true,
                                    bool isVirtual = true) {
         auto operand = MOperand{Kind::kRegister};
-        operand.SetRegisterNumber(regNumber);
+        operand.SetVRegister(regNumber);
         operand.SetVirtual(isVirtual);
 
         if (isScalar) {
@@ -58,9 +58,9 @@ public:
         return operand;
     }
 
-    static MOperand CreateParameter(uint regNumber) {
+    static MOperand CreateParameter(uint vreg) {
         auto operand = MOperand{Kind::kParameter};
-        operand.SetRegisterNumber(regNumber);
+        operand.SetVRegister(vreg);
         return operand;
     }
 
@@ -89,9 +89,9 @@ public:
         return operand;
     }
 
-    static MOperand CreateMemoryAddress(int64_t regNumber, uint bytes = 8, int64_t offset = 0) {
-        auto operand = MOperand{Kind::kStackIndex};
-        operand.SetRegisterNumber(regNumber);
+    static MOperand CreateMemory(uint vreg, uint bytes = 8, int64_t offset = 0) {
+        auto operand = MOperand{Kind::kMemory};
+        operand.SetVRegister(vreg);
         operand.SetOffset(offset);
         operand.SetType(MType::CreatePointer(bytes));
         return operand;
@@ -141,8 +141,8 @@ public:
         return m_Kind == Kind::kStackIndex;
     }
 
-    bool IsMemoryAddress() const {
-        return m_Kind == Kind::kMemoryAddress;
+    bool IsMemory() const {
+        return m_Kind == Kind::kMemory;
     }
 
     void SetType(MType type) {
@@ -173,12 +173,12 @@ public:
         return m_Data.ImmFloat;
     }
 
-    void SetRegisterNumber(uint regNumber) {
-        m_Data.RegisterNumber = regNumber;
+    void SetVRegister(uint vreg) {
+        m_Data.VRegister = vreg;
     }
 
-    uint GetRegisterNumber() const {
-        return m_Data.RegisterNumber;
+    uint GetVRegister() const {
+        return m_Data.VRegister;
     }
 
     void SetGlobalSymbol(const std::string& symbol) {
@@ -233,7 +233,7 @@ private:
     union DataUnion {
         int64_t ImmInt;
         double ImmFloat;  // TODO: FloatValue?
-        uint RegisterNumber;  // TODO: Register class
+        uint VRegister;  // TODO: Register class
         MBasicBlock* MBB;
     } m_Data;
 

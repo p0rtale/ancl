@@ -41,14 +41,16 @@ public:
         return m_Instructions;
     }
 
-    void AddInstruction(MInstruction instruction) {
+    TInstructionIt AddInstruction(MInstruction instruction) {
         handleNewInstruction(instruction);
         m_Instructions.push_back(instruction);
+        return --m_Instructions.end();
     }
 
-    void AddInstructionToBegin(MInstruction instruction) {
+    TInstructionIt AddInstructionToBegin(MInstruction instruction) {
         handleNewInstruction(instruction);
         m_Instructions.push_front(instruction);
+        return m_Instructions.begin();
     }
 
     TInstructionIt InsertInstr(MInstruction instruction, size_t index) {

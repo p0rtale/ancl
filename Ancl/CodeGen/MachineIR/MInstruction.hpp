@@ -120,11 +120,21 @@ public:
         AddOperand(MOperand::CreateGlobalSymbol(symbol));
     }
 
+    void AddFunction(const std::string& symbol) {
+        AddOperand(MOperand::CreateFunction(symbol));
+    }
+
     void AddStackIndex(uint slot, int64_t offset = 0) {
         AddOperand(MOperand::CreateStackIndex(slot, offset));
     }
 
-    // TODO: Add...
+    void AddMemory(uint vreg, uint bytes = 8, int64_t offset = 0) {
+        AddOperand(MOperand::CreateMemory(vreg, bytes, offset));
+    }
+
+    void AddBasicBlock(MBasicBlock* basicBlock) {
+        AddOperand(MOperand::CreateBasicBlock(basicBlock));
+    }
 
     size_t GetOperandsNumber() const {
         return m_Operands.size();

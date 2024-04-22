@@ -51,6 +51,7 @@ public:
         auto funcIRType = dynamic_cast<ir::FunctionType*>(Accept(*qualType));
         assert(funcIRType);
 
+        // TODO: handle small struct decomposition
         // TODO: handle big struct as return value (add ptr parameter + void return)
 
         auto storageClass = funcDecl.GetStorageClass();
@@ -79,7 +80,6 @@ public:
 
         // TODO: handle function without return (add void return)
         // TODO: handle multiple returns
-
     }
 
     void Visit(LabelDeclaration& labelDecl) override {
@@ -171,6 +171,9 @@ public:
         assert(varDecl.GetInit() && "Decl and Init must be separated");
 
         if (m_InsideParams) {
+            // !!! TODO: add parameter to function
+            // TODO: handle implicit parameter (struct pointer)
+            // TODO: handle struct parameter decomposition
             auto paramValue = m_IRProgram.CreateValue<ir::Parameter>(
                     name, varIRType, m_CurrentFunction);
             auto storeInstr = createStoreInstruction(alloca, paramValue);
@@ -692,6 +695,7 @@ public:
 
     std::vector<ir::Constant*> AcceptConst(InitializerList& initList) {
         m_ConstantList.clear();
+        // TODO: ...
         initList.Accept(*this);  // -> m_ConstantList
         return m_ConstantList;
     }

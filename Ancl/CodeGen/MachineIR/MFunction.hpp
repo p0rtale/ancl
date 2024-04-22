@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include <Ancl/Base.hpp>
+
 #include <Ancl/CodeGen/MachineIR/MBasicBlock.hpp>
 #include <Ancl/CodeGen/MachineIR/LocalDataArea.hpp>
 #include <Ancl/CodeGen/MachineIR/MType.hpp>
@@ -22,9 +24,6 @@ public:
 public:
     MFunction(const std::string& name): m_Name(name) {}
 
-    MFunction(const std::string& name, const std::vector<MBasicBlock>& basicBlocks)
-        : m_Name(name), m_BasicBlocks(basicBlocks) {}
-
     std::string GetName() const {
         return m_Name;
     }
@@ -39,12 +38,16 @@ public:
         return paramVReg;
     }
 
-    void AddBasicBlock(MBasicBlock MBB) {
-        m_BasicBlocks.push_back(MBB);
+    void AddBasicBlock(TScopePtr<MBasicBlock> MBB) {
+        m_BasicBlocks.push_back(std::move(MBB));
     }
 
-    std::vector<MBasicBlock>& GetBasicBlocks() {
-        return m_BasicBlocks;
+    MBasicBlock* GetBasicBlock(size_t idx) {
+        return m_BasicBlocks[idx].get();
+    }
+
+    MBasicBlock* GetLastBasicBlock() {
+        return m_BasicBlocks.back().get();
     }
 
     LocalDataArea& GetLocalDataArea() {
@@ -69,7 +72,7 @@ private:
     std::vector<Parameter> m_Parameters;
     LocalDataArea m_LocalDataArea;
 
-    std::vector<MBasicBlock> m_BasicBlocks;
+    std::vector<TScopePtr<MBasicBlock>> m_BasicBlocks;
 
     uint m_NextVReg = 0;
 };
