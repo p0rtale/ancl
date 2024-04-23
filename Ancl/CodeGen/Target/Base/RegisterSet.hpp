@@ -2,17 +2,24 @@
 
 #include <Ancl/CodeGen/Target/Base/Register.hpp>
 
-namespace gen {
+namespace target {
 
 class RegisterSet {
 public:
     RegisterSet() = default;
     virtual ~RegisterSet() = default;
 
-    virtual Register& GetRegister(uint number) = 0;
-    virtual Register& GetARP() = 0;
+    virtual Register GetRegister(uint number) = 0;
 
-    // TODO: callersARP, return address, return value, ...
+    virtual bool HasZeroRegister() = 0;
+    virtual Register GetZeroRegister() = 0;
+
+    virtual bool HasLinkRegister() = 0;
+    virtual Register GetLinkRegister() = 0;
+
+    virtual Register GetARP() = 0;
+
+    virtual Register GetSP() = 0;
 };
 
-}  // namespace gen
+}  // namespace target

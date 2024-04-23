@@ -1,27 +1,34 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 
-namespace gen {
+namespace target {
 
 class Register {
 public:
+    Register(uint number): m_Number(number) {}
+
     Register(const std::string& name, uint number, uint bytes,
-             bool isFloat = false)
+             const std::vector<uint>& subRegs)
         : m_Name(name), m_Number(number), m_Bytes(bytes),
-          m_IsFloat(isFloat) {}
+          m_SubRegNumbers(subRegs) {}
 
     std::string GetName() const {
         return m_Name;
+    }
+
+    uint GetNumber() const {
+        return m_Number;
     }
 
     uint GetBytes() const {
         return m_Bytes;
     }
 
-    bool IsFloat() const {
-        return m_IsFloat;
+    std::vector<uint> GetSubRegNumbers() const {
+        return m_SubRegNumbers;
     }
 
 private:
@@ -30,9 +37,7 @@ private:
     uint m_Number = 0;
     uint m_Bytes = 0;
 
-    // TODO: subregisters
-
-    bool m_IsFloat = false;
+    std::vector<uint> m_SubRegNumbers;
 };
 
-}  // namespace gen
+}  // namespace target
