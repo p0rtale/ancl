@@ -16,7 +16,8 @@ public:
         REG_NUMBER_END,
     };
 
-    enum class RegClass {
+    enum RegClass {
+        INVALID = 0,
         GR, GR8, GR16, GR32, GR64,
         FR,
     };

@@ -159,7 +159,7 @@ public:
             ++index;
         }
         return GetOperand(index);
-    } 
+    }
 
     std::vector<MOperand>& GetOperands() {
         return m_Operands;
@@ -170,6 +170,8 @@ private:
     CompareKind m_CompareKind = CompareKind::kNone;
 
     std::vector<MOperand> m_Operands;
+
+    uint m_TargetInstructionCode = 0;
 
     MBasicBlock* m_BasicBlock = nullptr;
 };
