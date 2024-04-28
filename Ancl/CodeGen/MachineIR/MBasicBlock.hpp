@@ -29,11 +29,11 @@ public:
 
     using TInstructionIt = std::list<MInstruction>::iterator;
 
-    TInstructionIt GetInstructionsBegin() {
+    TInstructionIt GetInstrBegin() {
         return m_Instructions.begin();
     }
 
-    TInstructionIt GetInstructionsEnd() {
+    TInstructionIt GetInstrEnd() {
         return m_Instructions.end();
     }
 

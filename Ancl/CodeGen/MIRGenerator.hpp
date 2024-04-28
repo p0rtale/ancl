@@ -56,7 +56,10 @@ private:
         auto globalAddressInstr = MInstruction(MInstruction::OpType::kGlobalAddress, mirBasicBlock);
 
         uint vreg = mirFunction->NextVReg();
-        globalAddressInstr.AddRegister(vreg, m_TargetMachine->GetPointerByteSize(), /*isScalar=*/false);
+        auto ptrReg = MOperand::CreateRegister(vreg);
+        ptrReg.SetType(MType::CreatePointer(m_TargetMachine->GetPointerByteSize()));
+
+        globalAddressInstr.AddOperand(ptrReg);
 
         if (dynamic_cast<ir::Function*>(irGlobalValue)) {
             globalAddressInstr.AddFunction(irGlobalValue->GetName());
@@ -127,7 +130,8 @@ private:
         if (dynamic_cast<ir::PointerType*>(instrType)) {
             mirOperand.SetType(MType::CreatePointer(m_TargetMachine->GetPointerByteSize()));
         } else {
-            mirOperand.SetType(MType::CreateScalar(ir::Alignment::GetTypeSize(instrType)));
+            bool isFloat = dynamic_cast<ir::FloatType*>(instrType);
+            mirOperand.SetType(MType::CreateScalar(ir::Alignment::GetTypeSize(instrType), isFloat));
         }
 
         return mirOperand;
@@ -139,7 +143,10 @@ private:
         auto stackAddress = MInstruction(MInstruction::OpType::kStackAddress, mirBasicBlock);
 
         uint vreg = mirFunction->NextVReg();
-        stackAddress.AddRegister(vreg, m_TargetMachine->GetPointerByteSize(), /*isScalar=*/false);
+        auto ptrReg = MOperand::CreateRegister(vreg);
+        ptrReg.SetType(MType::CreatePointer(m_TargetMachine->GetPointerByteSize()));
+
+        stackAddress.AddOperand(ptrReg);
         stackAddress.AddStackIndex(getIRValueVReg(irAlloca));
 
         // m_VRegToInstrDef[vreg] = mirBasicBlock->AddInstruction(stackAddress);
@@ -285,7 +292,7 @@ private:
 
         auto* toValue = storeInstr->GetToOperand();
         auto toOperand = genMVRegisterFromIRValue(toValue, basicBlock);
-        mirStore.AddMemory(toOperand.GetVRegister());
+        mirStore.AddMemory(toOperand.GetRegister());
 
         auto* fromValue = storeInstr->GetFromOperand();
         auto fromOperand = genMVRegisterFromIRValue(fromValue, basicBlock);
@@ -302,27 +309,29 @@ private:
 
         auto toValueType = toValue->GetType();
         if (auto structType = dynamic_cast<ir::StructType*>(toValueType)) {
-            uint currentOffset = 0;
+            // TODO: load return struct from stack
+
+            // uint currentOffset = 0;
             
-            auto fromOperand = genMVRegisterFromIRValue(fromValue, basicBlock);
+            // auto fromOperand = genMVRegisterFromIRValue(fromValue, basicBlock);
 
-            auto vregList = std::vector<uint>{};
-            vregList.reserve(structType->GetElementsNumber());
-            for (auto* memberType : structType->GetElementTypes()) {
-                size_t memberSize = ir::Alignment::GetTypeSize(memberType);
+            // auto vregList = std::vector<uint>{};
+            // vregList.reserve(structType->GetElementsNumber());
+            // for (auto* memberType : structType->GetElementTypes()) {
+            //     size_t memberSize = ir::Alignment::GetTypeSize(memberType);
 
-                auto mirLoad = MInstruction(MInstruction::OpType::kLoad, basicBlock);
-                uint vreg = mirFunction->NextVReg();
-                mirLoad.AddRegister(vreg, memberSize);
+            //     auto mirLoad = MInstruction(MInstruction::OpType::kLoad, basicBlock);
+            //     uint vreg = mirFunction->NextVReg();
+            //     mirLoad.AddRegister(vreg, memberSize);
 
-                // TODO: deal with bitcast
-                mirLoad.AddStackIndex(fromOperand.GetVRegister(), currentOffset);
-                currentOffset += memberSize;
+            //     // TODO: deal with bitcast
+            //     mirLoad.AddStackIndex(fromOperand.GetRegister(), currentOffset);
+            //     currentOffset += memberSize;
 
-                vregList.push_back(vreg);
-            }
+            //     vregList.push_back(vreg);
+            // }
 
-            m_IRValueToVRegList[loadInstr->GetName()] = std::move(vregList);
+            // m_IRValueToVRegList[loadInstr->GetName()] = std::move(vregList);
             return;
         }
 
@@ -332,7 +341,7 @@ private:
         mirLoad.AddOperand(toOperand);
 
         auto fromOperand = genMVRegisterFromIRValue(fromValue, basicBlock);
-        mirLoad.AddMemory(fromOperand.GetVRegister());
+        mirLoad.AddMemory(fromOperand.GetRegister());
 
         // m_VRegToInstrDef[toOperand.GetVRegister()] = basicBlock->AddInstruction(mirLoad);
         basicBlock->AddInstruction(mirLoad);
@@ -377,7 +386,11 @@ private:
             } else {
                 auto mirMul = MInstruction(MInstruction::OpType::kMul, basicBlock);
                 vregOffset = mirFunction->NextVReg();
-                mirMul.AddRegister(vregOffset, m_TargetMachine->GetPointerByteSize());
+
+                auto ptrReg = MOperand::CreateRegister(vregOffset);
+                ptrReg.SetType(MType::CreatePointer(m_TargetMachine->GetPointerByteSize()));
+                mirMul.AddOperand(ptrReg);
+
                 mirMul.AddOperand(indexOperand);
                 mirMul.AddImmInteger(typeSize, m_TargetMachine->GetPointerByteSize());
 
@@ -401,8 +414,9 @@ private:
             mirAdd.AddRegister(vregOffset, m_TargetMachine->GetPointerByteSize());
         }
 
-        linkIRValueWithVReg(memberInstr, ptrOperand.GetVRegister());
+        linkIRValueWithVReg(memberInstr, ptrOperand.GetRegister());
 
+        // TODO: ...
         basicBlock->AddInstruction(mirMember);
     }
 

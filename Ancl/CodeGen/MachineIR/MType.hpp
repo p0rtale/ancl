@@ -9,7 +9,8 @@ class MType {
 public:
     enum class Kind {
         kNone,
-        kScalar,
+        kInteger,
+        kFloat,
         kPointer,
     };
 
@@ -18,8 +19,11 @@ public:
     MType(Kind kind, uint bytes)
         : m_Kind(kind), m_Bytes(bytes) {}
 
-    static MType CreateScalar(uint bytes) {
-        return MType(Kind::kScalar, bytes);
+    static MType CreateScalar(uint bytes, bool isFloat = false) {
+        if (isFloat) {
+            return MType(Kind::kFloat, bytes);
+        }
+        return MType(Kind::kInteger, bytes);
     }
 
     static MType CreatePointer(uint bytes = 8) {
@@ -38,8 +42,16 @@ public:
         return m_Kind == Kind::kNone;
     }
 
+    bool IsInteger() const {
+        return m_Kind == Kind::kInteger;
+    }
+
+    bool IsFloat() const {
+        return m_Kind == Kind::kFloat;
+    }
+
     bool IsScalar() const {
-        return m_Kind == Kind::kScalar;
+        return IsInteger() || IsFloat();
     }
 
     bool IsPointer() const {

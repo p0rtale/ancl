@@ -32,35 +32,27 @@ public:
     static MOperand CreateImmInteger(int64_t value, uint bytes = 8) {
         auto operand = MOperand{Kind::kImmInteger};
         operand.SetImmInteger(value);
-        operand.SetType(MType::CreateScalar(bytes));
+        operand.SetType(MType::CreateScalar(bytes, /*isFloat=*/false));
         return operand;
     }
 
     static MOperand CreateImmFloat(double value, uint bytes = 8) {
         auto operand = MOperand{Kind::kImmFloat};
         operand.SetImmFloat(value);
-        operand.SetType(MType::CreateScalar(bytes));
+        operand.SetType(MType::CreateScalar(bytes, /*isFloat=*/true));
         return operand;
     }
 
-    static MOperand CreateRegister(uint regNumber, uint bytes = 8, bool isScalar = true,
-                                   bool isVirtual = true) {
+    static MOperand CreateRegister(uint regNumber, uint bytes = 8, bool isVirtual = true) {
         auto operand = MOperand{Kind::kRegister};
-        operand.SetVRegister(regNumber);
+        operand.SetRegister(regNumber);
         operand.SetVirtual(isVirtual);
-
-        if (isScalar) {
-            operand.SetType(MType::CreateScalar(bytes));
-        } else {
-            operand.SetType(MType::CreatePointer(bytes));
-        }
-        
         return operand;
     }
 
     static MOperand CreateParameter(uint vreg) {
         auto operand = MOperand{Kind::kParameter};
-        operand.SetVRegister(vreg);
+        operand.SetRegister(vreg);
         return operand;
     }
 
@@ -91,7 +83,7 @@ public:
 
     static MOperand CreateMemory(uint vreg, uint bytes = 8, int64_t offset = 0) {
         auto operand = MOperand{Kind::kMemory};
-        operand.SetVRegister(vreg);
+        operand.SetRegister(vreg);
         operand.SetOffset(offset);
         operand.SetType(MType::CreatePointer(bytes));
         return operand;
@@ -173,12 +165,12 @@ public:
         return m_Data.ImmFloat;
     }
 
-    void SetVRegister(uint vreg) {
-        m_Data.VRegister = vreg;
+    void SetRegister(uint vreg) {
+        m_Data.Register = vreg;
     }
 
-    uint GetVRegister() const {
-        return m_Data.VRegister;
+    uint GetRegister() const {
+        return m_Data.Register;
     }
 
     void SetGlobalSymbol(const std::string& symbol) {
@@ -225,6 +217,14 @@ public:
         return m_IsVirtual;
     }
 
+    void SetRegisterClass(uint regClass) {
+        m_RegisterClass = regClass;
+    }
+
+    uint GetRegisterClass() const {
+        return m_RegisterClass;
+    }
+
 private:
     Kind m_Kind = Kind::kNone;
 
@@ -233,11 +233,13 @@ private:
     union DataUnion {
         int64_t ImmInt;
         double ImmFloat;  // TODO: FloatValue?
-        uint VRegister;  // TODO: Register class
+        uint Register;
         MBasicBlock* MBB;
     } m_Data;
 
     bool m_IsVirtual = false;
+    uint m_RegisterClass = 0;
+
     std::string m_GlobalSymbol;  // TODO: add to union
     int64_t m_Offset = 0;  // TODO: add to union
     int m_Index = 0;

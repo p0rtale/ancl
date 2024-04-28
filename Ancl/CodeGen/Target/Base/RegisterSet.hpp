@@ -20,6 +20,9 @@ public:
     virtual Register GetARP() = 0;
 
     virtual Register GetSP() = 0;
+
+    virtual uint GetRegisterClass(Register reg) = 0;
+    virtual uint GetRegisterClass(uint bytes, bool isFloat = false) = 0;
 };
 
 }  // namespace target

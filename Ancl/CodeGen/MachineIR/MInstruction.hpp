@@ -104,8 +104,8 @@ public:
         m_Operands.push_back(operand);
     }
 
-    void AddRegister(uint regNumber, uint bytes = 8, bool isScalar = true, bool isVirtual = true) {
-        AddOperand(MOperand::CreateRegister(regNumber, bytes, isScalar, isVirtual));
+    void AddRegister(uint regNumber, uint bytes = 8, bool isVirtual = true) {
+        AddOperand(MOperand::CreateRegister(regNumber, bytes, isVirtual));
     }
 
     void AddImmInteger(int64_t value, uint bytes = 8) {
@@ -160,6 +160,14 @@ public:
             ++index;
         }
         return GetOperand(index);
+    }
+
+    TOperandIt GetOpBegin() {
+        return m_Operands.begin();
+    }
+
+    TOperandIt GetOpEnd() {
+        return m_Operands.end();
     }
 
     std::list<MOperand>& GetOperands() {

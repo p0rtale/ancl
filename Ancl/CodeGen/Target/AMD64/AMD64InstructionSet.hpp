@@ -9,7 +9,7 @@
 namespace target::amd64 {
 
 enum OpClass: uint {
-    INVALID = 0,
+    INVALID_CLASS = 0,
     GR, GR8, GR16, GR32, GR64,
     FR,
     IMM, IMM8, IMM16, IMM32, IMM64,

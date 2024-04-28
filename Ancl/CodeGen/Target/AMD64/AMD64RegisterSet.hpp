@@ -10,7 +10,7 @@ namespace target::amd64 {
 class AMD64RegisterSet: public RegisterSet {
 public:
     enum RegNumber {
-        INVALID = 0,
+        INVALID_REGNUM = 0,
 
 #define AMD64_REGISTER(NAME, NUMBER, BYTES, SUB_REGISTERS) NUMBER,
 #include <Ancl/CodeGen/Target/AMD64/AMD64RegisterSet.inc>
@@ -55,6 +55,25 @@ public:
 
     Register GetSP() override {
         return m_Registers[RSP];
+    }
+
+    uint GetRegisterClass(uint bytes, bool isFloat = false) {
+        if (isFloat) {
+            return FR;
+        }
+
+        switch (bytes) {
+        case 1:
+            return GR8;
+        case 2:
+            return GR16;
+        case 4:
+            return GR32;
+        case 8:
+            return GR64;
+        default:
+            return INVALID_CLASS;
+        }
     }
 
     uint GetRegisterClass(Register reg) {

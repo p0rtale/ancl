@@ -14,6 +14,7 @@ namespace gen {
 
 class MFunction {
 public:
+    // TODO: PR and Stack parameters
     struct Parameter {
         uint VReg;
         MType Type;
@@ -44,6 +45,10 @@ public:
 
     MBasicBlock* GetBasicBlock(size_t idx) {
         return m_BasicBlocks[idx].get();
+    }
+
+    std::vector<TScopePtr<MBasicBlock>>& GetBasicBlocks() {
+        return m_BasicBlocks;
     }
 
     MBasicBlock* GetLastBasicBlock() {
