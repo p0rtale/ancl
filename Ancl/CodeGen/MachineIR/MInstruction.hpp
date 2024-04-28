@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cassert>
-#include <vector>
+#include <list>
 
 #include <Ancl/CodeGen/MachineIR/MOperand.hpp>
 #include <Ancl/CodeGen/MachineIR/MBasicBlock.hpp>
@@ -140,28 +140,29 @@ public:
         return m_Operands.size();
     }
 
-    MOperand& GetOperand(size_t index) {
-        // TODO: fix reference invalidation
-        return m_Operands.at(index);
+    using TOperandIt = std::list<MOperand>::iterator;
+
+    TOperandIt GetOperand(size_t index) {
+        return std::next(m_Operands.begin(), index);
     }
 
     bool IsDefinition() const {
         return !IsReturn() && !IsJump() && !IsBranch() && !IsStore(); 
     }
 
-    MOperand& GetDefinition() {
+    TOperandIt GetDefinition() {
         assert(IsDefinition());
         return GetOperand(0);
     }
 
-    MOperand& GetUse(size_t index) {
+    TOperandIt GetUse(size_t index) {
         if (IsDefinition()) {
             ++index;
         }
         return GetOperand(index);
     }
 
-    std::vector<MOperand>& GetOperands() {
+    std::list<MOperand>& GetOperands() {
         return m_Operands;
     }
 
@@ -181,7 +182,8 @@ private:
     OpType m_OpType = OpType::kNone;
     CompareKind m_CompareKind = CompareKind::kNone;
 
-    std::vector<MOperand> m_Operands;
+    // TODO: Use something with random-access and handle iterator/pointer invalidation
+    std::list<MOperand> m_Operands;
 
     uint m_TargetInstructionCode = 0;
 

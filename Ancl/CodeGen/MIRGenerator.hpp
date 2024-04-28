@@ -67,7 +67,7 @@ private:
         // m_VRegToInstrDef[vreg] = mirBasicBlock->AddInstruction(globalAddressInstr);
         mirBasicBlock->AddInstruction(globalAddressInstr);
 
-        return globalAddressInstr.GetDefinition();
+        return *globalAddressInstr.GetDefinition();
     }
 
     MOperand genMVRegisterFromIRConstant(ir::Value* irConstant) {
@@ -145,7 +145,7 @@ private:
         // m_VRegToInstrDef[vreg] = mirBasicBlock->AddInstruction(stackAddress);
         mirBasicBlock->AddInstruction(stackAddress);
 
-        return stackAddress.GetDefinition();
+        return *stackAddress.GetDefinition();
     }
 
     MOperand genMVRegisterFromIRValue(ir::Value* irValue, MBasicBlock* mirBasicBlock) {
