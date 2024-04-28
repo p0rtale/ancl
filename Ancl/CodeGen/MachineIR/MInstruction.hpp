@@ -165,6 +165,18 @@ public:
         return m_Operands;
     }
 
+    void SetTargetInstruction(uint code) {
+        m_TargetInstructionCode = code;
+    }
+
+    bool HasTargetInstruction() const {
+        return m_TargetInstructionCode;
+    }
+
+    uint GetTargetInstrCode() const {
+        return m_TargetInstructionCode;
+    }
+
 private:
     OpType m_OpType = OpType::kNone;
     CompareKind m_CompareKind = CompareKind::kNone;
