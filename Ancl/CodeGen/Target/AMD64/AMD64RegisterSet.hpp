@@ -2,6 +2,8 @@
 
 #include <array>
 #include <Ancl/CodeGen/Target/Base/RegisterSet.hpp>
+#include <Ancl/CodeGen/Target/AMD64/AMD64InstructionSet.hpp>
+
 
 namespace target::amd64 {
 
@@ -14,12 +16,6 @@ public:
 #include <Ancl/CodeGen/Target/AMD64/AMD64RegisterSet.inc>
 
         REG_NUMBER_END,
-    };
-
-    enum RegClass {
-        INVALID = 0,
-        GR, GR8, GR16, GR32, GR64,
-        FR,
     };
 
     using TRegArray = std::array<Register, REG_NUMBER_END>;
@@ -61,27 +57,27 @@ public:
         return m_Registers[RSP];
     }
 
-    RegClass GetRegisterClass(Register reg) {
+    uint GetRegisterClass(Register reg) {
         uint regNumber = reg.GetNumber();
 
         if (regNumber >= AL && regNumber <= R15B) {
-            return RegClass::GR8;
+            return GR8;
         }
 
         if (regNumber >= AX && regNumber <= R15W) {
-            return RegClass::GR16;
+            return GR16;
         }
 
         if (regNumber >= EAX && regNumber <= R15D) {
-            return RegClass::GR32;
+            return GR32;
         }
  
         if (regNumber >= RAX && regNumber <= RIP) {
-            return RegClass::GR64;
+            return GR64;
         }
 
         if (regNumber >= XMM0 && regNumber <= XMM15) {
-            return RegClass::FR;
+            return FR;
         }
     }
 

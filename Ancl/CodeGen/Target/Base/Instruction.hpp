@@ -3,26 +3,19 @@
 #include <string>
 #include <vector>
 
-#include <Ancl/CodeGen/MachineIR/MInstruction.hpp>
-
 
 namespace target {
 
 using TInstrCode = uint;
-using TOperandClass = uint;
+using TOperandClass = std::vector<uint>;
 
 class TargetInstruction {
 public:
-    TargetInstruction(gen::MInstruction::OpType mInstrType, 
-                      TInstrCode instrCode,
+    TargetInstruction(TInstrCode instrCode,
                       std::vector<TOperandClass> operandClasses,
-                      const std::string& asmTemplate)
-        : m_MInstrType(mInstrType), m_InstrCode(instrCode),
-          m_OperandClasses(operandClasses), m_AsmTemplate(asmTemplate) {}
-
-    gen::MInstruction::OpType GetMInstructionType() const {
-        return m_MInstrType;
-    }
+                      const std::string& asmName)
+        : m_InstrCode(instrCode),
+          m_OperandClasses(operandClasses), m_AsmName(asmName) {}
 
     TInstrCode GetInstructionCode() const {
         return m_InstrCode;
@@ -36,17 +29,16 @@ public:
         return m_OperandClasses.at(idx);
     }
 
-    std::string GetAsmTemplate() const {
-        return m_AsmTemplate;
+    std::string GetAsmName() const {
+        return m_AsmName;
     }
 
 private:
-    gen::MInstruction::OpType m_MInstrType;
     TInstrCode m_InstrCode;
 
     std::vector<TOperandClass> m_OperandClasses;
 
-    std::string m_AsmTemplate;
+    std::string m_AsmName;
 };
 
 }  // namespace target
