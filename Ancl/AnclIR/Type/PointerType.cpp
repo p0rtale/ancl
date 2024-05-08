@@ -7,7 +7,7 @@ PointerType::PointerType(IRProgram& program, Type* subType)
     : Type(program), m_SubType(subType) {}
 
 PointerType* PointerType::Create(Type* subType) {
-    auto program = subType->GetProgram();
+    auto& program = subType->GetProgram();
     return program.CreateType<PointerType>(program, subType);
 }
 

@@ -11,7 +11,7 @@ FunctionType::FunctionType(Type* retType, const std::vector<Type*>& paramTypes,
 
 FunctionType* FunctionType::Create(Type* retType, const std::vector<Type*>& paramTypes,
                                    bool isVariadic) {
-    auto program = retType->GetProgram();
+    auto& program = retType->GetProgram();
     return program.CreateType<FunctionType>(retType, paramTypes, isVariadic);
 }
 

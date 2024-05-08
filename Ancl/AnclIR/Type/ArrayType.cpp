@@ -8,7 +8,7 @@ ArrayType::ArrayType(Type* subType, size_t size)
       m_SubType(subType), m_Size(size) {}
 
 ArrayType* ArrayType::Create(Type* subType, size_t size) {
-    auto program = subType->GetProgram();
+    auto& program = subType->GetProgram();
     return program.CreateType<ArrayType>(subType, size);
 }
 
