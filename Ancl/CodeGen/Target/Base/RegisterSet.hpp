@@ -2,7 +2,7 @@
 
 #include <Ancl/CodeGen/Target/Base/Register.hpp>
 
-namespace target {
+namespace gen::target {
 
 class RegisterSet {
 public:

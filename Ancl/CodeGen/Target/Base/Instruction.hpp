@@ -4,7 +4,7 @@
 #include <vector>
 
 
-namespace target {
+namespace gen::target {
 
 using TInstrCode = uint;
 using TOperandClass = std::vector<uint>;

@@ -5,7 +5,7 @@
 #include <Ancl/CodeGen/Target/Base/Instruction.hpp>
 
 
-namespace target {
+namespace gen::target {
 
 class InstructionSet {
 public:

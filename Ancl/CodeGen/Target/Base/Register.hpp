@@ -4,7 +4,7 @@
 #include <vector>
 
 
-namespace target {
+namespace gen::target {
 
 class Register {
 public:

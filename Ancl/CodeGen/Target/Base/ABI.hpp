@@ -5,7 +5,7 @@
 
 #include <Ancl/CodeGen/Target/Base/Register.hpp>
 
-namespace target {
+namespace gen::target {
 
 class TargetABI {
 public:

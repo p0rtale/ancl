@@ -5,7 +5,7 @@
 #include <Ancl/CodeGen/Target/Base/RegisterSet.hpp>
 
 
-namespace target {
+namespace gen::target {
 
 class TargetMachine {
 public:
