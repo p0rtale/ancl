@@ -39,7 +39,7 @@ private:
         }
     }
 
-public:
+private:
     MIRProgram* m_MIRProgram;
     target::TargetMachine* m_TargetMachine;
 };
