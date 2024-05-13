@@ -5,7 +5,7 @@
 #include <Ancl/CodeGen/Target/AMD64/AMD64InstructionSet.hpp>
 
 
-namespace target::amd64 {
+namespace gen::target::amd64 {
 
 class AMD64RegisterSet: public RegisterSet {
 public:

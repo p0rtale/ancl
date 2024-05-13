@@ -6,7 +6,7 @@
 #include <Ancl/CodeGen/Target/AMD64/AMD64RegisterSet.hpp>
 
 
-namespace target::amd64 {
+namespace gen::target::amd64 {
 
 enum OpClass: uint {
     INVALID_CLASS = 0,
@@ -26,7 +26,7 @@ public:
 
         // felixcloutier.com/x86/imul
         // TODO: IMUL R/M with implicit AX register?
-        IMUL_RR, IMUL_RM, IMUL_RI, IMUL_RMI,
+        IMUL_RR, IMUL_RM, IMUL_RRI, IMUL_RMI,
 
         // felixcloutier.com/x86/mulss
         // felixcloutier.com/x86/mulsd
@@ -83,6 +83,9 @@ public:
         // felixcloutier.com/x86/movzx
         // TODO: from 8->64 to 8->32 
         MOVZX_RR, MOVZX_RM,
+
+        // felixcloutier.com/x86/cwd:cdq:cqo (doubles the size of EAX/RAX)
+        CDQ, CQO,
 
         // felixcloutier.com/x86/movsx:movsxd
         // TODO: MOVSXD for 32->64
@@ -155,9 +158,8 @@ private:
         auto memOp = TOperandClass{/*BaseReg=*/GR, /*ScaleImm=*/IMM, /*IndexReg=*/GR, /*DispImm=*/IMM};
 
         auto instructions = std::vector<TargetInstruction>{
-            {IMUL_RR,  {grOp, grOp},  "imul"}, {IMUL_RM,  {grOp, memOp}, "imul"},
-            {IMUL_RI,  {grOp, immOp}, "imul"},
-            // {IMUL_RMI, {grOp, memOp, immOp},  "imul"},
+            {IMUL_RR,  {grOp, grOp}, "imul"}, {IMUL_RM, {grOp, memOp}, "imul"},
+            {IMUL_RRI, {grOp, grOp, immOp}, "imul"}, {IMUL_RMI, {grOp, memOp, immOp}, "imul"},
 
             {MULSS_RR,  {grOp, grOp},  "mulss"}, {MULSS_RM,  {grOp, memOp}, "mulss"},
             {MULSD_RR,  {grOp, grOp},  "mulsd"}, {MULSD_RM,  {grOp, memOp}, "mulsd"},
@@ -214,6 +216,8 @@ private:
 
             {MOVZX_RR, {grOp, grOp},  "movz"}, {MOVZX_RM, {grOp, memOp}, "movz"},
             {MOVSX_RR, {grOp, grOp},  "movs"}, {MOVSX_RM, {grOp, memOp}, "movs"},
+
+            {CDQ, {}, "cdq"}, {CQO, {}, "cqo"},
 
             {CVTSI2SS_RR, {grOp, grOp},  "cvtsi2ss"}, {CVTSI2SS_RM, {grOp, memOp}, "cvtsi2ss"},
             {CVTSI2SD_RR, {grOp, grOp},  "cvtsi2sd"}, {CVTSI2SD_RM, {grOp, memOp}, "cvtsi2sd"},

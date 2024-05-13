@@ -6,7 +6,7 @@
 #include <Ancl/CodeGen/Target/AMD64/AMD64RegisterSet.hpp>
 
 
-namespace target::amd64 {
+namespace gen::target::amd64 {
 
 // https://uclibc.org/docs/psABI-x86_64.pdf
 
