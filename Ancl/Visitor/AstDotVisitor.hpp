@@ -27,7 +27,8 @@ public:
     void Visit(EnumConstDeclaration& enumConstDecl) override {
         printNode("enumconst_declaration",
                   std::format("EnumConstDecl [\\\"{}\\\"]",
-                              enumConstDecl.GetName()));
+                              enumConstDecl.GetName()),
+                  enumConstDecl.GetLocation().ToString());
 
         acceptNode(enumConstDecl.GetInit(), "Init");
     }
@@ -35,7 +36,8 @@ public:
     void Visit(EnumDeclaration& enumDecl) override {
         printNode("enum_declaration",
                   std::format("EnumDecl [\\\"{}\\\"]",
-                              enumDecl.GetName()));
+                              enumDecl.GetName()),
+                  enumDecl.GetLocation().ToString());
 
         acceptNodeList(enumDecl.GetEnumerators(), "Enumerator");
     }
@@ -43,7 +45,8 @@ public:
     void Visit(FieldDeclaration& fieldDecl) override {
         printNode("field_declaration",
                   std::format("FieldDecl [\\\"{}\\\"]",
-                              fieldDecl.GetName()));
+                              fieldDecl.GetName()),
+                  fieldDecl.GetLocation().ToString());
 
         acceptNode(fieldDecl.GetType(), "Type");
     }
@@ -71,7 +74,8 @@ public:
 
         printNode("function_declaration",
                   std::format("FunctionDecl [\\\"{}\\\"{}]",
-                              funcDecl.GetName(), traitsStr));
+                              funcDecl.GetName(), traitsStr),
+                  funcDecl.GetLocation().ToString());
     
         auto body = funcDecl.GetBody();
         if (body) {
@@ -85,7 +89,8 @@ public:
     void Visit(LabelDeclaration& labelDecl) override {
         printNode("label_declaration",
                   std::format("LabelDecl [\\\"{}\\\"]",
-                              labelDecl.GetName()));
+                              labelDecl.GetName()),
+                  labelDecl.GetLocation().ToString());
 
         acceptNode(labelDecl.GetStatement(), "Statement");
     }
@@ -97,7 +102,8 @@ public:
         }
         printNode("record_declaration",
                   std::format("RecordDecl [\\\"{}\\\"{}]",
-                              recordDecl.GetName(), traitsStr));
+                              recordDecl.GetName(), traitsStr),
+                  recordDecl.GetLocation().ToString());
 
         acceptNodeList(recordDecl.GetInternalDecls(), "InternalDecl");
     }
@@ -133,7 +139,8 @@ public:
     void Visit(TypedefDeclaration& typedefDecl) override {
         printNode("typedef_declaration",
                   std::format("TypedefDecl [\\\"{}\\\"]",
-                              typedefDecl.GetName()));
+                              typedefDecl.GetName()),
+                  typedefDecl.GetLocation().ToString());
 
         acceptNode(typedefDecl.GetType(), "Type");
     }
@@ -142,7 +149,8 @@ public:
         // (Base class)
         printNode("value_declaration",
                   std::format("ValueDecl [\\\"{}\\\"]",
-                              valueDecl.GetName()));
+                              valueDecl.GetName()),
+                  valueDecl.GetLocation().ToString());
     }
 
     void Visit(VariableDeclaration& varDecl) override {
@@ -165,7 +173,8 @@ public:
 
         printNode("variable_declaration",
                   std::format("VariableDecl [\\\"{}\\\"{}]",
-                              varDecl.GetName(), traitsStr));
+                              varDecl.GetName(), traitsStr),
+                  varDecl.GetLocation().ToString());
 
         acceptNode(varDecl.GetType(), "Type");
 
@@ -187,39 +196,45 @@ public:
     }
 
     void Visit(CaseStatement& caseStmt) override {
-        printNode("case_statement", "CaseStmt");
+        printNode("case_statement", "CaseStmt",
+                  caseStmt.GetLocation().ToString());
 
         acceptNode(caseStmt.GetExpression(), "ConstExpr");
         acceptNode(caseStmt.GetBody(), "Body");
     }
 
     void Visit(CompoundStatement& compoundStmt) override {
-        printNode("compound_statement", "CompoundStmt");
+        printNode("compound_statement", "CompoundStmt",
+                  compoundStmt.GetLocation().ToString());
 
         acceptNodeList(compoundStmt.GetBody(), "Stmt");
     }
 
     void Visit(DeclStatement& declStmt) override {
-        printNode("decl_statement", "DeclStmt");
+        printNode("decl_statement", "DeclStmt",
+                  declStmt.GetLocation().ToString());
 
         acceptNodeList(declStmt.GetDeclarations(), "Decl");
     }
 
     void Visit(DefaultStatement& defaultStmt) override {
-        printNode("default_statement", "DefaultStmt");
+        printNode("default_statement", "DefaultStmt",
+                  defaultStmt.GetLocation().ToString());
 
         acceptNode(defaultStmt.GetBody(), "Body");
     }
 
     void Visit(DoStatement& doStmt) override {
-        printNode("do_statement", "DoStmt");
+        printNode("do_statement", "DoStmt",
+                  doStmt.GetLocation().ToString());
 
         acceptNode(doStmt.GetCondition(), "Condition");
         acceptNode(doStmt.GetBody(), "Body");
     }
 
     void Visit(ForStatement& forStmt) override {
-        printNode("for_statement", "ForStmt");
+        printNode("for_statement", "ForStmt",
+                  forStmt.GetLocation().ToString());
 
         auto init = forStmt.GetInit();
         if (init) {
@@ -240,13 +255,15 @@ public:
     }
 
     void Visit(GotoStatement& gotoStmt) override {
-        printNode("goto_statement", "GotoStmt");
+        printNode("goto_statement", "GotoStmt",
+                  gotoStmt.GetLocation().ToString());
 
         acceptNode(gotoStmt.GetLabel(), "Label");
     }
 
     void Visit(IfStatement& ifStmt) override {
-        printNode("if_statement", "IfStmt");
+        printNode("if_statement", "IfStmt",
+                  ifStmt.GetLocation().ToString());
 
         acceptNode(ifStmt.GetCondition(), "Condition");
         acceptNode(ifStmt.GetThen(), "Then");
@@ -254,7 +271,8 @@ public:
     }
 
     void Visit(LabelStatement& labelStmt) override {
-        printNode("label_statement", "LabelStmt");
+        printNode("label_statement", "LabelStmt",
+                  labelStmt.GetLocation().ToString());
 
         acceptNode(labelStmt.GetLabel(), "Label");
         acceptNode(labelStmt.GetBody(), "Body");
@@ -263,11 +281,13 @@ public:
     void Visit(LoopJumpStatement& loopJmpStmt) override {
         auto typeStr = loopJmpStmt.GetTypeStr();
         printNode("loopjump_statement",
-                  std::format("LoopJumpStmt [{}]", typeStr));
+                  std::format("LoopJumpStmt [{}]", typeStr),
+                  loopJmpStmt.GetLocation().ToString());
     }
 
     void Visit(ReturnStatement& returnStmt) override {
-        printNode("return_statement", "ReturnStmt");
+        printNode("return_statement", "ReturnStmt",
+                  returnStmt.GetLocation().ToString());
 
         acceptNode(returnStmt.GetReturnExpression(), "ReturnExpr");
     }
@@ -277,7 +297,8 @@ public:
     }
 
     void Visit(SwitchStatement& switchStmt) override {
-        printNode("switch_statement", "SwitchStmt");
+        printNode("switch_statement", "SwitchStmt",
+                  switchStmt.GetLocation().ToString());
 
         acceptNode(switchStmt.GetExpression(), "Expr");
         acceptNode(switchStmt.GetBody(), "Body");
@@ -288,7 +309,8 @@ public:
     }
 
     void Visit(WhileStatement& whileStmt) override {
-        printNode("while_statement", "WhileStmt");
+        printNode("while_statement", "WhileStmt",
+                  whileStmt.GetLocation().ToString());
 
         acceptNode(whileStmt.GetCondition(), "Condition");
         acceptNode(whileStmt.GetBody(), "Body");
@@ -308,21 +330,24 @@ public:
     void Visit(BinaryExpression& binaryExpr) override {
         auto opTypeStr = binaryExpr.GetOpTypeStr();
         printNode("binary_expression",
-                  std::format("BinaryExpr [\\{}]", opTypeStr));
+                  std::format("BinaryExpr [\\{}]", opTypeStr),
+                  binaryExpr.GetLocation().ToString());
 
         acceptNode(binaryExpr.GetLeftOperand(), "LeftOperand");
         acceptNode(binaryExpr.GetRightOperand(), "RightOperand");
     }
 
     void Visit(CallExpression& callExpr) override {
-        printNode("call_expression", "CallExpr");
+        printNode("call_expression", "CallExpr",
+                  callExpr.GetLocation().ToString());
 
         acceptNode(callExpr.GetCallee(), "Callee");
         acceptNodeList(callExpr.GetArguments(), "Arg");
     }
 
     void Visit(CastExpression& castExpr) override {
-        printNode("cast_expression", "CastExpr");
+        printNode("cast_expression", "CastExpr",
+                  castExpr.GetLocation().ToString());
 
         acceptNode(castExpr.GetSubExpression(), "SubExpr");
         acceptNode(castExpr.GetToType(), "ToType");
@@ -331,11 +356,13 @@ public:
     void Visit(CharExpression& charExpr) override {
         printNode("char_expression",
                   std::format("CharExpression ['{}']",
-                              charExpr.GetCharValue()));
+                              charExpr.GetCharValue()),
+                  charExpr.GetLocation().ToString());
     }
 
     void Visit(ConditionalExpression& condExpr) override {
-        printNode("conditional_expression", "CondExpr");
+        printNode("conditional_expression", "CondExpr",
+                  condExpr.GetLocation().ToString());
     
         acceptNode(condExpr.GetCondition(), "Condition");
         acceptNode(condExpr.GetTrueExpression(), "TrueExpr");
@@ -343,19 +370,22 @@ public:
     }
 
     void Visit(ConstExpression& constExpr) override {
-        printNode("const_expression", "ConstExpr");
+        printNode("const_expression", "ConstExpr",
+                  constExpr.GetLocation().ToString());
 
         acceptNode(constExpr.GetExpression(), "Expr");
     }
 
     void Visit(DeclRefExpression& declrefExpr) override {
-        printNode("declref_expression", "DeclRefExpr");
+        printNode("declref_expression", "DeclRefExpr",
+                  declrefExpr.GetLocation().ToString());
 
         acceptNode(declrefExpr.GetDeclaration(), "Decl");
     }
 
     void Visit(ExpressionList& exprList) override {
-        printNode("expression_list", "ExprList");
+        printNode("expression_list", "ExprList",
+                  exprList.GetLocation().ToString());
 
         acceptNodeList(exprList.GetExpressions(), "Expr");
     }
@@ -364,11 +394,13 @@ public:
         auto floatValue = floatExpr.GetFloatValue();
         printNode("float_expression",
                   std::format("FloatExpr [{}]",
-                              floatValue.GetValue()));
+                              floatValue.GetValue()),
+                  floatExpr.GetLocation().ToString());
     }
 
     void Visit(InitializerList& initList) override {
-        printNode("initializer_list", "InitList");
+        printNode("initializer_list", "InitList",
+                  initList.GetLocation().ToString());
 
         acceptNodeList(initList.GetInits(), "Init");
     }
@@ -381,11 +413,13 @@ public:
         }
         printNode("int_expression",
                   std::format("IntExpr [{},{}]",
-                              intValue.GetValue(), sign)); 
+                              intValue.GetValue(), sign),
+                  intExpr.GetLocation().ToString()); 
     }
 
     void Visit(SizeofTypeExpression& sizeofTypeExpr) override {
-        printNode("sizeoftype_expression", "SizeofTypeExpr");
+        printNode("sizeoftype_expression", "SizeofTypeExpr",
+                  sizeofTypeExpr.GetLocation().ToString());
 
         acceptNode(sizeofTypeExpr.GetType(), "Type");
     }
@@ -393,13 +427,15 @@ public:
     void Visit(StringExpression& stringExpr) override {
         printNode("string_expression",
                   std::format("StringExpr [\\\"{}\\\"]",
-                              stringExpr.GetStringValue()));
+                              stringExpr.GetStringValue()),
+                  stringExpr.GetLocation().ToString());
     }
 
     void Visit(UnaryExpression& unaryExpr) override {
         auto opTypeStr = unaryExpr.GetOpTypeStr();
         printNode("unary_expression",
-                  std::format("UnaryExpr [{}]", opTypeStr));
+                  std::format("UnaryExpr [{}]", opTypeStr),
+                  unaryExpr.GetLocation().ToString());
 
         acceptNode(unaryExpr.GetOperand(), "Operand");
     }
@@ -526,13 +562,18 @@ private:
         m_OutputStream << "fontcolor=\"#22bd74\",\n";
     }
 
-    void printNode(const std::string& ident, const std::string& label) {
+    void printNode(const std::string& ident, const std::string& label, const std::string& location = "") {
         m_CurrentNodeIdent = getId(ident);
+
+        std::string locLabel = label;
+        if (!location.empty()) {
+            locLabel = std::format("{} \\<{}\\>", label, location);
+        }
 
         printWithSpaces(std::format("{} [\n", m_CurrentNodeIdent));
 
         spaceLevelUp();
-        printNodeAttributes(label);
+        printNodeAttributes(locLabel);
         spaceLevelDown();
 
         printWithSpaces("];\n");

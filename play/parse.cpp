@@ -25,8 +25,13 @@ int main(int argc, const char** argv) {
     CLexer lexer(&input);
     CommonTokenStream tokens(&lexer);
 
+    std::vector<Token*> lineTokens;
+
     tokens.fill();
-    for (auto token : tokens.getTokens()) {
+    for (Token* token : tokens.getTokens()) {
+        if (token->getChannel() == CLexer::LINE) {
+            lineTokens.push_back(token);
+        }
         std::cout << token->toString() << std::endl;
     }
 
@@ -37,14 +42,15 @@ int main(int argc, const char** argv) {
 
     ASTProgram astProgram;
     BuildAstVisitor buildVisitor(astProgram);
+    buildVisitor.setLineTokens(lineTokens);
     buildVisitor.visitTranslationUnit(tree);
 
-    // AstDotVisitor dotVisitor("astdot.txt");
-    // dotVisitor.Visit(*astProgram.GetTranslationUnit());
+    AstDotVisitor dotVisitor("ast.dot");
+    dotVisitor.Visit(*astProgram.GetTranslationUnit());
 
-    IRProgram irProgram;
-    IRGenAstVisitor irGenVisitor(irProgram);
-    irGenVisitor.Run(astProgram);
+    // IRProgram irProgram;
+    // IRGenAstVisitor irGenVisitor(irProgram);
+    // irGenVisitor.Run(astProgram);
 
     return EXIT_SUCCESS;
 }

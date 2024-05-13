@@ -1,5 +1,9 @@
 lexer grammar CLexer;
 
+channels {
+    LINE
+}
+
 Auto
     : 'auto'
     ;
@@ -519,6 +523,26 @@ fragment SChar
 
 MultiLineMacro
     : '#' (~[\n]*? '\\' '\r'? '\n')+ ~ [\n]+ -> channel (HIDDEN)
+    ;
+
+LineDirective
+    : '#line ' DecimalConstant ' ' '"' SCharSequence? '"' {{
+        std::istringstream stream(getText());
+        std::string str;
+        getline(stream, str, ' ');  // directive
+        getline(stream, str, ' ');  // number
+
+        char* endPtr = nullptr;
+        const char* integerPtr = str.c_str();
+        long line = std::strtol(integerPtr, &endPtr, 0);
+
+        getline(stream, str, ' ');  // filename
+        std::string filename = str.substr(1, str.size() - 2);
+
+        setText(filename);
+
+        setLine(line - 1);
+    }} -> channel(LINE)
     ;
 
 Directive

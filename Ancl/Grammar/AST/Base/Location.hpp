@@ -20,7 +20,7 @@ public:
         return m_End;
     }
 
-    std::string ToStr() const {
+    std::string ToString() const {
         std::string filename = m_Begin.GetFileName();
         return std::format("{}:{}.{}-{}.{}",
                            std::move(filename),

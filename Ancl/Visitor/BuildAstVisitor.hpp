@@ -17,6 +17,10 @@ class BuildAstVisitor: public CParserBaseVisitor {
 public:
     BuildAstVisitor(ASTProgram& program): m_Program(program) {}
 
+    void setLineTokens(const std::vector<antlr4::Token*>& lineTokens) {
+        m_LineTokens = lineTokens;
+    }
+
 public:
     std::any visitPrimaryExpression(CParser::PrimaryExpressionContext *ctx) override {
         if (ctx->Identifier()) {
@@ -1871,6 +1875,7 @@ public:
         }
 
         auto initList = m_Program.CreateAstNode<InitializerList>(std::move(inits));
+        initList->SetLocation(createASTLocation(ctx));
         return initList;
     }
 
@@ -1891,6 +1896,8 @@ public:
                 statement = std::any_cast<Statement*>(statementAny);
             }
             labelDecl->SetStatement(statement);
+            // TODO: Create label identifier location
+            labelDecl->SetLocation(createASTLocation(ctx));
             
             auto labelStmt = m_Program.CreateAstNode<LabelStatement>(labelDecl, statement);
             labelStmt->SetLocation(createASTLocation(ctx));
@@ -2066,6 +2073,7 @@ public:
             }
             decls.push_back(declarationInfo.Decl);
             initStatement = m_Program.CreateAstNode<DeclStatement>(decls);
+            initStatement->SetLocation(createASTLocation(ctx->decl));
         } else if (ctx->expr) {
             auto exprAny = visitExpression(ctx->expr);
             initStatement = std::any_cast<Expression*>(exprAny);
@@ -2214,19 +2222,43 @@ private:
         size_t startColumn = startToken->getCharPositionInLine();
 
         auto stopToken = ctx->getStop();
-        size_t stopLine = startToken->getLine();
-        size_t stopColumn = startToken->getCharPositionInLine();
+        size_t stopLine = stopToken->getLine();
+        size_t stopColumn = stopToken->getCharPositionInLine();
 
-        auto inputStream = startToken->getInputStream();
-        auto sourceName = inputStream->getSourceName();
-
+        auto sourceName = getLocationFileName(startToken->getTokenIndex());
         auto start = Position(sourceName, startLine, startColumn);
-        auto stop = Position(std::move(sourceName), stopLine, stopColumn);
+        auto stop = Position(sourceName, stopLine, stopColumn);
         return Location(std::move(start), std::move(stop));
+    }
+
+    std::string getLocationFileName(size_t tokenIndex) {
+        if (m_LineTokens.empty()) {
+            return "unknown";
+        }
+
+        antlr4::Token* lineToken = m_LineTokens[m_LineTokenIndex];
+        size_t lineIndex = lineToken->getTokenIndex();
+
+        if (m_LineTokenIndex == m_LineTokens.size() - 1) {
+            return lineToken->getText();
+        }
+
+        antlr4::Token* nextLineToken = m_LineTokens[m_LineTokenIndex + 1];
+        size_t nextLineIndex = nextLineToken->getTokenIndex();
+
+        if (tokenIndex < nextLineIndex) {
+            return lineToken->getText();
+        }
+
+        ++m_LineTokenIndex;
+        return nextLineToken->getText();
     }
 
 private:
     ASTProgram& m_Program;
+
+    std::vector<antlr4::Token*> m_LineTokens;
+    size_t m_LineTokenIndex = 0;
 };
 
 };
