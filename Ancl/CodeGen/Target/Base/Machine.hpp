@@ -3,6 +3,8 @@
 #include <Ancl/Base.hpp>
 #include <Ancl/CodeGen/Target/Base/ABI.hpp>
 #include <Ancl/CodeGen/Target/Base/RegisterSet.hpp>
+#include <Ancl/CodeGen/Target/Base/InstructionSet.hpp>
+#include <Ancl/CodeGen/Selection/SelectionTree.hpp>
 
 
 namespace gen::target {
@@ -12,8 +14,14 @@ public:
     TargetMachine() = default;
     virtual ~TargetMachine() = default;
 
+    virtual void Select(SelectionTree& tree) = 0;
+
     RegisterSet* GetRegisterSet() {
         return m_RegisterSet.get();
+    }
+
+    InstructionSet* GetInstructionSet() {
+        return m_InstructionSet.get();
     }
 
     TargetABI* GetABI() {
@@ -24,6 +32,7 @@ public:
 
 protected:
     TScopePtr<RegisterSet> m_RegisterSet = nullptr;
+    TScopePtr<InstructionSet> m_InstructionSet = nullptr;
     TScopePtr<TargetABI> m_ABI = nullptr;
 };
 
