@@ -19,7 +19,7 @@ public:
 
     std::vector<Type*> GetParamTypes() const;
 
-    size_t GetParamNumber() const;
+    std::size_t GetParamNumber() const;
 
     bool IsVariadic() const;
 

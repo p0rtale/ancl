@@ -18,9 +18,13 @@ public:
     };
 
 public:
-    SwitchInstruction(Value* value, BasicBlock* basicBlock)
-        : TerminatorInstruction(VoidType::Create(value->GetProgram()), basicBlock),
-          m_Value(value) {}
+    SwitchInstruction(Value* value, BasicBlock* defaultBlock, BasicBlock* basicBlock)
+            : TerminatorInstruction(VoidType::Create(value->GetProgram()), basicBlock),
+              m_Value(value), m_DefaultBB(defaultBlock) {
+        // TODO: Cases uses?
+        AddOperand(value);
+        AddOperand(defaultBlock);
+    }
 
     Value* GetValue() const {
         return m_Value;

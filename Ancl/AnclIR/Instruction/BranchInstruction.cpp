@@ -6,12 +6,15 @@ using namespace ir;
 
 BranchInstruction::BranchInstruction(Value* condition, BasicBlock* trueBB,
                                      BasicBlock* falseBB, BasicBlock* basicBlock)
-    : TerminatorInstruction(VoidType::Create(trueBB->GetProgram()), basicBlock),
-      m_Condition(condition), m_TrueBB(trueBB), m_FalseBB(falseBB) {}
+        : TerminatorInstruction(VoidType::Create(trueBB->GetProgram()), basicBlock),
+          m_Condition(condition), m_TrueBB(trueBB), m_FalseBB(falseBB) {
+    // TODO: Blocks uses?
+    AddOperand(condition);
+}
 
 BranchInstruction::BranchInstruction(BasicBlock* trueBB, BasicBlock* basicBlock)
-    : TerminatorInstruction(VoidType::Create(trueBB->GetProgram()), basicBlock),
-      m_TrueBB(trueBB) {}
+        : TerminatorInstruction(VoidType::Create(trueBB->GetProgram()), basicBlock),
+          m_TrueBB(trueBB) {}
 
 bool BranchInstruction::IsConditional() const {
     return m_Condition;

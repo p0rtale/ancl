@@ -75,6 +75,10 @@ public:
         return m_OpType == OpType::kBranch;
     }
 
+    bool IsTerminator() const {
+        return IsJump() || IsBranch() || IsReturn();
+    }
+
     bool IsStore() const {
         return m_OpType == OpType::kStore;
     }
@@ -140,6 +144,14 @@ public:
         return m_Operands.size();
     }
 
+    size_t GetUsesNumber() const {
+        size_t opNumber = GetOperandsNumber();
+        if (!IsDefinition()) {
+            return opNumber;
+        }
+        return opNumber - 1;
+    }
+
     using TOperandIt = std::list<MOperand>::iterator;
 
     TOperandIt GetOperand(size_t index) {
@@ -174,7 +186,7 @@ public:
         return m_Operands;
     }
 
-    void SetTargetInstruction(uint code) {
+    void SetTargetInstructionCode(uint code) {
         m_TargetInstructionCode = code;
     }
 
@@ -182,7 +194,7 @@ public:
         return m_TargetInstructionCode;
     }
 
-    uint GetTargetInstrCode() const {
+    uint GetTargetInstructionCode() const {
         return m_TargetInstructionCode;
     }
 

@@ -16,6 +16,8 @@ public:
             : Instruction(VoidType::Create(fromValue->GetProgram()), basicBlock),
               m_FromOperand(fromValue), m_ToOperand(toValue) {
         SetName(name);
+        AddOperand(fromValue);
+        AddOperand(toValue);
     }
 
     Value* GetFromOperand() const {
@@ -26,7 +28,17 @@ public:
         return m_ToOperand;
     }
 
+    void SetVolatile() {
+        m_IsVolatile = true;
+    }
+
+    bool IsVolatile() const {
+        return m_IsVolatile;
+    }
+
 private:
+    bool m_IsVolatile = false;
+
     Value* m_FromOperand;
     Value* m_ToOperand;
 };

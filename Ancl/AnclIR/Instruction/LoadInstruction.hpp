@@ -16,13 +16,24 @@ public:
             : Instruction(type, basicBlock),
               m_PtrOperand(pointer) {
         SetName(name);
+        AddOperand(pointer);
     }
 
     Value* GetPtrOperand() const {
         return m_PtrOperand;
     }
 
+    void SetVolatile() {
+        m_IsVolatile = true;
+    }
+
+    bool IsVolatile() const {
+        return m_IsVolatile;
+    }
+
 private:
+    bool m_IsVolatile = false;
+
     Value* m_PtrOperand;
 };
 

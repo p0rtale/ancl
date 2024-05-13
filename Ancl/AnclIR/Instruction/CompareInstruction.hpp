@@ -29,6 +29,8 @@ public:
             : Instruction(IntType::Create(left->GetProgram(), 1), basicBlock),
               m_OpType(opType), m_LeftOperand(left), m_RightOperand(right) {
         SetName(name);
+        AddOperand(left);
+        AddOperand(right);
     }
 
     Value* GetLeftOperand() const {

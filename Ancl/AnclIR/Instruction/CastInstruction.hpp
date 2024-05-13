@@ -28,6 +28,7 @@ public:
             : Instruction(toType, basicBlock), m_OpType(opType),
               m_FromOperand(fromValue) {
         SetName(name);
+        AddOperand(fromValue);
     }
 
     Value* GetFromOperand() const {

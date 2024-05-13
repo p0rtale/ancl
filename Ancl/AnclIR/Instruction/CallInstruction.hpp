@@ -20,6 +20,11 @@ public:
             : Instruction(dynamic_cast<FunctionType*>(function->GetType())->GetReturnType(), basicBlock),
               m_Callee(function), m_Arguments(arguments) {
         SetName(name);
+
+        AddOperand(function);
+        for (Value* argument : arguments) {
+            AddOperand(argument);
+        }
     }
 
     Function* GetCallee() const {

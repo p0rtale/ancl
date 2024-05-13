@@ -11,8 +11,10 @@ namespace ir {
 class ReturnInstruction: public TerminatorInstruction {
 public:
     ReturnInstruction(Value* returnValue, BasicBlock* basicBlock)
-        : TerminatorInstruction(VoidType::Create(returnValue->GetProgram()), basicBlock),
-          m_ReturnValue(returnValue) {}
+            : TerminatorInstruction(VoidType::Create(returnValue->GetProgram()), basicBlock),
+              m_ReturnValue(returnValue) {
+        AddOperand(returnValue);
+    }
 
     bool HasReturnValue() const {
         return m_ReturnValue;

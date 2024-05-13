@@ -29,6 +29,8 @@ public:
             : Instruction(left->GetType(), basicBlock), m_OpType(opType),
               m_LeftOperand(left), m_RightOperand(right) {
         SetName(name);
+        AddOperand(left);
+        AddOperand(right);
     }
 
     Value* GetLeftOperand() const {

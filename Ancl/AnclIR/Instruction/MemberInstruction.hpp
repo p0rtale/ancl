@@ -18,6 +18,8 @@ public:
             : Instruction(memberType, basicBlock),
               m_PtrOperand(ptrValue), m_Index(index) {
         SetName(name);
+        AddOperand(ptrValue);
+        AddOperand(index);
     }
 
     void SetDeref(bool deref) {
