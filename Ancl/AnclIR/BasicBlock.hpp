@@ -1,14 +1,14 @@
 #pragma once
 
-#include <string>
 #include <vector>
+#include <string>
+#include <list>
 
 #include <Ancl/AnclIR/Value.hpp>
 #include <Ancl/AnclIR/Type/LabelType.hpp>
 #include <Ancl/AnclIR/Instruction/Instruction.hpp>
 #include <Ancl/AnclIR/Instruction/TerminatorInstruction.hpp>
-#include <Ancl/AnclIR/Instruction/SwitchInstruction.hpp>
-#include <Ancl/AnclIR/Instruction/BranchInstruction.hpp>
+#include <Ancl/AnclIR/Instruction/PhiInstruction.hpp>
 
 
 namespace ir {
@@ -28,16 +28,43 @@ public:
 
     void AddInstruction(Instruction* instruction);
 
+    void AddPhiFunction(PhiInstruction* phiInstruction) {
+        m_Instructions.push_front(phiInstruction);
+    }
+
+    std::vector<PhiInstruction*> GetPhiFunctions() const {
+        std::vector<PhiInstruction*> phis;
+        for (Instruction* instruction : m_Instructions) {
+            if (auto* phiInstr = dynamic_cast<PhiInstruction*>(instruction)) {
+                phis.push_back(phiInstr);
+            }
+        }
+        return phis;
+    }
+
     TerminatorInstruction* GetTerminator() const;
 
-    std::vector<BasicBlock*> GetNextBlocks() const;
+    std::vector<BasicBlock*> GetSuccessors() const;
 
-    std::vector<Instruction*> GetInstructions() const;
+    std::list<Instruction*> GetInstructions() const;
+
+    void AddPredecessor(BasicBlock* block);
+
+    std::vector<BasicBlock*> GetPredecessors() const {
+        return m_Predecessors;
+    }
+
+    size_t GetPredecessorsNumber() const {
+        return m_Predecessors.size();
+    }
 
 private:
     Function* m_Function;
 
-    std::vector<Instruction*> m_Instructions;
+    // TODO: Generalize to the value "Use"
+    std::vector<BasicBlock*> m_Predecessors;
+
+    std::list<Instruction*> m_Instructions;
 };
 
 }  // namespace ir

@@ -1,6 +1,9 @@
 #include <Ancl/AnclIR/BasicBlock.hpp>
 #include <Ancl/AnclIR/IRProgram.hpp>
 
+#include <Ancl/AnclIR/Instruction/BranchInstruction.hpp>
+#include <Ancl/AnclIR/Instruction/SwitchInstruction.hpp>
+
 using namespace ir;
 
 
@@ -25,11 +28,10 @@ TerminatorInstruction* BasicBlock::GetTerminator() const {
     if (m_Instructions.empty()) {
         return nullptr;
     }
-    auto instruction = m_Instructions[m_Instructions.size() - 1];
-    return dynamic_cast<TerminatorInstruction*>(instruction);
+    return dynamic_cast<TerminatorInstruction*>(m_Instructions.back());
 }
 
-std::vector<BasicBlock*> BasicBlock::GetNextBlocks() const {
+std::vector<BasicBlock*> BasicBlock::GetSuccessors() const {
     auto terminator = GetTerminator();
     std::vector<BasicBlock*> nextBlocks;
     if (auto branchInstr = dynamic_cast<BranchInstruction*>(terminator)) {
@@ -47,6 +49,10 @@ std::vector<BasicBlock*> BasicBlock::GetNextBlocks() const {
     return nextBlocks;
 }
 
-std::vector<Instruction*> BasicBlock::GetInstructions() const {
+std::list<Instruction*> BasicBlock::GetInstructions() const {
     return m_Instructions;
 }  
+
+void BasicBlock::AddPredecessor(BasicBlock* block) {
+    m_Predecessors.push_back(block);
+}
