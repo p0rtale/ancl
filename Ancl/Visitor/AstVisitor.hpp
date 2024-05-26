@@ -19,6 +19,7 @@ public:
     virtual void Visit(FieldDeclaration&) = 0;
     virtual void Visit(FunctionDeclaration&) = 0;
     virtual void Visit(LabelDeclaration&) = 0;
+    virtual void Visit(ParameterDeclaration&) = 0;
     virtual void Visit(RecordDeclaration&) = 0;
     virtual void Visit(TagDeclaration&) = 0;
     virtual void Visit(TranslationUnit&) = 0;
@@ -86,7 +87,6 @@ public:
     virtual void Visit(EnumType&) = 0;
     virtual void Visit(FunctionType&) = 0;
     virtual void Visit(PointerType&) = 0;
-    virtual void Visit(QualType&) = 0;
     virtual void Visit(RecordType&) = 0;
     virtual void Visit(TagType&) = 0;
     virtual void Visit(Type&) = 0;
