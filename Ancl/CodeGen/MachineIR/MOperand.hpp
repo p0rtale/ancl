@@ -16,7 +16,7 @@ public:
 
         kImmInteger, kImmFloat,
 
-        kRegister, kParameter,
+        kRegister,
 
         kGlobalSymbol,
         kMBasicBlock,
@@ -43,16 +43,11 @@ public:
         return operand;
     }
 
-    static MOperand CreateRegister(uint regNumber, uint bytes = 8, bool isVirtual = true) {
+    static MOperand CreateRegister(uint vreg, MType type, bool isVirtual = true) {
         auto operand = MOperand{Kind::kRegister};
-        operand.SetRegister(regNumber);
-        operand.SetVirtual(isVirtual);
-        return operand;
-    }
-
-    static MOperand CreateParameter(uint vreg) {
-        auto operand = MOperand{Kind::kParameter};
         operand.SetRegister(vreg);
+        operand.SetVirtual(isVirtual);
+        operand.SetType(type);
         return operand;
     }
 
@@ -64,7 +59,7 @@ public:
 
     static MOperand CreateBasicBlock(MBasicBlock* MBB) {
         auto operand = MOperand{Kind::kMBasicBlock};
-        operand.SetMBasicBlock(MBB);
+        operand.SetBasicBlock(MBB);
         return operand;
     }
 
@@ -74,17 +69,15 @@ public:
         return operand;
     }
 
-    static MOperand CreateStackIndex(uint index, int64_t offset = 0) {
+    static MOperand CreateStackIndex(uint index) {
         auto operand = MOperand{Kind::kStackIndex};
         operand.SetIndex(index);
-        operand.SetOffset(offset);
         return operand;
     }
 
-    static MOperand CreateMemory(uint vreg, uint bytes = 8, int64_t offset = 0) {
+    static MOperand CreateMemory(uint vreg, uint bytes = 8) {
         auto operand = MOperand{Kind::kMemory};
         operand.SetRegister(vreg);
-        operand.SetOffset(offset);
         operand.SetType(MType::CreatePointer(bytes));
         return operand;
     }
@@ -110,11 +103,11 @@ public:
     }
 
     bool IsPRegister() const {
-        return m_Kind == Kind::kRegister && !m_IsVirtual;
+        return IsRegister() && !m_IsVirtual;
     }
 
     bool IsVRegister() const {
-        return m_Kind == Kind::kRegister && m_IsVirtual;
+        return IsRegister() && m_IsVirtual;
     }
 
     bool IsGlobalSymbol() const {
@@ -185,27 +178,23 @@ public:
         return GetGlobalSymbol();
     }
 
-    void SetMBasicBlock(MBasicBlock* MBB) {
+    void SetBasicBlock(MBasicBlock* MBB) {
         m_Data.MBB = MBB;
+    }
+
+    bool HasBasicBlock() {
+        return m_Data.MBB;
     }
 
     MBasicBlock* GetBasicBlock() const {
         return m_Data.MBB;
     }
 
-    void SetOffset(int64_t offset) {
-        m_Offset = offset;
-    }
-
-    int64_t GetOffset() {
-        return m_Offset;
-    }
-
-    void SetIndex(int index) {
+    void SetIndex(uint index) {
         m_Index = index;
     }
 
-    int GetIndex() const {
+    uint GetIndex() const {
         return m_Index;
     }
 
@@ -241,8 +230,7 @@ private:
     uint m_RegisterClass = 0;
 
     std::string m_GlobalSymbol;  // TODO: add to union
-    int64_t m_Offset = 0;  // TODO: add to union
-    int m_Index = 0;
+    uint m_Index = 0;
 };
 
 }  // namespace gen

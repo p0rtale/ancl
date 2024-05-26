@@ -27,6 +27,30 @@ public:
         return m_Function;
     }  
 
+    void AddSuccessor(MBasicBlock* block) {
+        m_Successors.push_back(block);
+    }
+
+    std::vector<MBasicBlock*> GetSuccessors() const {
+        return m_Successors;
+    }
+
+    void AddPredecessor(MBasicBlock* block) {
+        m_Predecessors.push_back(block);
+    }
+
+    std::vector<MBasicBlock*> GetPredecessors() const {
+        return m_Predecessors;
+    }
+
+    size_t GetPredecessorsNumber() const {
+        return m_Predecessors.size();
+    }
+
+    MBasicBlock* GetPredecessor(size_t index) const {
+        return m_Predecessors.at(index);
+    }
+
     using TInstructionIt = std::list<MInstruction>::iterator;
 
     TInstructionIt GetInstrBegin() {
@@ -39,6 +63,10 @@ public:
 
     std::list<MInstruction>& GetInstructions() {
         return m_Instructions;
+    }
+
+    void ClearInstructions() {
+        m_Instructions.clear();
     }
 
     TInstructionIt AddInstruction(MInstruction instruction) {
@@ -103,6 +131,9 @@ private:
     std::string m_Name;
 
     MFunction* m_Function = nullptr;
+
+    std::vector<MBasicBlock*> m_Successors;
+    std::vector<MBasicBlock*> m_Predecessors;
 
     std::list<MInstruction> m_Instructions;
 };

@@ -4,7 +4,7 @@
 #include <list>
 
 #include <Ancl/CodeGen/MachineIR/MOperand.hpp>
-#include <Ancl/CodeGen/MachineIR/MBasicBlock.hpp>
+#include <Ancl/CodeGen/Target/Base/Register.hpp>
 
 
 namespace gen {
@@ -17,7 +17,7 @@ public:
         kNone = 0,
         kMul, kFMul,
         kSDiv, kUDiv, kFDiv,
-        kSRem, kURem, kFRem,
+        kSRem, kURem,
         kAdd, kFAdd,
         kSub, kFSub,
         kShiftL, kLShiftR, kAShiftR,
@@ -29,16 +29,20 @@ public:
         kZExt, kSExt, kFExt,
         kFToUI, kFToSI,
         kUIToF, kSIToF,
-        kPtrToI, kIToPtr,
 
         kCall, kJump, kBranch, kRet,
 
-        kImmLoad, kMov, kFMov,
+        kMov, kFMov,
 
         kLoad, kStore,
         kStackAddress, kGlobalAddress,
+        kMemberAddress,
 
-        kSextLoad, kZextLoad,
+        kPush, kPop,
+
+        kPhi,
+        kSubregToReg,
+        kRegToSubreg,
     };
 
     enum class CompareKind {
@@ -49,14 +53,134 @@ public:
     };
 
 public:
-    MInstruction(OpType opType, MBasicBlock* MBB)
-        : m_OpType(opType), m_BasicBlock(MBB) {}
+    MInstruction() = default;
 
-    MInstruction(OpType opType, CompareKind compareKind, MBasicBlock* MBB)
-        : m_OpType(opType), m_CompareKind(compareKind), m_BasicBlock(MBB) {}
+    MInstruction(OpType opType): m_OpType(opType) {}
+
+    MInstruction(OpType opType, CompareKind compareKind)
+        : m_OpType(opType), m_CompareKind(compareKind) {}
 
     OpType GetOpType() const {
         return m_OpType;
+    }
+
+    std::string GetOpTypeString() const {
+        if (m_OpType == OpType::kCmp || m_OpType == OpType::kUCmp || m_OpType == OpType::kFCmp) {
+            std::string name = "CMP";
+            if (m_OpType == OpType::kUCmp) {
+                name = "UCMP";
+            } else if (m_OpType == OpType::kFCmp) {
+                name = "FCMP";
+            }
+
+            switch (m_CompareKind){
+                case CompareKind::kEqual:
+                    return name + "EQ";
+                case CompareKind::kNEqual:
+                    return name + "NE";
+                case CompareKind::kGreater:
+                    return name + "GT";
+                case CompareKind::kLess:
+                    return name + "LT";
+                case CompareKind::kGreaterEq:
+                    return name + "GE";
+                case CompareKind::kLessEq:
+                    return name + "LE";
+                default:
+                    return name;
+            }
+        }
+
+        switch (m_OpType) {
+            case OpType::kNone:
+                return "";
+            case OpType::kMul:
+                return "MUL";
+            case OpType::kFMul:
+                return "FMUL";
+            case OpType::kSDiv:
+                return "SDIV";
+            case OpType::kUDiv:
+                return "UDIV";
+            case OpType::kFDiv:
+                return "FDIV";
+            case OpType::kSRem:
+                return "SREM";
+            case OpType::kURem:
+                return "UREM";
+            case OpType::kAdd:
+                return "ADD";
+            case OpType::kFAdd:
+                return "FADD";
+            case OpType::kSub:
+                return "SUB";
+            case OpType::kFSub:
+                return "FSUB";
+            case OpType::kShiftL:
+                return "SHIFTL";
+            case OpType::kLShiftR:
+                return "LSHIFTR";
+            case OpType::kAShiftR:
+                return "ASHIFTR";
+            case OpType::kAnd:
+                return "AND";
+            case OpType::kXor:
+                return "XOR";
+            case OpType::kOr:
+                return "OR";
+            case OpType::kITrunc:
+                return "ITRUNC";
+            case OpType::kFTrunc:
+                return "FTRUNC";
+            case OpType::kZExt:
+                return "ZEXT";
+            case OpType::kSExt:
+                return "SEXT";
+            case OpType::kFExt:
+                return "FEXT";
+            case OpType::kFToUI:
+                return "FTOUI";
+            case OpType::kFToSI:
+                return "FTOSI";
+            case OpType::kUIToF:
+                return "UITOF";
+            case OpType::kSIToF:
+                return "SITOF";
+            case OpType::kCall:
+                return "CALL";
+            case OpType::kJump:
+                return "JUMP";
+            case OpType::kBranch:
+                return "BRANCH";
+            case OpType::kRet:
+                return "RET";
+            case OpType::kMov:
+                return "MOV";
+            case OpType::kFMov:
+                return "FMOV";
+            case OpType::kLoad:
+                return "LOAD";
+            case OpType::kStore:
+                return "STORE";
+            case OpType::kStackAddress:
+                return "STACKADDR";
+            case OpType::kGlobalAddress:
+                return "GLOBALADDR";
+            case OpType::kMemberAddress:
+                return "MEMBERADDR";
+            case OpType::kPush:
+                return "PUSH";
+            case OpType::kPop:
+                return "POP";
+            case OpType::kPhi:
+                return "PHI";
+            case OpType::kSubregToReg:
+                return "SUBREG_TO_REG";
+            case OpType::kRegToSubreg:
+                return "REG_TO_SUBREG";
+            default:
+                return "";
+        }
     }
 
     bool IsCall() const {
@@ -84,8 +208,59 @@ public:
     }
 
     bool IsLoad() const {
-        return m_OpType == OpType::kLoad || m_OpType == OpType::kSextLoad ||
-               m_OpType == OpType::kZextLoad;
+        return m_OpType == OpType::kLoad;
+    }
+
+    bool IsStackAddress() const {
+        return m_OpType == OpType::kStackAddress;
+    }
+
+    bool IsGlobalAddress() const {
+        return m_OpType == OpType::kGlobalAddress;
+    }
+
+    bool IsMemberAddress() const {
+        return m_OpType == OpType::kMemberAddress;
+    }
+
+    bool IsCmp() const {
+        return m_OpType == OpType::kCmp;
+    }
+
+    bool IsMov() const {
+        return m_OpType == OpType::kMov;
+    }
+
+    // TODO: Const
+    bool IsRegMov() {
+        if (!IsMov()) {
+            return false;
+        }
+
+        TOperandIt toOperand = GetDefinition();
+        TOperandIt fromOperand = GetUse(0);
+
+        return toOperand->IsRegister() && fromOperand->IsRegister();
+    }
+
+    bool IsSubregToReg() const {
+        return m_OpType == OpType::kSubregToReg;
+    }
+
+    bool IsRegToSubreg() const {
+        return m_OpType == OpType::kRegToSubreg;
+    }
+
+    bool IsPush() const {
+        return m_OpType == OpType::kPush;
+    }
+
+    bool IsPop() const {
+        return m_OpType == OpType::kPop;
+    }
+
+    bool IsPhi() const {
+        return m_OpType == OpType::kPhi;
     }
 
     CompareKind GetCompareKind() const {
@@ -108,8 +283,34 @@ public:
         m_Operands.push_back(operand);
     }
 
-    void AddRegister(uint regNumber, uint bytes = 8, bool isVirtual = true) {
-        AddOperand(MOperand::CreateRegister(regNumber, bytes, isVirtual));
+    void AddOperandToBegin(MOperand operand) {
+        m_Operands.push_front(operand);
+    }
+
+    void RemoveFirstOperand() {
+        m_Operands.pop_front();
+    }
+
+    void AddImplicitRegDefinition(target::Register reg) {
+        m_ImplicitRegDefinitions.push_back(reg);
+    }
+
+    void AddImplicitRegUse(target::Register reg) {
+        m_ImplicitRegUses.push_back(reg);
+    }
+
+    void AddPhysicalRegister(target::Register reg) {
+        MType type;
+        if (reg.IsFloat()) {
+            type = MType(MType::Kind::kFloat, reg.GetBytes());
+        } else {
+            type = MType(MType::Kind::kInteger, reg.GetBytes());
+        }
+        AddOperand(MOperand::CreateRegister(reg.GetNumber(), type, /*isVirtual=*/false));
+    }
+
+    void AddVirtualRegister(uint regNumber, MType type) {
+        AddOperand(MOperand::CreateRegister(regNumber, type, /*isVirtual=*/true));
     }
 
     void AddImmInteger(int64_t value, uint bytes = 8) {
@@ -129,15 +330,19 @@ public:
     }
 
     void AddStackIndex(uint slot, int64_t offset = 0) {
-        AddOperand(MOperand::CreateStackIndex(slot, offset));
+        AddOperand(MOperand::CreateStackIndex(slot));
     }
 
-    void AddMemory(uint vreg, uint bytes = 8, int64_t offset = 0) {
-        AddOperand(MOperand::CreateMemory(vreg, bytes, offset));
+    void AddMemory(uint vreg, uint bytes = 8) {
+        AddOperand(MOperand::CreateMemory(vreg, bytes));
     }
 
     void AddBasicBlock(MBasicBlock* basicBlock) {
         AddOperand(MOperand::CreateBasicBlock(basicBlock));
+    }
+
+    bool HasOperands() const {
+        return !m_Operands.empty();
     }
 
     size_t GetOperandsNumber() const {
@@ -158,8 +363,15 @@ public:
         return std::next(m_Operands.begin(), index);
     }
 
+    // ADD defReg, useReg -> ADD mem, useReg
+    // IDIV
+    void Undefine() {
+        m_IsDefinition = false;
+    }
+
     bool IsDefinition() const {
-        return !IsReturn() && !IsJump() && !IsBranch() && !IsStore(); 
+        return !IsReturn() && !IsJump() && !IsBranch() && !IsStore() &&
+               !IsPush() && !IsPop() && m_IsDefinition; 
     }
 
     TOperandIt GetDefinition() {
@@ -186,6 +398,14 @@ public:
         return m_Operands;
     }
 
+    std::list<target::Register> GetImplicitRegDefinitions() {
+        return m_ImplicitRegDefinitions;
+    }
+
+    std::list<target::Register> GetImplicitRegUses() {
+        return m_ImplicitRegUses;
+    }
+
     void SetTargetInstructionCode(uint code) {
         m_TargetInstructionCode = code;
     }
@@ -198,6 +418,14 @@ public:
         return m_TargetInstructionCode;
     }
 
+    void SetInstructionClass(uint instrClass) {
+        m_InstructionClass = instrClass;
+    }
+
+    uint GetInstructionClass() const {
+        return m_InstructionClass;
+    }
+
 private:
     OpType m_OpType = OpType::kNone;
     CompareKind m_CompareKind = CompareKind::kNone;
@@ -205,9 +433,15 @@ private:
     // TODO: Use something with random-access and handle iterator/pointer invalidation
     std::list<MOperand> m_Operands;
 
+    std::list<target::Register> m_ImplicitRegDefinitions;
+    std::list<target::Register> m_ImplicitRegUses;
+
     uint m_TargetInstructionCode = 0;
+    uint m_InstructionClass = 0;
 
     MBasicBlock* m_BasicBlock = nullptr;
+
+    bool m_IsDefinition = true;
 };
 
 }  // namespace gen

@@ -14,29 +14,23 @@ namespace gen {
 
 class MFunction {
 public:
-    // TODO: PR and Stack parameters
-    struct Parameter {
-        uint VReg;
-        MType Type;
-        bool IsFloat;
-        bool IsStructPtr;
-    };
+    // TODO: uint -> uint64_t
+    static constexpr uint kFirstVirtualRegisterNumber = 1 << 16;
 
 public:
-    MFunction(const std::string& name): m_Name(name) {}
+    MFunction(const std::string& name, bool isStatic = false)
+        : m_Name(name), m_IsStatic(isStatic) {}
 
     std::string GetName() const {
         return m_Name;
     }
 
-    std::vector<Parameter> GetParameters() const {
-        return m_Parameters;
+    bool IsStatic() const {
+        return m_IsStatic;
     }
 
-    uint AddParameter(MType type, bool isFloat = false, bool isStructPtr = false) {
-        uint paramVReg = NextVReg();
-        m_Parameters.emplace_back(paramVReg, type, isFloat, isStructPtr);
-        return paramVReg;
+    void SetStatic() {
+        m_IsStatic = true;
     }
 
     void AddBasicBlock(TScopePtr<MBasicBlock> MBB) {
@@ -49,6 +43,10 @@ public:
 
     std::vector<TScopePtr<MBasicBlock>>& GetBasicBlocks() {
         return m_BasicBlocks;
+    }
+
+    MBasicBlock* GetFirstBasicBlock() {
+        return m_BasicBlocks.front().get();
     }
 
     MBasicBlock* GetLastBasicBlock() {
@@ -67,6 +65,14 @@ public:
         m_LocalDataArea.AddSlot(vreg, size, align);
     }
 
+    bool IsCaller() const {
+        return m_IsCaller;
+    }
+
+    void SetCaller() {
+        m_IsCaller = true;
+    }
+
     uint NextVReg() {
         return m_NextVReg++;
     }
@@ -74,12 +80,13 @@ public:
 private:
     std::string m_Name;
 
-    std::vector<Parameter> m_Parameters;
-    LocalDataArea m_LocalDataArea;
+    bool m_IsStatic = false;
+    bool m_IsCaller = false;
 
+    LocalDataArea m_LocalDataArea;
     std::vector<TScopePtr<MBasicBlock>> m_BasicBlocks;
 
-    uint m_NextVReg = 0;
+    uint m_NextVReg = kFirstVirtualRegisterNumber;
 };
 
 }  // namespace gen
