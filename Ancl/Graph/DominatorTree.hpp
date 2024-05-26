@@ -23,11 +23,17 @@ public:
     }
 
     std::vector<ir::BasicBlock*> GetChildren(ir::BasicBlock* block) const {
-        return m_Children.at(block);
+        if (m_Children.contains(block)) {
+            return m_Children.at(block);
+        }
+        return {};
     }
 
     std::unordered_set<ir::BasicBlock*> GetDominanceFrontier(ir::BasicBlock* block) const {
-        return m_DominanceFrontierSet.at(block);
+        if (m_DominanceFrontierSet.contains(block)) {
+            return m_DominanceFrontierSet.at(block);
+        }
+        return {};
     }
 
 private:
@@ -65,11 +71,11 @@ private:
         uint firstNumber = m_RPONumbering[firstDom];
         uint secondNumber = m_RPONumbering[secondDom];
         while (firstNumber != secondNumber) {
-            while (firstNumber < secondNumber) {
+            while (firstNumber > secondNumber) {
                 firstDom = m_Dominators[firstDom];
                 firstNumber = m_RPONumbering[firstDom];
             }
-            while (secondNumber < firstNumber) {
+            while (secondNumber > firstNumber) {
                 secondDom = m_Dominators[secondDom];
                 secondNumber = m_RPONumbering[secondDom];
             }
@@ -101,10 +107,6 @@ private:
     void solveDominance() {
         for (size_t i = 0; i < m_RPOrder.size(); ++i) {
             m_RPONumbering[m_RPOrder[i]] = i;
-        }
-
-        if (m_RPOrder.size() <= 1) {
-            return;
         }
 
         auto startBlock = m_RPOrder[0];
