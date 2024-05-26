@@ -30,7 +30,9 @@ public:
                               enumConstDecl.GetName()),
                   enumConstDecl.GetLocation().ToString());
 
-        acceptNode(enumConstDecl.GetInit(), "Init");
+        if (enumConstDecl.HasInit()) {
+            acceptNode(enumConstDecl.GetInit(), "Init");
+        }
     }
 
     void Visit(EnumDeclaration& enumDecl) override {
@@ -48,7 +50,7 @@ public:
                               fieldDecl.GetName()),
                   fieldDecl.GetLocation().ToString());
 
-        acceptNode(fieldDecl.GetType(), "Type");
+        acceptQualType(fieldDecl.GetType(), "Type");
     }
 
     void Visit(FunctionDeclaration& funcDecl) override {
@@ -83,7 +85,7 @@ public:
         }
         
         acceptNodeList(funcDecl.GetParams(), "ParamDecl");
-        acceptNode(funcDecl.GetType(), "Type");
+        acceptQualType(funcDecl.GetType(), "Type");
     }
 
     void Visit(LabelDeclaration& labelDecl) override {
@@ -93,6 +95,26 @@ public:
                   labelDecl.GetLocation().ToString());
 
         acceptNode(labelDecl.GetStatement(), "Statement");
+    }
+
+    void Visit(ParameterDeclaration& paramDecl) override {
+        std::string traitsStr;
+        auto storageClass = paramDecl.GetStorageClass();
+        switch (storageClass) {
+        case StorageClass::kAuto:
+            traitsStr.append(",auto");
+            break;
+        case StorageClass::kRegister:
+            traitsStr.append(",register");
+            break;
+        }
+
+        printNode("parameter_declaration",
+                  std::format("ParameterDecl [\\\"{}\\\"{}]",
+                              paramDecl.GetName(), traitsStr),
+                  paramDecl.GetLocation().ToString());
+
+        acceptQualType(paramDecl.GetType(), "Type");
     }
 
     void Visit(RecordDeclaration& recordDecl) override {
@@ -142,7 +164,7 @@ public:
                               typedefDecl.GetName()),
                   typedefDecl.GetLocation().ToString());
 
-        acceptNode(typedefDecl.GetType(), "Type");
+        acceptQualType(typedefDecl.GetType(), "Type");
     }
 
     void Visit(ValueDeclaration& valueDecl) override {
@@ -176,7 +198,7 @@ public:
                               varDecl.GetName(), traitsStr),
                   varDecl.GetLocation().ToString());
 
-        acceptNode(varDecl.GetType(), "Type");
+        acceptQualType(varDecl.GetType(), "Type");
 
         auto initExpr = varDecl.GetInit();
         if (initExpr) {
@@ -267,7 +289,9 @@ public:
 
         acceptNode(ifStmt.GetCondition(), "Condition");
         acceptNode(ifStmt.GetThen(), "Then");
-        acceptNode(ifStmt.GetElse(), "Else");
+        if (ifStmt.HasElse()) {
+            acceptNode(ifStmt.GetElse(), "Else");
+        }
     }
 
     void Visit(LabelStatement& labelStmt) override {
@@ -346,11 +370,16 @@ public:
     }
 
     void Visit(CastExpression& castExpr) override {
-        printNode("cast_expression", "CastExpr",
-                  castExpr.GetLocation().ToString());
-
-        acceptNode(castExpr.GetSubExpression(), "SubExpr");
-        acceptNode(castExpr.GetToType(), "ToType");
+        if (castExpr.IsLValueToRValue()) {
+            printNode("cast_expression", "LValueToRValue",
+                      castExpr.GetLocation().ToString());
+            acceptNode(castExpr.GetSubExpression(), "SubExpr");
+        } else {
+            printNode("cast_expression", "CastExpr",
+                      castExpr.GetLocation().ToString());
+            acceptNode(castExpr.GetSubExpression(), "SubExpr");
+            acceptQualType(castExpr.GetToType(), "ToType");
+        }
     }
 
     void Visit(CharExpression& charExpr) override {
@@ -413,7 +442,7 @@ public:
         }
         printNode("int_expression",
                   std::format("IntExpr [{},{}]",
-                              intValue.GetValue(), sign),
+                              intValue.GetSignedValue(), sign),
                   intExpr.GetLocation().ToString()); 
     }
 
@@ -421,7 +450,7 @@ public:
         printNode("sizeoftype_expression", "SizeofTypeExpr",
                   sizeofTypeExpr.GetLocation().ToString());
 
-        acceptNode(sizeofTypeExpr.GetType(), "Type");
+        acceptQualType(sizeofTypeExpr.GetType(), "Type");
     }
 
     void Visit(StringExpression& stringExpr) override {
@@ -455,9 +484,9 @@ public:
         }
         printNode("array_type",
                   std::format("ArrayType [{},{}]",
-                              intValue.GetValue(), sign));
+                              intValue.GetSignedValue(), sign));
 
-        acceptNode(arrayType.GetSubType(), "ElementType");
+        acceptQualType(arrayType.GetSubType(), "ElementType");
     }
 
     void Visit(BuiltinType& builtinType) override {
@@ -479,32 +508,14 @@ public:
         }
         printNode("function_type", label);
 
-        acceptNode(funcType.GetSubType(), "ReturnType");
-        acceptNodeList(funcType.GetParamTypes(), "ParamType");
+        acceptQualType(funcType.GetSubType(), "ReturnType");
+        acceptQualTypeList(funcType.GetParamTypes(), "ParamType");
     }
 
     void Visit(PointerType& ptrType) override {
         printNode("pointer_type", "PointerType");
 
-        acceptNode(ptrType.GetSubType(), "SubType");
-    }
-
-    void Visit(QualType& qualType) override {
-        std::string qualStr;
-        if (qualType.IsConst()) {
-            qualStr.push_back('C');
-        }
-        if (qualType.IsVolatile()) {
-            qualStr.push_back('V');
-        }
-        if (qualType.IsRestrict()) {
-            qualStr.push_back('R');
-        }
-
-        printNode("qual_type",
-                  std::format("QualType [{}]", qualStr));
-
-        acceptNode(qualType.GetSubType(), "SubType");
+        acceptQualType(ptrType.GetSubType(), "SubType");
     }
 
     void Visit(RecordType& recordType) override {
@@ -588,6 +599,32 @@ private:
         std::string prevNodeIdent = m_PreviousNodeIdent;
         m_EdgeLabel = edgeLabel;
         node->Accept(*this);
+        m_CurrentNodeIdent = prevNodeIdent;
+    }
+
+    void acceptQualType(QualType qualType, const std::string& edgeLabel) {
+        std::string qualStr;
+        if (qualType.IsConst()) {
+            qualStr.push_back('C');
+        }
+        if (qualType.IsVolatile()) {
+            qualStr.push_back('V');
+        }
+        if (qualType.IsRestrict()) {
+            qualStr.push_back('R');
+        }
+
+        acceptNode(qualType.GetSubType(), std::format("{} [{}]", edgeLabel, qualStr));
+    }
+
+    void acceptQualTypeList(const std::vector<QualType>& typeList, const std::string& edgeLabel) {
+        m_PreviousNodeIdent = m_CurrentNodeIdent;
+        std::string prevNodeIdent = m_PreviousNodeIdent;
+        for (size_t i = 0; i < typeList.size(); ++i) {
+            m_EdgeLabel = std::format("{}{}", edgeLabel, i);
+            typeList[i].GetSubType()->Accept(*this);
+            m_PreviousNodeIdent = prevNodeIdent;
+        }
         m_CurrentNodeIdent = prevNodeIdent;
     }
 
