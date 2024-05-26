@@ -10,8 +10,8 @@ class ValueDeclaration: public Declaration {
 public:
     ValueDeclaration() = default;
 
-    ValueDeclaration(std::string name, QualType* type = nullptr)
-        : Declaration(std::move(name)), m_Type(type) {}
+    ValueDeclaration(const std::string& name, QualType type = nullptr)
+        : Declaration(name), m_Type(type) {}
 
     virtual ~ValueDeclaration() = default;
 
@@ -19,11 +19,11 @@ public:
         visitor.Visit(*this);
     }
 
-    void SetType(QualType* type) {
+    void SetType(QualType type) {
         m_Type = type;
     }
 
-    QualType* GetType() const {
+    QualType GetType() const {
         return m_Type;
     }
 
@@ -40,7 +40,7 @@ public:
     }
 
 private:
-    QualType* m_Type;
+    QualType m_Type;
 };
 
 }  // namespace ast

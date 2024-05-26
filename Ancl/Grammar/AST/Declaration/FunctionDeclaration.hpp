@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <Ancl/Grammar/AST/Declaration/ValueDeclaration.hpp>
+#include <Ancl/Grammar/AST/Declaration/ParameterDeclaration.hpp>
 #include <Ancl/Grammar/AST/Declaration/StorageClass.hpp>
 #include <Ancl/Grammar/AST/Type/FunctionType.hpp>
 
@@ -18,22 +19,26 @@ public:
     }
 
     bool IsDefinition() const {
-        return !m_Body;
+        return m_Body;
     }
 
     void SetBody(Statement* body) {
         m_Body = body;
     }
 
+    bool HasBody() const {
+        return m_Body;
+    }
+
     Statement* GetBody() const {
         return m_Body;
     }
 
-    void SetParams(std::vector<VariableDeclaration*> params) {
-        m_Params = std::move(params);
+    void SetParams(const std::vector<ParameterDeclaration*>& params) {
+        m_Params = params;
     }
 
-    std::vector<VariableDeclaration*> GetParams() const {
+    std::vector<ParameterDeclaration*> GetParams() const {
         return m_Params;
     }
 
@@ -63,7 +68,7 @@ public:
 
 private:
     Statement* m_Body;
-    std::vector<VariableDeclaration*> m_Params;
+    std::vector<ParameterDeclaration*> m_Params;
 
     StorageClass m_StorageClass = StorageClass::kNone;
     bool m_IsInline = false;

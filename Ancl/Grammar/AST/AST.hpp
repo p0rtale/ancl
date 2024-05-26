@@ -21,6 +21,7 @@
 #include <Ancl/Grammar/AST/Declaration/FieldDeclaration.hpp>
 #include <Ancl/Grammar/AST/Declaration/FunctionDeclaration.hpp>
 #include <Ancl/Grammar/AST/Declaration/LabelDeclaration.hpp>
+#include <Ancl/Grammar/AST/Declaration/ParameterDeclaration.hpp>
 #include <Ancl/Grammar/AST/Declaration/RecordDeclaration.hpp>
 #include <Ancl/Grammar/AST/Declaration/TagDeclaration.hpp>
 #include <Ancl/Grammar/AST/Declaration/TranslationUnit.hpp>

@@ -10,7 +10,7 @@ class TypeDeclaration: public Declaration {
 public:
     TypeDeclaration() = default;
 
-    TypeDeclaration(QualType* type)
+    TypeDeclaration(QualType type)
         : m_Type(std::move(type)) {}
 
     virtual ~TypeDeclaration() = default;
@@ -19,11 +19,11 @@ public:
         visitor.Visit(*this);
     }
 
-    void SetType(QualType* type) {
+    void SetType(QualType type) {
         m_Type = type;
     }
 
-    QualType* GetType() const {
+    QualType GetType() const {
         return m_Type;
     }
 
@@ -40,7 +40,7 @@ public:
     }
 
 private:
-    QualType* m_Type;
+    QualType m_Type;
 };
 
 }  // namespace ast

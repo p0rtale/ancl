@@ -15,6 +15,14 @@ public:
         visitor.Visit(*this);
     }
 
+    void SetGlobal() {
+        m_IsGlobal = true;
+    }
+
+    bool IsGlobal() const {
+        return m_IsGlobal;
+    }
+
     bool HasInit() const {
         return m_Init;
     }
@@ -37,6 +45,8 @@ public:
 
 private:
     Expression* m_Init = nullptr;
+
+    bool m_IsGlobal = false;
 
     StorageClass m_StorageClass = StorageClass::kNone;
 };

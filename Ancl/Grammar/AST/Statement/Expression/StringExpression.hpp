@@ -9,8 +9,8 @@ namespace ast {
 
 class StringExpression: public Expression {
 public:
-    StringExpression(std::string stringValue)
-        : m_StringValue(std::move(stringValue)) {}
+    StringExpression(const std::string& stringValue)
+        : m_StringValue(stringValue) {}
 
     void Accept(AstVisitor& visitor) override {
         visitor.Visit(*this);

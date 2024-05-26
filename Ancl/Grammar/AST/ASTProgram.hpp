@@ -3,12 +3,13 @@
 #include <vector>
 
 #include <Ancl/Grammar/AST/Base/ASTNode.hpp>
+#include <Ancl/Grammar/AST/Type/TypeNode.hpp>
 #include <Ancl/Grammar/AST/Declaration/TranslationUnit.hpp>
 
 #include <Ancl/Tracker.hpp>
 
 
-using namespace ast;
+namespace ast {
 
 class ASTProgram {
 public:
@@ -39,3 +40,5 @@ private:
 
     TranslationUnit* m_TranslationUnit;
 };
+
+}  // namespace ast

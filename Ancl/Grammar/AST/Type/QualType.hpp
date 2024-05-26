@@ -6,17 +6,17 @@
 
 namespace ast {
 
-class QualType: public TypeNode {
+class QualType {
 public:
     QualType() = default;
     QualType(Type* subType): m_SubType(subType) {}
 
-    void Accept(AstVisitor& visitor) override {
-        visitor.Visit(*this);
-    }
-
     void SetSubType(Type* subType) {
         m_SubType = subType;
+    }
+
+    bool HasSubType() {
+        return m_SubType;
     }
 
     Type* GetSubType() const {
@@ -57,6 +57,12 @@ public:
 
     void RemoveRestrict() {
         m_IsRestrict = false;
+    }
+
+    void RemoveQualifiers() {
+        RemoveConst();
+        RemoveVolatile();
+        RemoveRestrict();
     }
 
 private:

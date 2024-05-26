@@ -9,6 +9,7 @@ class EnumDeclaration;
 class FieldDeclaration;
 class FunctionDeclaration;
 class LabelDeclaration;
+class ParameterDeclaration;
 class RecordDeclaration;
 class TagDeclaration;
 class TranslationUnit;

@@ -23,6 +23,21 @@ public:
         kLongDouble,
     };
 
+    enum Rank : uint {
+        kVoidRank = 0,
+        kCharRank = 1,
+        kUCharRank = 1,
+        kShortRank = 2,
+        kUShortRank = 2,
+        kIntRank = 3,
+        kUIntRank = 3,
+        kLongRank = 4,
+        kULongRank = 4,
+        kFloatRank = 5,
+        kDoubleRank = 6,
+        kLongDoubleRank = 7,
+    };
+
 public:
     BuiltinType(): m_Kind(Kind::kNone) {}
     BuiltinType(Kind kind): m_Kind(kind) {}
@@ -37,6 +52,24 @@ public:
 
     bool IsInteger() const {
         return IsSignedInteger() || IsUnsignedInteger();
+    }
+
+    uint GetRank() const {
+        switch (m_Kind) {
+            case Kind::kVoid:        return 0;
+            case Kind::kChar:        return 1;
+            case Kind::kUChar:       return 1;
+            case Kind::kShort:       return 2;
+            case Kind::kUShort:      return 2;
+            case Kind::kInt:         return 3;
+            case Kind::kUInt:        return 3;
+            case Kind::kLong:        return 4;
+            case Kind::kULong:       return 4;
+            case Kind::kFloat:       return 5;
+            case Kind::kDouble:      return 6;
+            case Kind::kLongDouble:  return 7;
+        }
+        return 0;
     }
 
     bool IsSignedInteger() const {
@@ -69,6 +102,10 @@ public:
                 return true;
         }
         return false;
+    }
+
+    bool IsDoublePrecision() const {
+        return m_Kind == Kind::kDouble;
     }
 
     void SetKind(Kind kind) {

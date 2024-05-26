@@ -9,17 +9,17 @@ namespace ast {
 
 class PointerType: public Type, public INodeType {
 public:
-    PointerType(QualType* subType): m_SubType(subType) {}
+    PointerType(QualType subType): m_SubType(subType) {}
 
     void Accept(AstVisitor& visitor) override {
         visitor.Visit(*this);
     }
 
-    void SetSubType(QualType* subType) override {
+    void SetSubType(QualType subType) override {
         m_SubType = subType;
     }
 
-    QualType* GetSubType() const override {
+    QualType GetSubType() const override {
         return m_SubType;
     }
 
@@ -36,7 +36,7 @@ public:
     }
 
 private:
-    QualType* m_SubType;
+    QualType m_SubType;
 };
 
 }  // namespace ast

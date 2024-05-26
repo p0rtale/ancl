@@ -9,8 +9,8 @@ namespace ast {
 
 class InitializerList: public Expression {
 public:
-    InitializerList(std::vector<Expression*> inits)
-        : m_Inits(std::move(inits)) {}
+    InitializerList(const std::vector<Expression*>& inits)
+        : m_Inits(inits) {}
 
     void Accept(AstVisitor& visitor) override {
         visitor.Visit(*this);
@@ -25,6 +25,7 @@ public:
     }
 
 private:
+    // Assignment expressions + Initializer lists
     std::vector<Expression*> m_Inits;
 };
 

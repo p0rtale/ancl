@@ -19,12 +19,24 @@ public:
         visitor.Visit(*this);
     }
 
+    bool HasInit() const {
+        return m_Init;
+    }
+
     Statement* GetInit() const {
         return m_Init;
     }
-     
+
+    bool HasCondition() const {
+        return m_Condition;
+    }
+
     Expression* GetCondition() const {
         return m_Condition;
+    }
+
+    bool HasStep() const {
+        return m_Step;
     }
 
     Expression* GetStep() const {

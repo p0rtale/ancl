@@ -15,6 +15,10 @@ public:
         visitor.Visit(*this);
     }
 
+    void SetDeclaration(RecordDeclaration* declaration) {
+        m_Declaration = declaration;
+    }
+
     RecordDeclaration* GetDeclaration() const {
         return m_Declaration;
     }

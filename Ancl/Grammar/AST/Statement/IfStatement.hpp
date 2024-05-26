@@ -24,6 +24,10 @@ public:
         return m_Then;
     }
 
+    bool HasElse() const {
+        return m_Else;
+    }
+
     Statement* GetElse() const {
         return m_Else;
     }

@@ -9,11 +9,16 @@ namespace ast {
 
 class EnumDeclaration: public TagDeclaration {
 public:
-    EnumDeclaration(std::vector<EnumConstDeclaration*> enumerators)
-        : m_Enumerators(std::move(enumerators)) {}
+    EnumDeclaration(const std::vector<EnumConstDeclaration*>& enumerators,
+                    bool isDefinition = false)
+        : m_Enumerators(enumerators), m_IsDefinition(isDefinition) {}
 
     void Accept(AstVisitor& visitor) override {
         visitor.Visit(*this);
+    }
+
+    bool IsDefinition() const override {
+        return m_IsDefinition;
     }
 
     std::vector<EnumConstDeclaration*> GetEnumerators() const {
@@ -34,6 +39,8 @@ public:
 
 private:
     std::vector<EnumConstDeclaration*> m_Enumerators;
+
+    bool m_IsDefinition = false;
 };
 
 }  // namespace ast

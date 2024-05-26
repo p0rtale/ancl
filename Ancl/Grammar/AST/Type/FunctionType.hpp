@@ -11,7 +11,7 @@ namespace ast {
 
 class FunctionType: public Type, public INodeType {
 public:
-    FunctionType(QualType* returnType): m_ReturnType(returnType) {}
+    FunctionType(QualType returnType): m_ReturnType(returnType) {}
 
     void Accept(AstVisitor& visitor) override {
         visitor.Visit(*this);
@@ -25,19 +25,19 @@ public:
         return m_IsVariadic;
     }
 
-    void SetSubType(QualType* subType) override {
+    void SetSubType(QualType subType) override {
         m_ReturnType = subType;
     }
 
-    QualType* GetSubType() const override {
+    QualType GetSubType() const override {
         return m_ReturnType;
     }
 
-    void SetParamTypes(std::vector<QualType*> paramTypes) {
-        m_ParamTypes = std::move(paramTypes);
+    void SetParamTypes(const std::vector<QualType>& paramTypes) {
+        m_ParamTypes = paramTypes;
     }
 
-    std::vector<QualType*> GetParamTypes() const {
+    std::vector<QualType> GetParamTypes() const {
         return m_ParamTypes;
     }
 
@@ -54,8 +54,8 @@ public:
     }
 
 private:
-    QualType* m_ReturnType;
-    std::vector<QualType*> m_ParamTypes;
+    QualType m_ReturnType;
+    std::vector<QualType> m_ParamTypes;
 
     bool m_IsVariadic = false;
 };

@@ -20,6 +20,14 @@ public:
         return m_Callee;
     }
 
+    void SetArgument(size_t index, Expression* argExpr) {
+        m_Arguments.at(index) = argExpr;
+    }
+
+    Expression* GetArgument(size_t index) {
+        return m_Arguments.at(index);
+    }
+
     std::vector<Expression*> GetArguments() const {
         return m_Arguments;
     }

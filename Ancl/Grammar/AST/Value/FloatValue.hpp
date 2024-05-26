@@ -1,9 +1,6 @@
 #pragma once
 
-#include <Ancl/Grammar/AST/Value/Value.hpp>
-
-
-class FloatValue: public Value {
+class FloatValue {
 public:
     FloatValue(float value)
         : m_Value(value), m_IsDoublePrecision(false) {}

@@ -9,8 +9,8 @@ class FieldDeclaration: public ValueDeclaration {
 public:
     FieldDeclaration() = default;
 
-    FieldDeclaration(std::string name, QualType* type = nullptr)
-        : ValueDeclaration(std::move(name), type) {}
+    FieldDeclaration(const std::string& name, QualType type = nullptr)
+        : ValueDeclaration(name, type) {}
 
     void Accept(AstVisitor& visitor) override {
         visitor.Visit(*this);

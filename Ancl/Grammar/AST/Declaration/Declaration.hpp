@@ -24,6 +24,10 @@ public:
         m_Name = name;
     }
 
+    bool HasName() const {
+        return !m_Name.empty();
+    }
+
     std::string GetName() const {
         return m_Name;
     }

@@ -15,6 +15,10 @@ public:
         visitor.Visit(*this);
     }
 
+    void SetDeclaration(EnumDeclaration* declaration) {
+        m_Declaration = declaration;
+    }
+
     EnumDeclaration* GetDeclaration() const {
         return m_Declaration;
     }

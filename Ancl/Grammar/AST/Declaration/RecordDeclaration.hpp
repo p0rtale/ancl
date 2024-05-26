@@ -9,14 +9,15 @@ namespace ast {
 
 class RecordDeclaration: public TagDeclaration {
 public:
-    RecordDeclaration(bool isUnion = false): m_IsUnion(isUnion) {}
+    RecordDeclaration(bool isUnion = false, bool isDefinition = false)
+        : m_IsUnion(isUnion), m_IsDefinition(isDefinition) {}
 
     void Accept(AstVisitor& visitor) override {
         visitor.Visit(*this);
     }
 
-    bool IsDefinition() const {
-        return !m_InternalDecls.empty();
+    bool IsDefinition() const override {
+        return m_IsDefinition;
     }
 
     void AddInternalTagDecl(TagDeclaration* tagDecl) {
@@ -28,11 +29,20 @@ public:
         field->SetPosition(m_FieldsNum++);
     }
 
+    FieldDeclaration* GetField(const std::string& name) {
+        for (Declaration* decl : m_InternalDecls) {
+            auto* field = dynamic_cast<FieldDeclaration*>(decl);
+            if (field && field->GetName() == name) {
+                return field;
+            }
+        }
+        return nullptr;
+    }
+
     std::vector<FieldDeclaration*> GetFields() const {
-        auto fields = std::vector<FieldDeclaration*>{};
-        for (const auto& decl : m_InternalDecls) {
-            auto field = dynamic_cast<FieldDeclaration*>(decl);
-            if (field) {
+        std::vector<FieldDeclaration*> fields;
+        for (Declaration* decl : m_InternalDecls) {
+            if (auto* field = dynamic_cast<FieldDeclaration*>(decl)) {
                 fields.push_back(field);
             }
         }
@@ -66,6 +76,7 @@ private:
     // std::vector<TagDeclaration*> m_InternalDecls;
 
     bool m_IsUnion = false;
+    bool m_IsDefinition = false;
 };
 
 }  // namespace ast

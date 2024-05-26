@@ -16,12 +16,24 @@ public:
         visitor.Visit(*this);
     }
 
+    void SetCondition(Expression* condition) {
+        m_Condition = condition;
+    }
+
     Expression* GetCondition() const {
         return m_Condition;
     }
 
+    void SetTrueExpression(Expression* trueExpr) {
+        m_TrueExpression = trueExpr;
+    }
+
     Expression* GetTrueExpression() const {
         return m_TrueExpression;
+    }
+
+    void SetFalseExpression(Expression* falseExpr) {
+        m_FalseExpression = falseExpr;
     }
 
     Expression* GetFalseExpression() const {

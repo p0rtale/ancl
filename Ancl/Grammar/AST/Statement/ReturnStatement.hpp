@@ -15,6 +15,14 @@ public:
         visitor.Visit(*this);
     }
 
+    bool HasReturnExpression() const {
+        return m_ReturnExpression;
+    }
+
+    void SetReturnExpression(Expression* expression) {
+        m_ReturnExpression = expression;
+    }
+
     Expression* GetReturnExpression() const {
         return m_ReturnExpression;
     }

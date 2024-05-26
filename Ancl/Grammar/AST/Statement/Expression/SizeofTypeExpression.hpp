@@ -7,19 +7,19 @@ namespace ast {
 
 class SizeofTypeExpression: public Expression {
 public:
-    SizeofTypeExpression(QualType* type)
-        : m_Type(type) {}
+    SizeofTypeExpression(QualType subType)
+        : m_SubType(subType) {}
 
     void Accept(AstVisitor& visitor) override {
         visitor.Visit(*this);
     }
 
-    QualType* GetType() const {
-        return m_Type;
+    QualType GetSubType() const {
+        return m_SubType;
     }
 
 private:
-    QualType* m_Type;
+    QualType m_SubType;
 };
 
 }  // namespace ast

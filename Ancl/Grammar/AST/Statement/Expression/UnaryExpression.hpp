@@ -30,6 +30,10 @@ public:
         visitor.Visit(*this);
     }
 
+    void SetOperand(Expression* operand) {
+        m_Operand = operand;
+    }
+
     Expression* GetOperand() const {
         return m_Operand;
     }
@@ -42,10 +46,10 @@ public:
         switch (m_OpType) {
             case OpType::kNone:  return "None";
 
-            case OpType::kPreInc:   return "++";
-            case OpType::kPreDec:   return "--";
-            case OpType::kPostInc:  return "++";
-            case OpType::kPostDec:  return "--";
+            case OpType::kPreInc:   return "prefix ++";
+            case OpType::kPreDec:   return "prefix --";
+            case OpType::kPostInc:  return "postfix ++";
+            case OpType::kPostDec:  return "postfix --";
 
             case OpType::kAddrOf:  return "&";
             case OpType::kDeref:   return "*";
