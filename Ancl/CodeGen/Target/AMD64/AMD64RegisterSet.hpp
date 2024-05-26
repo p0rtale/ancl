@@ -1,6 +1,8 @@
 #pragma once
 
 #include <array>
+#include <vector>
+
 #include <Ancl/CodeGen/Target/Base/RegisterSet.hpp>
 #include <Ancl/CodeGen/Target/AMD64/AMD64InstructionSet.hpp>
 
@@ -23,14 +25,70 @@ public:
 public:
     AMD64RegisterSet() {
         initRegisters();
+        updateRegistersInfo();
     }    
+
+    bool IsValidRegister(uint number) override {
+        return number > INVALID_REGNUM && number < REG_NUMBER_END;
+    }
 
     Register GetRegister(uint number) override {
         return m_Registers.at(number);
     }
 
-    TRegArray GetRegisters() const {
+    TRegArray GetAllRegisters() const {
         return m_Registers;
+    }
+
+    std::vector<Register> GetRegisters(uint regClass) override {
+        std::vector<Register> registers;
+        switch (regClass) {
+        case GR8:
+            for (uint regNumber = AL; regNumber <= R15B; ++regNumber) {
+                registers.emplace_back(regNumber);
+            }
+            break;
+        case GR16:
+            for (uint regNumber = AX; regNumber <= R15W; ++regNumber) {
+                registers.emplace_back(regNumber);
+            }
+            break;
+        case GR32:
+            for (uint regNumber = EAX; regNumber <= R15D; ++regNumber) {
+                registers.emplace_back(regNumber);
+            }
+            break;
+        case GR64:
+            for (uint regNumber = RAX; regNumber <= RDI; ++regNumber) {
+                registers.emplace_back(regNumber);
+            }
+            // Skip RSP and RBP
+            for (uint regNumber = R8; regNumber <= R15; ++regNumber) {
+                registers.emplace_back(regNumber);
+            }
+            // Skip RIP
+            break;
+        case FR:
+        case FR32:
+        case FR64:
+            for (uint regNumber = XMM0; regNumber <= XMM15; ++regNumber) {
+                registers.emplace_back(regNumber);
+            }
+            break;
+        default:
+            // TODO: Handle error
+            break;
+        }
+
+        return registers;
+    }
+
+    std::vector<uint> GetGPClasses() const override {
+        return {GR8, GR16, GR32, GR64};
+    }
+
+    std::vector<uint> GetFPClasses() const override {
+        return {FR};
     }
 
     bool HasZeroRegister() override {
@@ -38,7 +96,7 @@ public:
     }
 
     Register GetZeroRegister() override {
-        return m_Registers[INVALID];
+        return m_Registers[INVALID_REGNUM];
     }
 
     bool HasLinkRegister() override {
@@ -46,7 +104,7 @@ public:
     }
 
     Register GetLinkRegister() override {
-        return m_Registers[INVALID];
+        return m_Registers[INVALID_REGNUM];
     }
 
     Register GetARP() override {
@@ -57,8 +115,20 @@ public:
         return m_Registers[RSP];
     }
 
-    uint GetRegisterClass(uint bytes, bool isFloat = false) {
+    Register GetIP() override {
+        return m_Registers[RIP];
+    }
+
+    uint GetRegisterClass(uint bytes, bool isFloat = false) override {
         if (isFloat) {
+            // switch (bytes) {
+            // case 4:
+            //     return FR32;
+            // case 8:
+            //     return FR64;
+            // default:
+            //     return INVALID_CLASS;
+            // }
             return FR;
         }
 
@@ -76,7 +146,7 @@ public:
         }
     }
 
-    uint GetRegisterClass(Register reg) {
+    uint GetRegisterClass(Register reg) override {
         uint regNumber = reg.GetNumber();
 
         if (regNumber >= AL && regNumber <= R15B) {
@@ -96,17 +166,37 @@ public:
         }
 
         if (regNumber >= XMM0 && regNumber <= XMM15) {
+            // return FR64;
             return FR;
         }
+
+        return INVALID_CLASS;
     }
 
 private:
     void initRegisters() {
-        m_Registers[INVALID] = Register(INVALID);
+        m_Registers[INVALID_REGNUM] = Register(INVALID_REGNUM);
 
 #define AMD64_REGISTER(NAME, NUMBER, BYTES, SUB_REGISTERS) \
         m_Registers[NUMBER] = Register(NAME, NUMBER, BYTES, SUB_REGISTERS);
 #include <Ancl/CodeGen/Target/AMD64/AMD64RegisterSet.inc>
+    }
+
+    void updateRegistersInfo() {
+        for (auto& reg : m_Registers) {
+            if (GetRegisterClass(reg) == FR64) {
+                reg.SetFloat();
+            }
+
+            std::vector<uint> subregNums = reg.GetSubRegNumbers();
+            for (uint subregNum : subregNums) {
+                m_Registers[subregNum].SetParentRegNumber(reg.GetNumber());
+            }
+            if (subregNums.size() == 2) {
+                m_Registers[subregNums[0]].SetPairedRegNumber(subregNums[1]);
+                m_Registers[subregNums[1]].SetPairedRegNumber(subregNums[0]);
+            }
+        }
     }
 
 private:
