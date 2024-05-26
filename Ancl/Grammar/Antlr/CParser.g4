@@ -260,7 +260,7 @@ structOrUnion
     ;
 
 structDeclarationList
-    : decls+=structDeclaration+
+    : decls+=structDeclaration*
     ;
 
 structDeclaration // The first two rules have priority order and cannot be simplified to one expression.
@@ -485,7 +485,7 @@ jumpStatement
     ;
 
 translationUnit
-    : decls+=externalDeclaration+ EOF
+    : decls+=externalDeclaration* EOF
     ;
 
 externalDeclaration
