@@ -4,11 +4,14 @@
 #include <unordered_map>
 #include <vector>
 #include <optional>
+#include <cassert>
 
 #include <Ancl/Grammar/AST/Declaration/Declaration.hpp>
 #include <Ancl/Grammar/AST/Declaration/LabelDeclaration.hpp>
 #include <Ancl/Grammar/AST/Declaration/TagDeclaration.hpp>
 
+
+namespace ast {
 
 class Scope {
 public:
@@ -23,7 +26,7 @@ public:
 
 public:
     Scope() = default; 
-    Scope(std::string name): m_Name(std::move(name)) {}
+    Scope(const std::string& name): m_Name(name) {}
 
     std::string GetName() const {
         return m_Name;
@@ -48,6 +51,10 @@ public:
 
     void AddSymbol(NamespaceType type, const Symbol& symbol, Declaration* decl) {
         m_OrderedSymbols.push_back({symbol, decl});
+        UpdateSymbol(type, symbol, decl);
+    }
+
+    void UpdateSymbol(NamespaceType type, const Symbol& symbol, Declaration* decl) {
         switch (type) {
         case NamespaceType::Label:
             m_LabelNamespace[symbol] = static_cast<LabelDeclaration*>(decl);
@@ -75,7 +82,7 @@ public:
         return m_OrderedSymbols;
     }
 
-    bool HaveSymbol(NamespaceType type, const Symbol& symbol) const {
+    bool HasSymbol(NamespaceType type, const Symbol& symbol) const {
         switch (type) {
         case NamespaceType::Label:
             return m_LabelNamespace.contains(symbol);
@@ -87,8 +94,8 @@ public:
     }
 
     std::optional<Declaration*> FindSymbol(NamespaceType type, const Symbol& symbol) {
-        auto scope = findScopeBySymbol(type, symbol);
-        if (scope->HaveSymbol(type, symbol)) {
+        Scope* scope = findScopeBySymbol(type, symbol);
+        if (scope->HasSymbol(type, symbol)) {
             return scope->GetSymbol(type, symbol);
         }
         return std::nullopt;
@@ -97,13 +104,10 @@ public:
 private:
     Scope* findScopeBySymbol(NamespaceType type, const Symbol& symbol) {
         Scope* scope = this;
-        while (!scope->IsGlobalScope() && !scope->HaveSymbol(type, symbol)) {
-            auto parent = scope->GetParentScope();
-            if (parent) {
-                scope = parent;
-            } else {
-                // TODO: handle error             
-            }
+        while (!scope->IsGlobalScope() && !scope->HasSymbol(type, symbol)) {
+            Scope* parent = scope->GetParentScope();
+            assert(parent);
+            scope = parent;
         }
         return scope;
     }
@@ -121,7 +125,7 @@ private:
 private:
     std::string m_Name;
 
-    Scope* m_ParentScope;
+    Scope* m_ParentScope = nullptr;
     std::vector<Scope*> m_ChildrenScopes;
 
     TSymbols m_OrderedSymbols;
@@ -130,3 +134,5 @@ private:
     std::unordered_map<Symbol, TagDeclaration*> m_TagNamespace;
     std::unordered_map<Symbol, Declaration*> m_IdentNamespace;
 };
+
+}  // namespace ast

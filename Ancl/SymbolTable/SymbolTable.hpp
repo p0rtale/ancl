@@ -4,6 +4,8 @@
 #include <Ancl/Tracker.hpp>
 
 
+namespace ast {
+
 class SymbolTable {
 public:
     SymbolTable(): m_GlobalScope(m_Tracker.Allocate<Scope>("global")) {}
@@ -12,8 +14,8 @@ public:
         return m_GlobalScope;
     }
 
-    Scope* CreateScope(std::string name = "", Scope* parent = nullptr) {
-        auto scope = m_Tracker.Allocate<Scope>(std::move(name));
+    Scope* CreateScope(const std::string& name = "", Scope* parent = nullptr) {
+        auto* scope = m_Tracker.Allocate<Scope>(name);
         if (!parent) {
             parent = m_GlobalScope;
         }
@@ -26,3 +28,5 @@ private:
 
     Scope* m_GlobalScope;
 };
+
+}  // namespace ast
