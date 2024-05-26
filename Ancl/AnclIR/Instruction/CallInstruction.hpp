@@ -35,6 +35,10 @@ public:
         return m_Arguments;
     }
 
+    bool HasArguments() const {
+        return !m_Arguments.empty();
+    }
+
     size_t GetArgumentsNumber() const {
         return m_Arguments.size();
     }

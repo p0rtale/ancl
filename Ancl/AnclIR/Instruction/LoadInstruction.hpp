@@ -13,14 +13,13 @@ namespace ir {
 class LoadInstruction: public Instruction {
 public:
     LoadInstruction(Value* pointer, Type* type, const std::string& name, BasicBlock* basicBlock)
-            : Instruction(type, basicBlock),
-              m_PtrOperand(pointer) {
+            : Instruction(type, basicBlock) {
         SetName(name);
         AddOperand(pointer);
     }
 
     Value* GetPtrOperand() const {
-        return m_PtrOperand;
+        return GetOperand(0);
     }
 
     void SetVolatile() {
@@ -33,8 +32,6 @@ public:
 
 private:
     bool m_IsVolatile = false;
-
-    Value* m_PtrOperand;
 };
 
 }  // namespace ir

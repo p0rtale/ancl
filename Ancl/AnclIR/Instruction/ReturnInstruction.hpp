@@ -10,22 +10,23 @@ namespace ir {
 
 class ReturnInstruction: public TerminatorInstruction {
 public:
+    ReturnInstruction(BasicBlock* basicBlock)
+            : TerminatorInstruction(VoidType::Create(basicBlock->GetProgram()), basicBlock) {
+        AddOperand(nullptr);
+    }
+
     ReturnInstruction(Value* returnValue, BasicBlock* basicBlock)
-            : TerminatorInstruction(VoidType::Create(returnValue->GetProgram()), basicBlock),
-              m_ReturnValue(returnValue) {
+            : TerminatorInstruction(returnValue->GetType(), basicBlock) {
         AddOperand(returnValue);
     }
 
     bool HasReturnValue() const {
-        return m_ReturnValue;
+        return HasOperand(0);
     }
 
     Value* GetReturnValue() const {
-        return m_ReturnValue;
+        return GetOperand(0);
     }
-
-private:
-    Value* m_ReturnValue = nullptr;
 };
 
 }  // namespace ir

@@ -15,7 +15,7 @@ public:
         kNone = 0,
         kMul, kFMul,
         kSDiv, kUDiv, kFDiv,
-        kSRem, kURem, kFRem,
+        kSRem, kURem,
         kAdd, kFAdd,
         kSub, kFSub,
         kShiftL, kLShiftR, kAShiftR,
@@ -26,19 +26,18 @@ public:
     BinaryInstruction(OpType opType, const std::string& name,
                       Value* left, Value* right,
                       BasicBlock* basicBlock)
-            : Instruction(left->GetType(), basicBlock), m_OpType(opType),
-              m_LeftOperand(left), m_RightOperand(right) {
+            : Instruction(left->GetType(), basicBlock), m_OpType(opType) {
         SetName(name);
         AddOperand(left);
         AddOperand(right);
     }
 
     Value* GetLeftOperand() const {
-        return m_LeftOperand;
+        return GetOperand(0);
     }
 
     Value* GetRightOperand() const {
-        return m_RightOperand;
+        return GetOperand(1);
     }
 
     OpType GetOpType() const {
@@ -58,7 +57,6 @@ public:
 
             case OpType::kSRem:  return "srem";
             case OpType::kURem:  return "urem";
-            case OpType::kFRem:  return "frem";
 
             case OpType::kAdd:   return "add";
             case OpType::kFAdd:  return "fadd";
@@ -82,9 +80,6 @@ public:
 
 private:
     OpType m_OpType = OpType::kNone;
-
-    Value* m_LeftOperand;
-    Value* m_RightOperand;
 };
 
 }  // namespace ir

@@ -26,6 +26,8 @@ public:
 
     Function* GetFunction() const;
 
+    void AddInstructionToBegin(Instruction* instruction);
+
     void AddInstruction(Instruction* instruction);
 
     void AddPhiFunction(PhiInstruction* phiInstruction) {
@@ -47,6 +49,8 @@ public:
     std::vector<BasicBlock*> GetSuccessors() const;
 
     std::list<Instruction*> GetInstructions() const;
+
+    std::list<Instruction*>& GetInstructionsRef();
 
     void AddPredecessor(BasicBlock* block);
 

@@ -20,6 +20,10 @@ Function* BasicBlock::GetFunction() const {
     return m_Function;
 }
 
+void BasicBlock::AddInstructionToBegin(Instruction* instruction) {
+    m_Instructions.push_front(instruction);
+}
+
 void BasicBlock::AddInstruction(Instruction* instruction) {
     m_Instructions.push_back(instruction);
 }
@@ -32,14 +36,14 @@ TerminatorInstruction* BasicBlock::GetTerminator() const {
 }
 
 std::vector<BasicBlock*> BasicBlock::GetSuccessors() const {
-    auto terminator = GetTerminator();
+    TerminatorInstruction* terminator = GetTerminator();
     std::vector<BasicBlock*> nextBlocks;
-    if (auto branchInstr = dynamic_cast<BranchInstruction*>(terminator)) {
+    if (auto* branchInstr = dynamic_cast<BranchInstruction*>(terminator)) {
         nextBlocks.push_back(branchInstr->GetTrueBasicBlock());
         if (branchInstr->IsConditional()) {
             nextBlocks.push_back(branchInstr->GetFalseBasicBlock());
         }
-    } else if (auto switchInstr = dynamic_cast<SwitchInstruction*>(terminator)) {
+    } else if (auto* switchInstr = dynamic_cast<SwitchInstruction*>(terminator)) {
         nextBlocks.push_back(switchInstr->GetDefaultBasicBlock());
         for (const auto switchCase : switchInstr->GetCases()) {
             nextBlocks.push_back(switchCase.CaseBasicBlock);
@@ -50,6 +54,10 @@ std::vector<BasicBlock*> BasicBlock::GetSuccessors() const {
 }
 
 std::list<Instruction*> BasicBlock::GetInstructions() const {
+    return m_Instructions;
+}  
+
+std::list<Instruction*>& BasicBlock::GetInstructionsRef() {
     return m_Instructions;
 }  
 

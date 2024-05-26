@@ -15,8 +15,7 @@ public:
     // TODO: create member Type
     MemberInstruction(Value* ptrValue, Value* index,
                       const std::string& name, Type* memberType, BasicBlock* basicBlock)
-            : Instruction(memberType, basicBlock),
-              m_PtrOperand(ptrValue), m_Index(index) {
+            : Instruction(memberType, basicBlock) {
         SetName(name);
         AddOperand(ptrValue);
         AddOperand(index);
@@ -31,17 +30,14 @@ public:
     }
 
     Value* GetPtrOperand() const {
-        return m_PtrOperand;
+        return GetOperand(0);
     }
 
     Value* GetIndex() const {
-        return m_Index;
+        return GetOperand(1);
     }
 
 private:
-    Value* m_PtrOperand;
-    Value* m_Index;
-
     bool m_IsDeref = false;
 };
 

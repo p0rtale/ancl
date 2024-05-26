@@ -12,20 +12,19 @@ namespace ir {
 
 class StoreInstruction: public Instruction {
 public:
-    StoreInstruction(Value* fromValue, Value* toValue, const std::string& name, BasicBlock* basicBlock)
-            : Instruction(VoidType::Create(fromValue->GetProgram()), basicBlock),
-              m_FromOperand(fromValue), m_ToOperand(toValue) {
+    StoreInstruction(Value* value, Value* address, const std::string& name, BasicBlock* basicBlock)
+            : Instruction(VoidType::Create(value->GetProgram()), basicBlock) {
         SetName(name);
-        AddOperand(fromValue);
-        AddOperand(toValue);
+        AddOperand(value);
+        AddOperand(address);
     }
 
-    Value* GetFromOperand() const {
-        return m_FromOperand;
+    Value* GetValueOperand() const {
+        return GetOperand(0);
     }
 
-    Value* GetToOperand() const {
-        return m_ToOperand;
+    Value* GetAddressOperand() const {
+        return GetOperand(1);
     }
 
     void SetVolatile() {
@@ -38,9 +37,6 @@ public:
 
 private:
     bool m_IsVolatile = false;
-
-    Value* m_FromOperand;
-    Value* m_ToOperand;
 };
 
 }  // namespace ir

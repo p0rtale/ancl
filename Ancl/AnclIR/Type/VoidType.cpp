@@ -3,6 +3,7 @@
 
 using namespace ir;
 
+
 VoidType::VoidType(IRProgram& program): Type(program) {}
 
 VoidType* VoidType::Create(IRProgram& program) {

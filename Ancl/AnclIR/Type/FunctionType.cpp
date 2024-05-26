@@ -7,11 +7,11 @@ using namespace ir;
 FunctionType::FunctionType(Type* retType, const std::vector<Type*>& paramTypes,
                            bool isVariadic)
     : Type(retType->GetProgram()), m_ReturnType(retType),
-        m_ParamTypes(paramTypes), m_IsVariadic(isVariadic) {}
+      m_ParamTypes(paramTypes), m_IsVariadic(isVariadic) {}
 
 FunctionType* FunctionType::Create(Type* retType, const std::vector<Type*>& paramTypes,
                                    bool isVariadic) {
-    auto& program = retType->GetProgram();
+    IRProgram& program = retType->GetProgram();
     return program.CreateType<FunctionType>(retType, paramTypes, isVariadic);
 }
 

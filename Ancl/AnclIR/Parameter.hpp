@@ -14,7 +14,7 @@ class Function;
 class Parameter: public Value {
 public:
     Parameter(const std::string& name, Type* type, Function* function,
-             bool isImplicit = false)
+              bool isImplicit = false)
             : Value(type), m_Function(function), m_IsImplicit(isImplicit) {
         SetName(name);
     }

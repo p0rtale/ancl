@@ -13,7 +13,7 @@ public:
 
     static PointerType* Create(Type* subType);
 
-    Type* GetSubType();
+    Type* GetSubType() const;
 
 private:
     Type* m_SubType;

@@ -19,28 +19,32 @@ public:
         kFToUI, kFToSI,
         kUIToF, kSIToF,
         kPtrToI, kIToPtr,
+        kBitcast,
     };
 
 public:
     CastInstruction(OpType opType, const std::string& name,
                     Value* fromValue, Type* toType,
                     BasicBlock* basicBlock)
-            : Instruction(toType, basicBlock), m_OpType(opType),
-              m_FromOperand(fromValue) {
+            : Instruction(toType, basicBlock), m_OpType(opType) {
         SetName(name);
         AddOperand(fromValue);
     }
 
     Value* GetFromOperand() const {
-        return m_FromOperand;
+        return GetOperand(0);
     }
 
     Type* GetFromType() const {
-        return m_FromOperand->GetType();
+        return GetOperand(0)->GetType();
     }
 
     Type* GetToType() const {
         return GetType();
+    }
+
+    OpType GetOpType() const {
+        return m_OpType;
     }
 
     std::string GetOpTypeStr() const {
@@ -63,6 +67,8 @@ public:
             case OpType::kPtrToI:  return "ptrtoi";
             case OpType::kIToPtr:  return "itoptr";
 
+            case OpType::kBitcast:  return "bitcast";
+
             default: {
                 return "";
             }
@@ -71,8 +77,6 @@ public:
 
 private:
     OpType m_OpType = OpType::kNone;
-
-    Value* m_FromOperand;
 };
 
 }  // namespace ir

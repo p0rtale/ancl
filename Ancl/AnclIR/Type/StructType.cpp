@@ -3,11 +3,12 @@
 
 using namespace ir;
 
+
 StructType::StructType(IRProgram& program, const std::vector<Type*>& elementTypes)
     : Type(program), m_ElementTypes(elementTypes) {}
 
 StructType* StructType::Create(const std::vector<Type*>& elementTypes) {
-    auto& program = elementTypes.at(0)->GetProgram();
+    IRProgram& program = elementTypes.at(0)->GetProgram();
     return program.CreateType<StructType>(program, elementTypes);
 }
 

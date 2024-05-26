@@ -24,6 +24,8 @@ public:
         // TODO: Cases uses?
         AddOperand(value);
         AddOperand(defaultBlock);
+
+        // TODO: Link Basic Blocks
     }
 
     Value* GetValue() const {

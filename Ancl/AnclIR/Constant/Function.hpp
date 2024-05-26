@@ -50,7 +50,14 @@ public:
         if (m_BasicBlocks.empty()) {
             return nullptr;
         }
-        return m_BasicBlocks[0];
+        return m_BasicBlocks.front();
+    }
+
+    BasicBlock* GetLastBlock() const {
+        if (m_BasicBlocks.empty()) {
+            return nullptr;
+        }
+        return m_BasicBlocks.back();
     }
 
     std::vector<BasicBlock*> GetBasicBlocks() const {

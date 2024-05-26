@@ -27,18 +27,18 @@ public:
     CompareInstruction(OpType opType, const std::string& name,
                        Value* left, Value* right, BasicBlock* basicBlock)
             : Instruction(IntType::Create(left->GetProgram(), 1), basicBlock),
-              m_OpType(opType), m_LeftOperand(left), m_RightOperand(right) {
+              m_OpType(opType) {
         SetName(name);
         AddOperand(left);
         AddOperand(right);
     }
 
     Value* GetLeftOperand() const {
-        return m_LeftOperand;
+        return GetOperand(0);
     }
 
     Value* GetRightOperand() const {
-        return m_RightOperand;
+        return GetOperand(1);
     }
 
     OpType GetOpType() const {
@@ -112,9 +112,6 @@ public:
 
 private:
     OpType m_OpType = OpType::kNone;
-
-    Value* m_LeftOperand;
-    Value* m_RightOperand;
 };
 
 }  // namespace ir

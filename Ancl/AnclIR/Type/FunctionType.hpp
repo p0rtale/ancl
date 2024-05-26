@@ -19,6 +19,10 @@ public:
 
     std::vector<Type*> GetParamTypes() const;
 
+    bool HasParameters() const {
+        return !m_ParamTypes.empty();
+    }
+
     std::size_t GetParamNumber() const;
 
     bool IsVariadic() const;

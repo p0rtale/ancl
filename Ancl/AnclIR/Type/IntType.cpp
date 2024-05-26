@@ -4,13 +4,13 @@
 using namespace ir;
 
 
-IntType::IntType(IRProgram& program, size_t bytesNumber)
+IntType::IntType(IRProgram& program, uint64_t bytesNumber)
     : Type(program), m_BytesNumber(bytesNumber) {}
 
-IntType* IntType::Create(IRProgram& program, size_t bytesNumber) {
+IntType* IntType::Create(IRProgram& program, uint64_t bytesNumber) {
     return program.CreateType<IntType>(program, bytesNumber);
 }
 
-size_t IntType::GetBytesNumber() const {
+uint64_t IntType::GetBytesNumber() const {
     return m_BytesNumber;
 }

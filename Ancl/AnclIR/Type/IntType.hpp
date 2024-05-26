@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstddef>
+#include <cstdint>
 
 #include <Ancl/AnclIR/Type/Type.hpp>
 
@@ -11,14 +11,14 @@ class IRProgram;
 
 class IntType: public Type {
 public:
-    IntType(IRProgram& program, size_t bytesNumber);
+    IntType(IRProgram& program, uint64_t bytesNumber);
 
-    static IntType* Create(IRProgram& program, size_t bytesNumber);
+    static IntType* Create(IRProgram& program, uint64_t bytesNumber);
 
-    size_t GetBytesNumber() const;
+    uint64_t GetBytesNumber() const;
 
 private:
-    size_t m_BytesNumber = 0;
+    uint64_t m_BytesNumber = 0;
 };
 
 }  // namespace ir

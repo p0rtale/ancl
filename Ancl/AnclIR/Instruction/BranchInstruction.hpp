@@ -26,7 +26,6 @@ public:
     BasicBlock* GetFalseBasicBlock() const;
 
 private:
-    Value* m_Condition = nullptr;
     BasicBlock* m_TrueBB = nullptr;
     BasicBlock* m_FalseBB = nullptr;
 };

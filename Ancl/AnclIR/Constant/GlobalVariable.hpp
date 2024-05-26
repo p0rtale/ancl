@@ -19,37 +19,55 @@ public:
         SetName(name);
     }
 
-    bool HasInit() const {
-        return !m_Init.empty();
-    }
-
-    std::string GetInitString() const {
-        return m_InitString;
-    }
-
-    bool IsStringInit() const {
-        return m_IsStringInit;
+    void SetInit(Constant* init) {
+        m_Init = std::vector{init};
     }
 
     Constant* GetInit() const {
         return m_Init.at(0);
     }
 
+    bool HasInit() const {
+        return !m_Init.empty();
+    }
+
+    void SetInitString(const std::string& str) {
+        m_IsInitString = true;
+        m_InitString = str;
+    }
+
+    std::string GetInitString() const {
+        return m_InitString;
+    }
+
+    bool IsInitString() const {
+        return m_IsInitString;
+    }
+
+    void SetInitList(const std::vector<Constant*>& init) {
+        m_IsInitList = true;
+        m_Init = init;
+    }
+
     std::vector<Constant*> GetInitList() const {
         return m_Init;
     }
 
-    void SetInit(const std::string& str) {
-        m_IsStringInit = true;
-        m_InitString = str;
+    bool IsInitList() const {
+        return m_IsInitList;
     }
 
-    void SetInit(Constant* init) {
-        m_Init = std::vector{init};
+    void SetInitVariable(GlobalVariable* variable) {
+        m_InitVariable = variable;
+        m_IsInitVariable = true;
     }
 
-    void SetInit(const std::vector<Constant*>& init) {
-        m_Init = init;
+    GlobalVariable* GetInitVariable() {
+        return m_InitVariable;
+    }
+
+    bool IsInitVariable() const {
+        return m_IsInitVariable;
     }
 
     bool IsConst() const {
@@ -62,9 +80,13 @@ public:
 
 private:
     std::vector<Constant*> m_Init;
+    bool m_IsInitList = false;
 
     std::string m_InitString;
-    bool m_IsStringInit = false;
+    bool m_IsInitString = false;
+
+    GlobalVariable* m_InitVariable;
+    bool m_IsInitVariable = false;
 
     bool m_IsConst = false;
 };

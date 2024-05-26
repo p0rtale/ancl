@@ -29,6 +29,14 @@ public:
         m_Operands.push_back(operand);
     }
 
+    bool HasOperand(size_t index) const {
+        return index < m_Operands.size();
+    }
+
+    Value* GetOperand(size_t index) const {
+        return m_Operands.at(index);
+    }
+
     void SetOperand(Value* operand, size_t index) {
         m_Operands[index] = operand;
     }
