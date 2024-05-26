@@ -9,7 +9,7 @@
 #include <Ancl/SymbolTable/SymbolTable.hpp>
 
 
-namespace ancl {
+namespace ast {
 
 class SymbolTreeDotConverter {
 public:
@@ -74,7 +74,30 @@ private:
         m_OutputStream << "fillcolor=\"#181818\",\n";
         printSpaces();
         m_OutputStream << std::format("label=\"{{{}|", label);
-        for (auto [symbol, type] : symbols) {
+        for (auto [symbol, decl] : symbols) {
+            if (dynamic_cast<EnumConstDeclaration*>(decl)) {
+                m_OutputStream << "EnumConst ";
+            } else if (dynamic_cast<EnumDeclaration*>(decl)) {
+                m_OutputStream << "EnumDecl ";
+            } else if (dynamic_cast<FieldDeclaration*>(decl)) {
+                m_OutputStream << "FieldDecl ";
+            } else if (dynamic_cast<FunctionDeclaration*>(decl)) {
+                m_OutputStream << "FuncDecl ";
+            } else if (dynamic_cast<LabelDeclaration*>(decl)) {
+                m_OutputStream << "LabelDecl ";
+            } else if (dynamic_cast<ParameterDeclaration*>(decl)) {
+                m_OutputStream << "ParamDecl ";
+            } else if (dynamic_cast<RecordDeclaration*>(decl)) {
+                m_OutputStream << "RecordDecl ";
+            } else if (dynamic_cast<TypedefDeclaration*>(decl)) {
+                m_OutputStream << "TypedefDecl ";
+            } else if (dynamic_cast<VariableDeclaration*>(decl)) {
+                m_OutputStream << "VarDecl ";
+            }
+
+            m_OutputStream << std::format("\\\"{}\\\" ", symbol);
+            m_OutputStream << "\\l";
+
             // if (type->IsFunctionType()) {
             //     m_OutputStream << "Function ";
             // } else if (type->IsPointerType()) {
@@ -132,7 +155,7 @@ private:
     }
 
     void printNode(const std::string& ident, const Scope::TSymbols& symbols) {
-        m_CurrentNodeIdent = getId(ident);
+        m_CurrentNodeIdent = getId();
 
         printWithSpaces(std::format("{} [\n", m_CurrentNodeIdent));
 
@@ -149,7 +172,7 @@ private:
         m_PreviousNodeIdent = m_CurrentNodeIdent;
         std::string prevNodeIdent = m_PreviousNodeIdent;
         
-        auto scopeName = scope->GetName();
+        std::string scopeName = scope->GetName();
         printNode(scopeName, scope->GetSymbols());
 
         convertScopes(scope->GetChildrenScopes());   
@@ -167,8 +190,8 @@ private:
         m_CurrentNodeIdent = prevNodeIdent;
     }
 
-    std::string getId(const std::string& ident) {
-        return std::format("{}_{}", ident, m_IdCounter++);
+    std::string getId() {
+        return std::to_string(m_IdCounter++);
     }
 
 private:
@@ -185,4 +208,4 @@ private:
     const SymbolTable& m_Tree;
 };
 
-}  // namespace ancl
+}  // namespace ast
