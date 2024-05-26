@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cassert>
+
 #include <vector>
 #include <list>
 #include <unordered_map>
@@ -15,6 +17,8 @@
 #include <Ancl/AnclIR/Instruction/PhiInstruction.hpp>
 
 #include <Ancl/Graph/DominatorTree.hpp>
+
+#include <Ancl/Logger/Logger.hpp>
 
 
 namespace ir {
@@ -52,16 +56,17 @@ private:
             ++stacksGrowth[alloca];
         }
 
-        auto instructions = block->GetInstructions();
+        auto& instructions = block->GetInstructionsRef();
         for (auto it = instructions.begin(); it != instructions.end();) {
             auto instr = *it;
 
             bool isPromotableInstr = false;
             if (auto* store = dynamic_cast<StoreInstruction*>(instr)) {
-                auto* toOperand = store->GetToOperand();
+                auto* toOperand = store->GetAddressOperand();
                 if (auto* alloca = dynamic_cast<AllocaInstruction*>(toOperand)) {
                     if (isPromotable(alloca)) {
-                        m_AllocaValueStacks[alloca].push(store->GetFromOperand());
+                        // TODO: Check LOAD
+                        m_AllocaValueStacks[alloca].push(store->GetValueOperand());
                         ++stacksGrowth[alloca];
                         isPromotableInstr = true;
                     }
@@ -70,6 +75,10 @@ private:
                 auto* ptrOperand = load->GetPtrOperand();
                 if (auto* alloca = dynamic_cast<AllocaInstruction*>(ptrOperand)) {
                     if (isPromotable(alloca)) {
+                        if (m_AllocaValueStacks[alloca].empty()) {
+                            // TODO: Set some empty Value
+                            ANCL_CRITICAL("Undefined behavior: Alloca without Store was promoted");
+                        }
                         m_LoadValueMap[load] = m_AllocaValueStacks[alloca].top();
                         isPromotableInstr = true;
                     }
@@ -161,7 +170,7 @@ private:
         assert(allocaPtrType);
 
         auto& program = m_Function->GetProgram();
-        auto* phiInstr = program.CreateValue<PhiInstruction>(allocaPtrType->GetSubType(), "", block);
+        auto* phiInstr = program.CreateValue<PhiInstruction>(allocaPtrType->GetSubType(), "phi", block);
         block->AddPhiFunction(phiInstr);
 
         auto preds = block->GetPredecessors();
@@ -216,7 +225,7 @@ private:
                         }
                     }
                 } else if (auto* store = dynamic_cast<StoreInstruction*>(instruction)) {
-                    if (auto* alloca = dynamic_cast<AllocaInstruction*>(store->GetToOperand())) {
+                    if (auto* alloca = dynamic_cast<AllocaInstruction*>(store->GetAddressOperand())) {
                         if (!m_BadAllocas[alloca]) {
                             m_PromotableAllocaInfo[alloca].Stores.push_back(store);
                             m_PromotableAllocaInfo[alloca].DefBlocks.insert(block);
@@ -247,7 +256,7 @@ private:
                 return false;
             }
         } else if (auto* store = dynamic_cast<StoreInstruction*>(user)) {
-            if (store->GetFromOperand() == alloca) {
+            if (store->GetValueOperand() == alloca) {
                 return false;
             }
             if (store->IsVolatile()) {
