@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <vector>
+
 #include <Ancl/AnclIR/IR.hpp>
 
 
@@ -8,24 +11,26 @@ namespace ir {
 class Alignment {
 public:
     struct StructLayout {
-        size_t Size;
-        size_t Alignment;
-        std::vector<size_t> Offsets;
+        uint64_t Size;
+        uint64_t Alignment;
+        std::vector<uint64_t> Offsets;
     };
 
 public:
-    static size_t Align(size_t minSize, size_t alignment);
+    static uint64_t Align(uint64_t minSize, uint64_t alignment);
 
     static StructLayout GetStructLayout(StructType* structType);
 
     // TODO: move to Target Machine
-    static constexpr size_t GetPointerTypeSize() {
+    static constexpr uint64_t GetPointerTypeSize() {
         return 8;
     }
 
-    static size_t GetTypeSize(Type* type);
+    static uint64_t GetTypeSize(Type* type);
 
-    static size_t GetTypeAlignment(Type* type);
+    static uint64_t GetTypeBitSize(Type* type);
+
+    static uint64_t GetTypeAlignment(Type* type);
 };
 
 }  // namespace ir
