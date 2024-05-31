@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include <Ancl/Grammar/AST/Declaration/FieldDeclaration.hpp>
 #include <Ancl/Grammar/AST/Declaration/TagDeclaration.hpp>
 
 
@@ -9,61 +10,24 @@ namespace ast {
 
 class RecordDeclaration: public TagDeclaration {
 public:
-    RecordDeclaration(bool isUnion = false, bool isDefinition = false)
-        : m_IsUnion(isUnion), m_IsDefinition(isDefinition) {}
+    RecordDeclaration(bool isUnion = false, bool isDefinition = false);
 
-    void Accept(AstVisitor& visitor) override {
-        visitor.Visit(*this);
-    }
+    void Accept(AstVisitor& visitor) override;
 
-    bool IsDefinition() const override {
-        return m_IsDefinition;
-    }
+    bool IsDefinition() const override;
 
-    void AddInternalTagDecl(TagDeclaration* tagDecl) {
-        m_InternalDecls.push_back(tagDecl);
-    }
+    void AddInternalTagDecl(TagDeclaration* tagDecl);
+    void AddField(FieldDeclaration* field);
 
-    void AddField(FieldDeclaration* field) {
-        m_InternalDecls.push_back(field);
-        field->SetPosition(m_FieldsNum++);
-    }
+    FieldDeclaration* GetField(const std::string& name);
 
-    FieldDeclaration* GetField(const std::string& name) {
-        for (Declaration* decl : m_InternalDecls) {
-            auto* field = dynamic_cast<FieldDeclaration*>(decl);
-            if (field && field->GetName() == name) {
-                return field;
-            }
-        }
-        return nullptr;
-    }
+    std::vector<FieldDeclaration*> GetFields() const;
 
-    std::vector<FieldDeclaration*> GetFields() const {
-        std::vector<FieldDeclaration*> fields;
-        for (Declaration* decl : m_InternalDecls) {
-            if (auto* field = dynamic_cast<FieldDeclaration*>(decl)) {
-                fields.push_back(field);
-            }
-        }
-        return fields;
-    }
+    std::vector<Declaration*> GetInternalDecls() const;
 
-    std::vector<Declaration*> GetInternalDecls() const {
-        return m_InternalDecls;
-    }
-
-    bool IsStruct() const override {
-        return !m_IsUnion;
-    }
-
-    bool IsUnion() const override {
-        return m_IsUnion;
-    }
-
-    bool IsEnum() const override {
-        return false;
-    }
+    bool IsStruct() const override;
+    bool IsUnion() const override;
+    bool IsEnum() const override;
 
 private:
     // TODO: simplify

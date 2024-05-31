@@ -9,28 +9,16 @@ namespace ast {
 
 class CallExpression: public Expression {
 public:
-    CallExpression(Expression* callee, std::vector<Expression*> arguments)
-        : m_Callee(callee), m_Arguments(arguments) {}
+    CallExpression(Expression* callee, std::vector<Expression*> arguments);
 
-    void Accept(AstVisitor& visitor) override {
-        visitor.Visit(*this);
-    }
+    void Accept(AstVisitor& visitor) override;
 
-    Expression* GetCallee() const {
-        return m_Callee;
-    }
+    Expression* GetCallee() const;
 
-    void SetArgument(size_t index, Expression* argExpr) {
-        m_Arguments.at(index) = argExpr;
-    }
+    void SetArgument(size_t index, Expression* argExpr);
+    Expression* GetArgument(size_t index);
 
-    Expression* GetArgument(size_t index) {
-        return m_Arguments.at(index);
-    }
-
-    std::vector<Expression*> GetArguments() const {
-        return m_Arguments;
-    }
+    std::vector<Expression*> GetArguments() const;
 
 private:
     Expression* m_Callee;

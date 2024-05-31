@@ -13,38 +13,18 @@ public:
     };
 
 public:
-    CastExpression(Expression* subExpression, QualType toType)
-            : m_SubExpression(subExpression), m_ToType(toType) {
-        SetType(m_ToType);
-        m_ToType.RemoveQualifiers();
-    }
+    CastExpression(Expression* subExpression, QualType toType);
 
-    CastExpression(Expression* subExpression, Kind castKind)
-            : m_SubExpression(subExpression), m_ToType(subExpression->GetType()),
-              m_CastKind(castKind) {
-        SetType(m_ToType);
-        m_ToType.RemoveQualifiers();
-    }
+    CastExpression(Expression* subExpression, Kind castKind);
 
-    void Accept(AstVisitor& visitor) override {
-        visitor.Visit(*this);
-    }
+    void Accept(AstVisitor& visitor) override;
 
-    bool IsLValueToRValue() const {
-        return m_CastKind == Kind::kLValueToRValue;
-    }
+    bool IsLValueToRValue() const;
 
-    void SetSubExpression(Expression* subExpression) {
-        m_SubExpression = subExpression;
-    }
+    void SetSubExpression(Expression* subExpression);
+    Expression* GetSubExpression() const;
 
-    Expression* GetSubExpression() const {
-        return m_SubExpression;
-    }
-
-    QualType GetToType() const {
-        return m_ToType;
-    }
+    QualType GetToType() const;
 
 private:
     Expression* m_SubExpression;

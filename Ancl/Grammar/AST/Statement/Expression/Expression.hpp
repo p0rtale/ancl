@@ -10,38 +10,18 @@ class Expression: public ValueStatement {
 public:
     virtual ~Expression() = default;
 
-    void Accept(AstVisitor& visitor) override {
-        visitor.Visit(*this);
-    }
+    void Accept(AstVisitor& visitor) override;
 
-    QualType GetType() const {
-        return m_Type;
-    }
+    QualType GetType() const;
+    void SetType(QualType type);
 
-    void SetType(QualType type) {
-        m_Type = type;
-    }
+    void SetLValue();
+    void SetRValue();
 
-    bool IsLValue() const {
-        return m_IsLValue;
-    }
+    bool IsLValue() const;
+    bool IsRValue() const;
 
-    bool IsRValue() const {
-        return !m_IsLValue;
-    }
-
-    bool IsModifiableLValue() const {
-        // TODO: check type
-        return m_IsLValue;
-    }
-
-    void SetLValue() {
-        m_IsLValue = true;
-    }
-
-    void SetRValue() {
-        m_IsLValue = false;
-    }
+    bool IsModifiableLValue() const;
 
 private:
     QualType m_Type;

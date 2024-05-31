@@ -10,31 +10,18 @@ namespace ast {
 
 class ConstExpression: public Expression {
 public:
-    ConstExpression(Expression* expression)
-        : m_Expression(expression) {}
+    ConstExpression(Expression* expression);
 
-    ConstExpression(Value value)
-        : m_Value(value) {}
+    ConstExpression(Value value);
 
-    void Accept(AstVisitor& visitor) override {
-        visitor.Visit(*this);
-    }
+    void Accept(AstVisitor& visitor) override;
 
-    Expression* GetExpression() const {
-        return m_Expression;
-    }
+    Expression* GetExpression() const;
 
-    void SetValue(Value value) {
-        m_Value = value;
-    }
+    void SetValue(Value value);
+    Value GetValue() const;
 
-    Value GetValue() const {
-        return *m_Value;
-    }
-
-    bool IsEvaluated() const {
-        return m_Value.has_value();
-    }
+    bool IsEvaluated() const;
 
 private:
     Expression* m_Expression;

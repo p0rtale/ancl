@@ -8,37 +8,18 @@ namespace ast {
 class ConditionalExpression: public Expression {
 public:
     ConditionalExpression(Expression* condition, Expression* trueExpression,
-                          Expression* falseExpression)
-        : m_Condition(condition), m_TrueExpression(trueExpression),
-          m_FalseExpression(falseExpression) {}
+                          Expression* falseExpression);
 
-    void Accept(AstVisitor& visitor) override {
-        visitor.Visit(*this);
-    }
+    void Accept(AstVisitor& visitor) override;
 
-    void SetCondition(Expression* condition) {
-        m_Condition = condition;
-    }
+    void SetCondition(Expression* condition);
+    Expression* GetCondition() const;
 
-    Expression* GetCondition() const {
-        return m_Condition;
-    }
+    void SetTrueExpression(Expression* trueExpr);
+    Expression* GetTrueExpression() const;
 
-    void SetTrueExpression(Expression* trueExpr) {
-        m_TrueExpression = trueExpr;
-    }
-
-    Expression* GetTrueExpression() const {
-        return m_TrueExpression;
-    }
-
-    void SetFalseExpression(Expression* falseExpr) {
-        m_FalseExpression = falseExpr;
-    }
-
-    Expression* GetFalseExpression() const {
-        return m_FalseExpression;
-    }
+    void SetFalseExpression(Expression* falseExpr);
+    Expression* GetFalseExpression() const;
 
 private:
     Expression* m_Condition;

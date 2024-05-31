@@ -23,48 +23,15 @@ public:
     };
 
 public:
-    UnaryExpression(Expression* operand, OpType opType)
-        : m_Operand(operand), m_OpType(opType) {}
+    UnaryExpression(Expression* operand, OpType opType);
 
-    void Accept(AstVisitor& visitor) override {
-        visitor.Visit(*this);
-    }
+    void Accept(AstVisitor& visitor) override;
 
-    void SetOperand(Expression* operand) {
-        m_Operand = operand;
-    }
+    void SetOperand(Expression* operand);
+    Expression* GetOperand() const;
 
-    Expression* GetOperand() const {
-        return m_Operand;
-    }
-
-    OpType GetOpType() const {
-        return m_OpType;
-    }
-
-    std::string GetOpTypeStr() const {
-        switch (m_OpType) {
-            case OpType::kNone:  return "None";
-
-            case OpType::kPreInc:   return "prefix ++";
-            case OpType::kPreDec:   return "prefix --";
-            case OpType::kPostInc:  return "postfix ++";
-            case OpType::kPostDec:  return "postfix --";
-
-            case OpType::kAddrOf:  return "&";
-            case OpType::kDeref:   return "*";
-            case OpType::kPlus:    return "+";
-            case OpType::kMinus:   return "-";
-            case OpType::kNot:     return "~";
-            case OpType::kLogNot:  return "!";
-
-            case OpType::kSizeof:  return "sizeof";
-
-            default: {
-                return "";
-            }
-        }
-    }
+    OpType GetOpType() const;
+    std::string GetOpTypeStr() const;
 
 private:
     Expression* m_Operand;

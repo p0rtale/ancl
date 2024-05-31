@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert>
 #include <vector>
 
 #include <Ancl/Grammar/AST/Statement/Expression/Expression.hpp>
@@ -12,29 +11,16 @@ class ExpressionList: public Expression {
 public:
     ExpressionList() = default;
 
-    ExpressionList(const std::vector<Expression*>& expressions)
-        : m_Expressions(expressions) {}
+    ExpressionList(const std::vector<Expression*>& expressions);
 
-    void Accept(AstVisitor& visitor) override {
-        visitor.Visit(*this);
-    }
+    void Accept(AstVisitor& visitor) override;
 
-    void SetExpression(Expression* expression, size_t index) {
-        m_Expressions.at(index) = expression;
-    }
+    void SetExpression(Expression* expression, size_t index);
+    void AddExpression(Expression* expression);
 
-    void AddExpression(Expression* expression) {
-        m_Expressions.push_back(expression);
-    }
+    Expression* GetLastExpression();
 
-    Expression* GetLastExpression() {
-        assert(!m_Expressions.empty());
-        return m_Expressions.back();
-    }
-
-    std::vector<Expression*> GetExpressions() const {
-        return m_Expressions;
-    }
+    std::vector<Expression*> GetExpressions() const;
 
 private:
     std::vector<Expression*> m_Expressions;
