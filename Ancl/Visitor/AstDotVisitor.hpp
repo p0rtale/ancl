@@ -258,19 +258,16 @@ public:
         printNode("for_statement", "ForStmt",
                   forStmt.GetLocation().ToString());
 
-        auto init = forStmt.GetInit();
-        if (init) {
-            acceptNode(init, "Init");
+        if (forStmt.HasInit()) {
+            acceptNode(forStmt.GetInit(), "Init");
         }
         
-        auto condition = forStmt.GetCondition();
-        if (condition) {
-            acceptNode(condition, "Condition");
+        if (forStmt.HasCondition()) {
+            acceptNode(forStmt.GetCondition(), "Condition");
         }
 
-        auto step = forStmt.GetStep();
-        if (step) {
-            acceptNode(step, "Step");
+        if (forStmt.HasStep()) {
+            acceptNode(forStmt.GetStep(), "Step");
         }
 
         acceptNode(forStmt.GetBody(), "Body");
@@ -313,7 +310,9 @@ public:
         printNode("return_statement", "ReturnStmt",
                   returnStmt.GetLocation().ToString());
 
-        acceptNode(returnStmt.GetReturnExpression(), "ReturnExpr");
+        if (returnStmt.HasReturnExpression()) {
+            acceptNode(returnStmt.GetReturnExpression(), "ReturnExpr");
+        }
     }
 
     void Visit(SwitchCase& switchCase) override {
