@@ -15,14 +15,17 @@ namespace gen {
 
 class MIRGenerator {
 public:
-    MIRGenerator(ir::IRProgram& irProgram, target::TargetMachine* targetMachine)
-        : m_IRProgram(irProgram), m_TargetMachine(targetMachine) {}
+    MIRGenerator(MIRProgram& machineProgram, ir::IRProgram& irProgram,
+                 target::TargetMachine* targetMachine)
+        : m_MIRProgram(machineProgram),
+          m_IRProgram(irProgram),
+          m_TargetMachine(targetMachine) {}
 
-    void Generate(MIRProgram& machineProgram) {
+    void Generate() {
         for (ir::Function* irFunction : m_IRProgram.GetFunctions()) {
             TScopePtr<MFunction> mirFunction = genMFromIRFunction(irFunction);
             if (mirFunction) {
-                machineProgram.AddFunction(std::move(mirFunction));
+                m_MIRProgram.AddFunction(std::move(mirFunction));
             }
         }
 
@@ -34,12 +37,12 @@ public:
             if (globalVar->IsConst()) {
                 globalData.SetConst();
             }
-            machineProgram.AddGlobalDataArea(globalData);
+            m_MIRProgram.AddGlobalDataArea(globalData);
         }
     }
 
 private:
-    void linkIRValueWithVReg(ir::Value* value, uint vreg) {
+    void linkIRValueWithVReg(ir::Value* value, uint64_t vreg) {
         // NB: Unnamed values must be assigned numbers in the AnclIR
         // TODO: Separate renumber pass?
         m_IRValueToVReg[value->GetName()] = vreg;
@@ -49,7 +52,7 @@ private:
         return m_IRValueToVReg.contains(value->GetName());
     }
 
-    uint getIRValueVReg(ir::Value* value) {
+    uint64_t getIRValueVReg(ir::Value* value) {
         return m_IRValueToVReg.at(value->GetName());
     }
 
@@ -72,7 +75,7 @@ private:
         return *globalAddressInstr.GetDefinition();
     }
 
-    MOperand genMVRegisterFromIRConstant(ir::Value* irConstant) {
+    MOperand genMVRegisterFromIRConstant(ir::Value* irConstant, MBasicBlock* mirBasicBlock) {
         uint64_t constantSize = ir::Alignment::GetTypeSize(irConstant->GetType());
 
         if (auto* irIntConstant = dynamic_cast<ir::IntConstant*>(irConstant)) {
@@ -84,9 +87,45 @@ private:
         }
 
         if (auto* irFloatConstant = dynamic_cast<ir::FloatConstant*>(irConstant)) {
+            static uint64_t counter = 0;
+
+            std::string labelName = ".L.float";
+            if (counter > 0) {
+                labelName += "." + std::to_string(counter);
+            }
+
             FloatValue floatValue = irFloatConstant->GetValue();
-            MOperand mirOperand = MOperand::CreateImmFloat(floatValue.GetValue(), constantSize);
-            return mirOperand;      
+            uint64_t floatBytes = ir::Alignment::GetTypeSize(irFloatConstant->GetType());
+
+            GlobalDataArea globalDataArea{labelName};
+            globalDataArea.SetConst();
+            globalDataArea.SetLocal();
+
+            double value = floatValue.GetValue();
+            if (floatValue.IsDoublePrecision()) {
+                globalDataArea.AddDoubleSlot(value);
+            } else {
+                globalDataArea.AddFloatSlot(static_cast<float>(value));
+            }
+
+            m_MIRProgram.AddGlobalDataArea(globalDataArea);
+
+            MFunction* mirFunction = mirBasicBlock->GetFunction();
+
+            MInstruction globalAddressInstr{MInstruction::OpType::kGlobalAddress};
+            globalAddressInstr.AddVirtualRegister(mirFunction->NextVReg(),
+                                            MType::CreatePointer(m_TargetMachine->GetPointerByteSize()));
+            globalAddressInstr.AddGlobalSymbol(labelName);
+            mirBasicBlock->AddInstruction(globalAddressInstr);
+
+            MInstruction mirLoad{MInstruction::OpType::kLoad};
+            auto loadReg = MOperand::CreateRegister(mirFunction->NextVReg(),
+                                    MType::CreateScalar(/*bytes=*/floatBytes, /*isFloat=*/true));
+            mirLoad.AddOperand(loadReg);
+            mirLoad.AddOperand(*globalAddressInstr.GetDefinition());
+            mirBasicBlock->AddInstruction(mirLoad);
+
+            return loadReg;
         }
 
         assert(false);
@@ -111,7 +150,7 @@ private:
 
     MOperand genMVRegisterFromIRInstr(ir::Instruction* irInstruction, MBasicBlock* mirBasicBlock) {
         MFunction* mirFunction = mirBasicBlock->GetFunction();
-        uint vreg = 0;
+        uint64_t vreg = 0;
 
         // TODO: spilled return values?
 
@@ -140,7 +179,7 @@ private:
 
         MInstruction stackAddress{MInstruction::OpType::kStackAddress};
 
-        uint vreg = mirFunction->NextVReg();
+        uint64_t vreg = mirFunction->NextVReg();
         stackAddress.AddVirtualRegister(vreg, MType::CreatePointer(m_TargetMachine->GetPointerByteSize()));
         stackAddress.AddStackIndex(getIRValueVReg(irAlloca));
     
@@ -154,7 +193,7 @@ private:
             if (auto* irGlobalValue = dynamic_cast<ir::GlobalValue*>(irConstant)) {
                 return genMVRegisterFromIRGlobalValueUse(irGlobalValue, mirBasicBlock);
             }
-            return genMVRegisterFromIRConstant(irConstant);
+            return genMVRegisterFromIRConstant(irConstant, mirBasicBlock);
         }
 
         if (auto* irParameter = dynamic_cast<ir::Parameter*>(irValue)) {
@@ -322,9 +361,7 @@ private:
             break;
         case ir::CastInstruction::OpType::kPtrToI:
         case ir::CastInstruction::OpType::kIToPtr:
-            break;
         case ir::CastInstruction::OpType::kBitcast:
-            mirOpType = MInstruction::OpType::kFMul;
             break;
         }
 
@@ -361,17 +398,17 @@ private:
         if (auto* structType = dynamic_cast<ir::StructType*>(toValueType)) {
             // TODO: load return struct from stack
 
-            // uint currentOffset = 0;
+            // uint64_t currentOffset = 0;
             
             // auto fromOperand = genMVRegisterFromIRValue(fromValue, basicBlock);
 
-            // auto vregList = std::vector<uint>{};
+            // auto vregList = std::vector<uint64_t>{};
             // vregList.reserve(structType->GetElementsNumber());
             // for (auto* memberType : structType->GetElementTypes()) {
             //     size_t memberSize = ir::Alignment::GetTypeSize(memberType);
 
             //     auto mirLoad = MInstruction(MInstruction::OpType::kLoad, basicBlock);
-            //     uint vreg = mirFunction->NextVReg();
+            //     uint64_t vreg = mirFunction->NextVReg();
             //     mirLoad.AddRegister(vreg, memberSize);
 
             //     // TODO: deal with bitcast
@@ -406,8 +443,8 @@ private:
         MOperand indexOperand = genMVRegisterFromIRValue(indexValue, basicBlock);
         
         bool isImmediate = false;
-        uint immOffset = 0;
-        uint indexImmValue = 0;
+        uint64_t immOffset = 0;
+        uint64_t indexImmValue = 0;
         if (indexOperand.IsImmediate()) {
             assert(indexOperand.IsImmInteger());
             indexImmValue = indexOperand.GetImmInteger();
@@ -459,6 +496,46 @@ private:
         basicBlock->AddInstruction(memberAddress);
     }
 
+    void genMFromIRMemCopyInstr(ir::MemoryCopyInstruction* memCopyInstr, MBasicBlock* basicBlock) {
+        MFunction* function = basicBlock->GetFunction();
+        function->SetCaller();
+
+        target::TargetABI* targetABI = m_TargetMachine->GetABI();
+        target::RegisterSet* targetRegSet = m_TargetMachine->GetRegisterSet();
+        std::vector<target::Register> argumentRegisters = targetABI->GetIntArgumentRegisters();
+
+        target::Register destReg = argumentRegisters.at(0);
+        MOperand destOperand = genMVRegisterFromIRValue(memCopyInstr->GetDestinationOperand(),
+                                                        basicBlock);
+
+        MInstruction movDestInstr{MInstruction::OpType::kMov};
+        movDestInstr.AddPhysicalRegister(destReg);
+        movDestInstr.AddOperand(destOperand);
+        basicBlock->AddInstruction(movDestInstr);
+
+        target::Register sourceReg = argumentRegisters.at(1);
+        MOperand sourceOperand = genMVRegisterFromIRValue(memCopyInstr->GetSourceOperand(),
+                                                          basicBlock);
+
+        MInstruction movSourceInstr{MInstruction::OpType::kMov};
+        movSourceInstr.AddPhysicalRegister(sourceReg);
+        movSourceInstr.AddOperand(sourceOperand);
+        basicBlock->AddInstruction(movSourceInstr);
+
+        target::Register sizeReg = argumentRegisters.at(2);
+        MOperand sizeOperand = genMVRegisterFromIRValue(memCopyInstr->GetSizeConstant(),
+                                                        basicBlock);
+
+        MInstruction movSizeInstr{MInstruction::OpType::kMov};
+        movSizeInstr.AddPhysicalRegister(sizeReg);
+        movSizeInstr.AddOperand(sizeOperand);
+        basicBlock->AddInstruction(movSizeInstr);
+
+        MInstruction callInstr{MInstruction::OpType::kCall};
+        callInstr.AddFunction("memcpy");
+        basicBlock->AddInstruction(callInstr);
+    }
+
     void genMFromIRPhiInstr(ir::PhiInstruction* phiInstr, MBasicBlock* basicBlock) {
         MInstruction mirPhi{MInstruction::OpType::kPhi};
 
@@ -468,6 +545,11 @@ private:
         // TODO: Remove copy paste (genMVRegisterFromIRValue)
         for (size_t i = 0; i < phiInstr->GetArgumentsNumber(); ++i) {
             ir::Value* argValue = phiInstr->GetIncomingValue(i);
+            if (!argValue) {
+                mirPhi.AddVirtualRegister(0, MType{});
+                continue;
+            }
+
             if (auto* irConstant = dynamic_cast<ir::Constant*>(argValue)) {
                 if (auto* irGlobalValue = dynamic_cast<ir::GlobalValue*>(argValue)) {
                     if (dynamic_cast<ir::Function*>(irGlobalValue)) {
@@ -504,7 +586,7 @@ private:
                 mirPhi.AddVirtualRegister(getIRValueVReg(irParameter), mirType);
             } else if (auto* irInstruction = dynamic_cast<ir::Instruction*>(argValue)) {
                 MFunction* mirFunction = basicBlock->GetFunction();
-                uint vreg = 0;
+                uint64_t vreg = 0;
 
                 if (!hasIRValueVReg(irInstruction)) {
                     vreg = mirFunction->NextVReg();
@@ -576,11 +658,11 @@ private:
                 targetArgReg = targetABI->GetFloatArgumentRegisters()[floatParamIndex++];
             } else {  // Pointer or Integer
                 targetArgReg = targetABI->GetIntArgumentRegisters()[intParamIndex++];
-                uint regSize = targetArgReg.GetBytes();
+                uint64_t regSize = targetArgReg.GetBytes();
                 target::Register subReg = targetArgReg;
-                uint argSize = ir::Alignment::GetTypeSize(argIRType);
+                uint64_t argSize = ir::Alignment::GetTypeSize(argIRType);
                 if (argSize < regSize) {  // Use i32 register for i8 and i16 argument values
-                    uint subRegNumber = targetArgReg.GetSubRegNumbers().at(0);
+                    uint64_t subRegNumber = subReg.GetSubRegNumbers().at(0);
                     subReg = targetRegSet->GetRegister(subRegNumber);
                     regSize = subReg.GetBytes();
                 }
@@ -597,6 +679,14 @@ private:
 
         ir::Function* calleeValue = callInstr->GetCallee();
 
+        auto* calleeType = static_cast<ir::FunctionType*>(calleeValue->GetType());
+        if (calleeType->IsVariadic()) {
+            MInstruction vectorInfoMovInstr{MInstruction::OpType::kMov};
+            vectorInfoMovInstr.AddPhysicalRegister(targetABI->GetVectorNumberInfoRegister());
+            vectorInfoMovInstr.AddImmInteger(floatParamIndex);
+            basicBlock->AddInstruction(vectorInfoMovInstr);
+        }
+
         MInstruction mirCall{MInstruction::OpType::kCall};
         mirCall.AddFunction(calleeValue->GetName());
         basicBlock->AddInstruction(mirCall);
@@ -606,7 +696,7 @@ private:
             return;
         }
 
-        uint callResultSize = ir::Alignment::GetTypeSize(callResultIRType);
+        uint64_t callResultSize = ir::Alignment::GetTypeSize(callResultIRType);
         bool isFloat = dynamic_cast<ir::FloatType*>(callResultIRType);
 
         target::Register targetCallResultReg;
@@ -614,10 +704,10 @@ private:
             targetCallResultReg = targetABI->GetFloatReturnRegisters()[0];
         } else {  // Pointer or Integer
             targetCallResultReg = targetABI->GetIntReturnRegisters()[0];
-            uint regSize = targetCallResultReg.GetBytes();
+            uint64_t regSize = targetCallResultReg.GetBytes();
             target::Register subReg = targetCallResultReg;
             while (callResultSize < regSize) {
-                uint subRegNumber = targetCallResultReg.GetSubRegNumbers().at(0);
+                uint64_t subRegNumber = subReg.GetSubRegNumbers().at(0);
                 subReg = targetRegSet->GetRegister(subRegNumber);
                 regSize = subReg.GetBytes();
             }
@@ -627,11 +717,6 @@ private:
         }
 
         MOperand callResultOperand = genMVRegisterFromIRValue(callInstr, basicBlock);
-
-        auto movType = MInstruction::OpType::kMov;
-        if (targetCallResultReg.IsFloat()) {
-            movType = MInstruction::OpType::kFMov;
-        }
 
         MInstruction movInstr{isFloat ? MInstruction::OpType::kFMov : MInstruction::OpType::kMov};
         movInstr.AddOperand(callResultOperand);
@@ -659,11 +744,11 @@ private:
             targetReturnReg = targetABI->GetFloatReturnRegisters()[0];
         } else {  // Pointer or Integer
             targetReturnReg = targetABI->GetIntReturnRegisters()[0];
-            uint regSize = targetReturnReg.GetBytes();
+            uint64_t regSize = targetReturnReg.GetBytes();
             target::Register subReg = targetReturnReg;
-            uint returnSize = ir::Alignment::GetTypeSize(returnIRType);
+            uint64_t returnSize = ir::Alignment::GetTypeSize(returnIRType);
             if (returnSize < regSize) {  // Use i32 register for i8 and i16 return values
-                uint subRegNumber = targetReturnReg.GetSubRegNumbers().at(0);
+                uint64_t subRegNumber = subReg.GetSubRegNumbers().at(0);
                 subReg = targetRegSet->GetRegister(subRegNumber);
                 regSize = subReg.GetBytes();
             }
@@ -681,8 +766,6 @@ private:
     }
 
     void genMFromIRInstruction(ir::Instruction* instruction, MBasicBlock* basicBlock) {
-        // TODO: memcpy
-
         if (auto* allocaInstr = dynamic_cast<ir::AllocaInstruction*>(instruction)) {
             genMFromIRAllocaInstr(allocaInstr, basicBlock);
         } else if (auto* binaryInstr = dynamic_cast<ir::BinaryInstruction*>(instruction)) {
@@ -697,6 +780,10 @@ private:
             genMFromIRLoadInstr(loadInstr, basicBlock);
         } else if (auto* memberInstr = dynamic_cast<ir::MemberInstruction*>(instruction)) {
             genMFromIRMemberInstr(memberInstr, basicBlock);
+        } else if (auto* memCopyInstr = dynamic_cast<ir::MemoryCopyInstruction*>(instruction)) {
+            genMFromIRMemCopyInstr(memCopyInstr, basicBlock);
+        } else if (auto* memSetInstr = dynamic_cast<ir::MemorySetInstruction*>(instruction)) {
+            ANCL_CRITICAL("MachineIR: Memset is not implemented :(");
         } else if (auto* phiInstr = dynamic_cast<ir::PhiInstruction*>(instruction)) {
             genMFromIRPhiInstr(phiInstr, basicBlock);
         } else if (auto* branchInstr = dynamic_cast<ir::BranchInstruction*>(instruction)) {
@@ -708,7 +795,7 @@ private:
         } else if (auto* returnInstr = dynamic_cast<ir::ReturnInstruction*>(instruction)) {
             genMFromIRReturnInstr(returnInstr, basicBlock);
         } else {
-            assert(false);
+            ANCL_CRITICAL("MachineIR: Some instruction is not implemented");
         }
     }
 
@@ -732,7 +819,6 @@ private:
         ir::Alignment::StructLayout structLayout = ir::Alignment::GetStructLayout(irStructType);
         uint64_t structSize = structLayout.Size;
 
-        assert(globalVar->IsInitList() && "GlobalVariable init must be a list");
         std::vector<ir::Constant*> initList = globalVar->GetInitList();
         if (initList.empty()) {
             globalDataArea.AddIntegerSlot(structSize, 0);
@@ -774,7 +860,6 @@ private:
 
         uint64_t size = ir::Alignment::GetTypeSize(irArrayType);
 
-        assert(globalVar->IsInitList() && "GlobalVariable init must be a list");
         std::vector<ir::Constant*> initList = globalVar->GetInitList();
         if (initList.empty()) {
             globalDataArea.AddIntegerSlot(size, 0);
@@ -814,6 +899,7 @@ private:
         if (globalVar->IsInitVariable()) {
             ir::GlobalVariable* initVariable = globalVar->GetInitVariable();
             globalDataArea.AddLabelSlot(scalarSize, initVariable->GetName());
+            return globalDataArea;
         }
 
         if (!globalVar->HasInit()) {
@@ -833,7 +919,6 @@ private:
 
         auto mirFunctionScope = CreateScope<MFunction>(irFunction->GetName());
         MFunction* mirFunction = mirFunctionScope.get();
-
 
         for (ir::BasicBlock* basicBlock : irFunction->GetBasicBlocks()) {
             const std::string& name = basicBlock->GetName();
@@ -869,7 +954,7 @@ private:
         ir::Type* elementType = allocaPtrType->GetSubType();
 
         MFunction* mirFunction = basicBlock->GetFunction();
-        uint vreg = mirFunction->NextVReg();
+        uint64_t vreg = mirFunction->NextVReg();
         linkIRValueWithVReg(allocaInstr, vreg);
 
         mirFunction->AddLocalData(vreg, ir::Alignment::GetTypeSize(elementType),
@@ -877,6 +962,11 @@ private:
     }
 
     void updateMIRFunctionParameters(ir::Function* irFunction, MFunction* mirFunction) {
+        auto* irFunctionType = static_cast<ir::FunctionType*>(irFunction->GetType());
+        if (irFunctionType->IsVariadic()) {
+            mirFunction->SetVariadic();
+        }
+
         size_t intParamIndex = 0;
         size_t floatParamIndex = 0;
         for (ir::Parameter* irParam : irFunction->GetParameters()) {
@@ -895,13 +985,13 @@ private:
 
             // if (dynamic_cast<ir::StructType*>(paramIRType)) {
             //     auto targetABI = m_TargetMachine->GetABI();
-            //     uint maxStructParamSize = targetABI->GetMaxStructParamSize();
-            //     uint structParamNum = maxStructParamSize / pointerSize;
+            //     uint64_t maxStructParamSize = targetABI->GetMaxStructParamSize();
+            //     uint64_t structParamNum = maxStructParamSize / pointerSize;
 
-            //     auto paramVRegs = std::vector<uint>{};
+            //     auto paramVRegs = std::vector<uint64_t>{};
             //     paramVRegs.reserve(structParamNum);
-            //     for (uint i = 0; i < structParamNum; ++i) {
-            //         uint vreg = mirFunction->AddParameter(MType::CreateScalar(paramSize));
+            //     for (uint64_t i = 0; i < structParamNum; ++i) {
+            //         uint64_t vreg = mirFunction->AddParameter(MType::CreateScalar(paramSize));
             //         paramVRegs.push_back(vreg);
             //     }
             //     linkIRParamWithVRegs(irParam, paramVRegs);
@@ -915,10 +1005,10 @@ private:
                 targetParamReg = targetABI->GetFloatArgumentRegisters()[floatParamIndex++];
             } else {  // Pointer or Integer
                 targetParamReg = targetABI->GetIntArgumentRegisters()[intParamIndex++];
-                uint regSize = targetParamReg.GetBytes();
+                uint64_t regSize = targetParamReg.GetBytes();
                 target::Register subReg = targetParamReg;
                 while (paramSize < regSize) {
-                    uint subRegNumber = targetParamReg.GetSubRegNumbers().at(0);
+                    uint64_t subRegNumber = subReg.GetSubRegNumbers().at(0);
                     subReg = targetRegSet->GetRegister(subRegNumber);
                     regSize = subReg.GetBytes();
                 }
@@ -937,24 +1027,24 @@ private:
                 mirType = MType::CreateScalar(paramSize, isFloat);
             }
 
-            uint vreg = mirFunction->NextVReg();
+            uint64_t vreg = mirFunction->NextVReg();
             linkIRValueWithVReg(irParam, vreg);
             movInstr.AddVirtualRegister(vreg, mirType);
             movInstr.AddPhysicalRegister(targetParamReg);
             firstBasicBlock->AddInstructionToBegin(movInstr);
 
             // if (dynamic_cast<ir::PointerType*>(paramIRType)) {
-                // uint vreg = mirFunction->AddParameter(MType::CreatePointer(pointerSize), false, isImplicit);
+                // uint64_t vreg = mirFunction->AddParameter(MType::CreatePointer(pointerSize), false, isImplicit);
                 // linkIRValueWithVReg(irParam, vreg);
             // } else if (paramSize <= pointerSize) {
-                // uint vreg = mirFunction->AddParameter(MType::CreateScalar(paramSize), isFloat, isImplicit);
+                // uint64_t vreg = mirFunction->AddParameter(MType::CreateScalar(paramSize), isFloat, isImplicit);
                 // linkIRValueWithVReg(irParam, vreg);
             // } else {  // divide into multiple registers
-                // uint regNum = paramSize / pointerSize;
-                // auto paramVRegs = std::vector<uint>{};
+                // uint64_t regNum = paramSize / pointerSize;
+                // auto paramVRegs = std::vector<uint64_t>{};
                 // paramVRegs.reserve(regNum);
-                // for (uint i = 0; i < regNum; ++i) {
-                //     uint vreg = mirFunction->AddParameter(
+                // for (uint64_t i = 0; i < regNum; ++i) {
+                //     uint64_t vreg = mirFunction->AddParameter(
                 //                     MType::CreateScalar(pointerSize), isFloat, isImplicit);
                 //     paramVRegs.push_back(vreg);
                 // }
@@ -963,16 +1053,17 @@ private:
         }
     }
 
-    // void linkIRParamWithVRegs(ir::Parameter* param, const std::vector<uint>& vregs) {
+    // void linkIRParamWithVRegs(ir::Parameter* param, const std::vector<uint64_t>& vregs) {
     //     m_IRParamToVRegs[param->GetName()] = vregs;
     // }
 
 private:
+    MIRProgram& m_MIRProgram;
     ir::IRProgram& m_IRProgram;
     target::TargetMachine* m_TargetMachine = nullptr;
 
-    std::unordered_map<std::string, uint> m_IRValueToVReg;
-    std::unordered_map<std::string, std::vector<uint>> m_IRValueToVRegList;
+    std::unordered_map<std::string, uint64_t> m_IRValueToVReg;
+    std::unordered_map<std::string, std::vector<uint64_t>> m_IRValueToVRegList;
 
     std::unordered_map<std::string, MBasicBlock*> m_MBBMap;
 };
