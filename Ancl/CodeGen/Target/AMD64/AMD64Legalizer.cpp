@@ -16,16 +16,12 @@ bool AMD64Legalizer::IsLegalizationRequired(SelectionNode* node) {
     MInstruction& nodeInstruction = node->GetInstructionRef();
     switch (nodeInstruction.GetOpType()) {
         case MInstruction::OpType::kMul:
-        case MInstruction::OpType::kFMul:
         case MInstruction::OpType::kSDiv:
         case MInstruction::OpType::kUDiv:
-        case MInstruction::OpType::kFDiv:
         case MInstruction::OpType::kSRem:
         case MInstruction::OpType::kURem:
         case MInstruction::OpType::kAdd:
-        case MInstruction::OpType::kFAdd:
         case MInstruction::OpType::kSub:
-        case MInstruction::OpType::kFSub:
         case MInstruction::OpType::kShiftL:
         case MInstruction::OpType::kLShiftR:
         case MInstruction::OpType::kAShiftR:
@@ -34,8 +30,6 @@ bool AMD64Legalizer::IsLegalizationRequired(SelectionNode* node) {
         case MInstruction::OpType::kOr:
         case MInstruction::OpType::kCmp:
         case MInstruction::OpType::kUCmp:
-        case MInstruction::OpType::kFCmp:
-        case MInstruction::OpType::kFMov:
         case MInstruction::OpType::kZExt:
             return true;
 

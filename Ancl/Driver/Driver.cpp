@@ -211,8 +211,8 @@ void Driver::AllocateRegisters() {
         for (auto& function : m_MIRProgram.GetFunctions()) {
             std::string functionName = function->GetName();
 
-            // gen::GlobalColoringAllocator floatAllocator(*function, m_TargetMachine.get(), /*isFloatClass=*/true);
-            // floatAllocator.Allocate(m_FunctionsLiveOUT.at(functionName));
+            gen::GlobalColoringAllocator floatAllocator(*function, m_TargetMachine.get(), /*isFloatClass=*/true);
+            floatAllocator.Allocate(m_FunctionsLiveOUT.at(functionName));
 
             gen::GlobalColoringAllocator generalAllocator(*function, m_TargetMachine.get(), /*isFloatClass=*/false);
             generalAllocator.Allocate(m_FunctionsLiveOUT.at(functionName));
