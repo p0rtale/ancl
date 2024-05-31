@@ -4,30 +4,23 @@
 #include <Ancl/CodeGen/Target/Base/Machine.hpp>
 #include <Ancl/CodeGen/Selection/SelectionGraph.hpp>
 
+
 namespace gen {
 
 class InstructionSelector {
 public:
-    InstructionSelector(MIRProgram* mirProgram,
-                        target::TargetMachine* targetMachine)
-        : m_MIRProgram(mirProgram), m_TargetMachine(targetMachine) {}
+    InstructionSelector(MIRProgram& mirProgram,
+                        target::TargetMachine* targetMachine);
 
-    void Select() {
-        for (const auto& function : m_MIRProgram->GetFunctions()) {
-            SelectionGraph graph;
-            graph.Build(function.get());
+    void Select();
 
-            for (SelectionTree& tree : graph.GetTrees()) {
-                m_TargetMachine->Select(tree);
-            }
-
-            // TODO: Generate target instructions
-        }
-    }
+    static MInstruction SelectInstruction(MInstruction& instruction,
+                                          target::TargetMachine* targetMachine);
 
 private:
-    MIRProgram* m_MIRProgram;
-    target::TargetMachine* m_TargetMachine;
+    MIRProgram& m_MIRProgram;
+
+    target::TargetMachine* m_TargetMachine = nullptr;
 };
 
 }  // namespace gen

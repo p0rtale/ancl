@@ -24,16 +24,16 @@ public:
         m_SelectionTrees.clear();
         TUseCount useCount = calcUseCount(function);
 
-        auto contexts = buildContexts(function);
-        for (const auto& context : contexts) {
+        std::vector<TContext> contexts = buildContexts(function);
+        for (const TContext& context : contexts) {
             std::list<SelectionTree> contextTrees;
-            for (const auto& instruction : context) {
+            for (const MInstruction& instruction : context) {
                 contextTrees.emplace_back(instruction);
             }
 
             mergeTrees(contextTrees, useCount);
 
-            for (const auto& tree : contextTrees) {
+            for (SelectionTree& tree : contextTrees) {
                 m_SelectionTrees.push_back(std::move(tree));
             }
         }
@@ -44,14 +44,14 @@ public:
     }
 
 private:
-    using TUseCount = std::unordered_map<uint, uint>;
+    using TUseCount = std::unordered_map<uint64_t, uint64_t>;
 
     TUseCount calcUseCount(MFunction* function) {
         TUseCount useCount;
         for (auto& basicBlock : function->GetBasicBlocks()) {
-            for (auto& instruction : basicBlock->GetInstructions()) {
+            for (MInstruction& instruction : basicBlock->GetInstructions()) {
                 for (size_t i = 0; i < instruction.GetUsesNumber(); ++i) {
-                    auto use = instruction.GetUse(i);
+                    MInstruction::TOperandIt use = instruction.GetUse(i);
                     if (use->IsVRegister()) {
                         ++useCount[use->GetRegister()];
                     }
@@ -62,32 +62,30 @@ private:
     }
 
     void mergeTrees(std::list<SelectionTree>& trees, const TUseCount& useCount) {
-        std::unordered_map<uint, std::list<SelectionTree>::iterator> definitionsMap;
+        std::unordered_map<uint64_t, std::list<SelectionTree>::iterator> definitionsMap;
         std::unordered_set<MInstruction*> validLoads;
 
         for (auto it = trees.begin(); it != trees.end(); ++it) {
-            auto& tree = *it;
+            SelectionTree& tree = *it;
 
             auto& root = tree.GetRoot();
             MInstruction* rootInstruction = &root->GetInstructionRef();
             if (rootInstruction->IsDefinition()) {
-                auto defOperand = rootInstruction->GetDefinition();
+                MInstruction::TOperandIt defOperand = rootInstruction->GetDefinition();
                 if (defOperand->IsVRegister()) {
                     definitionsMap[defOperand->GetRegister()] = it;
                     if (rootInstruction->IsLoad()) {
                         validLoads.insert(rootInstruction);
                     }
                 }
-            } else if (rootInstruction->IsStore()) {
-                validLoads.clear();
             }
 
             for (size_t i = 0; i < root->GetChildNumber(); ++i) {
-                auto child = root->GetChild(i);
+                SelectionNode* child = root->GetChild(i);
                 if (!child) {
-                    auto useOperand = rootInstruction->GetUse(i);
+                    MInstruction::TOperandIt useOperand = rootInstruction->GetUse(i);
                     if (useOperand->IsVRegister()) {
-                        uint vreg = useOperand->GetRegister();
+                        uint64_t vreg = useOperand->GetRegister();
                         if (definitionsMap.contains(vreg) && useCount.at(vreg) == 1) {
                             auto useTreeIt = definitionsMap[vreg];
                             auto& useRoot = useTreeIt->GetRoot();
@@ -103,6 +101,12 @@ private:
                     }
                 }
             }
+
+            // Forget only after processing first Store
+            // (store (add (load x) 10) x) --> add [x] 10
+            if (rootInstruction->IsStore()) {
+                validLoads.clear();
+            }
         }
     }
 
@@ -111,8 +115,9 @@ private:
 
         for (auto& basicBlock : function->GetBasicBlocks()) {
             TContext currentContext;
-            for (auto& instruction : basicBlock->GetInstructions()) {
-                if (instruction.IsCall()) {
+            for (MInstruction& instruction : basicBlock->GetInstructions()) {
+                // Separate call and PR copies
+                if (instruction.IsCall() || instruction.IsMov()) {
                     contexts.push_back(currentContext);
                     contexts.push_back({instruction});
                     currentContext.clear();
