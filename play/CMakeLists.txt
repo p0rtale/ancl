@@ -6,3 +6,6 @@ target_link_libraries(parse ancl)
 
 add_executable(ir ir.cpp)
 target_link_libraries(ir ancl)
+
+add_executable(ancl-cli ancl.cpp)
+target_link_libraries(ancl-cli ancl)
