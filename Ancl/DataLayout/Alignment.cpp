@@ -129,7 +129,7 @@ uint64_t Alignment::GetTypeAlignment(Type* type) {
         always has alignment of at least 16 bytes."
     */
     if (auto* arrayType = dynamic_cast<ArrayType*>(type)) {
-        if (GetTypeSize(arrayType) > 16) {
+        if (GetTypeSize(arrayType) >= 16) {
             return 16;
         }
         return GetTypeAlignment(arrayType->GetSubType());
