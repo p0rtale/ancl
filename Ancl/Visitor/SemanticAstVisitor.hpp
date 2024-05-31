@@ -1,13 +1,17 @@
 #pragma once
 
+#include <optional>
+
 #include <Ancl/Grammar/AST/AST.hpp>
 #include <Ancl/Visitor/AstVisitor.hpp>
-#include <Ancl/Visitor/ConstExprAstVisitor.hpp>
 
 #include <Ancl/SymbolTable/Scope.hpp>
 #include <Ancl/SymbolTable/SymbolTable.hpp>
+#include <Ancl/SymbolTable/DotConverter.hpp>
 
-#include <Ancl/Grammar/AST/Program.hpp>
+#include <Ancl/Grammar/AST/ASTProgram.hpp>
+
+#include <Ancl/Logger/Logger.hpp>
 
 
 namespace ast {
@@ -21,13 +25,19 @@ public:
     };
 
 public:
-    SemanticAstVisitor() = default;
+    SemanticAstVisitor(ASTProgram& program)
+        : m_Program(program) {}
 
-    Status Run(Program& program) {
+    Status Run() {
         m_Status = Status::kOk;
-        Visit(*program.GetTranslationUnit());
+        Visit(*m_Program.GetTranslationUnit());
 
         return m_Status;
+    }
+
+    void PrintScopeInfoDot(const std::string& filename) {
+        SymbolTreeDotConverter dotConverter(m_SymbolTable, filename);
+        dotConverter.Convert();
     }
 
 private:
@@ -41,107 +51,31 @@ private:
         // Base class
     }
 
-    void Visit(EnumConstDeclaration& enumConstDecl) override {
-        auto enumName = enumConstDecl.GetName();
-        if (m_CurrentScope->FindSymbol(Scope::NamespaceType::Ident, enumName)) {
-            // TODO: handle error
-        }
-        m_CurrentScope->AddSymbol(Scope::NamespaceType::Ident, enumName, &enumConstDecl);
-
-        auto initExpr = enumConstDecl.GetInit();
-        initExpr->Accept(*this);
-    }
-
-    void Visit(EnumDeclaration& enumDecl) override {
-        auto enumName = enumDecl.GetName();
-        if (m_CurrentScope->FindSymbol(Scope::NamespaceType::Tag, enumName)) {
-            // TODO: handle error
-        }
-        m_CurrentScope->AddSymbol(Scope::NamespaceType::Tag, enumName, &enumDecl);
-
-        for (const auto& enumConstDecl : enumDecl.GetEnumerators()) {
-            enumConstDecl->Accept(*this);
-        }
-    }
-
-    void Visit(FieldDeclaration& fieldDecl) override {
-        auto fieldName = fieldDecl.GetName();
-        m_CurrentScope->AddSymbol(Scope::NamespaceType::Ident, fieldName, &fieldDecl);
-    }
-
-    void Visit(FunctionDeclaration& funcDecl) override {
-        // TODO: handle declaration/definition, static/extern
-
-        auto body = funcDecl.GetBody();
-        if (body) {
-            body->Accept(*this);
-        }
-    }
-
-    void Visit(LabelDeclaration& labelDecl) override {
-        auto labelName = labelDecl.GetName();
-        if (m_CurrentScope->FindSymbol(Scope::NamespaceType::Label, labelName)) {
-            // TODO: handle error
-        }
-        m_CurrentScope->AddSymbol(Scope::NamespaceType::Label, labelName, &labelDecl);
-    }
-
-    void Visit(RecordDeclaration& recordDecl) override {
-        auto recordName = recordDecl.GetName();
-        m_CurrentScope->AddSymbol(Scope::NamespaceType::Tag, recordName, &recordDecl);
-
-        if (recordDecl.IsDefinition()) {
-            // TODO: handle record definition
-        } else {  // is declaration
-            // TODO: handle record declaration
-        }
-
-        auto recordScope = m_SymbolTable.CreateScope("record", m_CurrentScope);
-        for (const auto& decl : recordDecl.GetInternalDecls()) {
-            if (auto fieldDecl = dynamic_cast<FieldDeclaration*>(decl)) {
-                m_CurrentScope = recordScope;
-                fieldDecl->Accept(*this);
-                m_CurrentScope = m_CurrentScope->GetParentScope();
-            } else {
-                // internal Tag declaration
-                decl->Accept(*this);
-            }
-        }
-    }
+    void Visit(EnumConstDeclaration& enumConstDecl) override;
+    void Visit(EnumDeclaration& enumDecl) override;
+    void Visit(FieldDeclaration& fieldDecl) override;
+    void Visit(FunctionDeclaration& funcDecl) override;
+    void Visit(LabelDeclaration& labelDecl) override;
+    void Visit(ParameterDeclaration& paramDecl) override;
+    void Visit(RecordDeclaration& recordDecl) override;
 
     void Visit(TagDeclaration&) override {
         // Base class
     }
 
-    void Visit(TranslationUnit& unit) override {
-        for (const auto& decl : unit.GetDeclarations()) {
-            decl->Accept(*this);
-        }
-    }
+    void Visit(TranslationUnit& unit) override;
 
     void Visit(TypeDeclaration&) override {
         // Base class
     }
 
-    void Visit(TypedefDeclaration& typedefDecl) override {
-        auto typedefName = typedefDecl.GetName();
-        if (m_CurrentScope->FindSymbol(Scope::NamespaceType::Ident, typedefName)) {
-            // TODO: handle error
-        }
-        m_CurrentScope->AddSymbol(Scope::NamespaceType::Ident, typedefName, &typedefDecl);
-    }
+    void Visit(TypedefDeclaration& typedefDecl) override;
 
     void Visit(ValueDeclaration& valueDecl) override {
         // Base class
     }
 
-    void Visit(VariableDeclaration& varDecl) override {
-        auto varName = varDecl.GetName();
-        if (m_CurrentScope->FindSymbol(Scope::NamespaceType::Ident, varName)) {
-            // TODO: handle error
-        }
-        m_CurrentScope->AddSymbol(Scope::NamespaceType::Ident, varName, &varDecl);
-    }
+    void Visit(VariableDeclaration& varDecl) override;
 
 
     /*
@@ -154,132 +88,29 @@ private:
         // Base class
     }
 
-    void Visit(CaseStatement& caseStmt) override {
-        // TODO: check for outer switch statement
-
-        auto constExpr = caseStmt.GetExpression();
-        constExpr->Accept(*this);
-
-        // TODO: evaluate constant expression
-        auto constExprVisitor = ConstExprAstVisitor();
-        constExprVisitor.Visit(*constExpr);
-
-        auto body = caseStmt.GetBody();
-        body->Accept(*this);
-    }
-
-    void Visit(CompoundStatement& compoundStmt) override {
-        m_CurrentScope = m_SymbolTable.CreateScope(/*name=*/"", m_CurrentScope);
-        for (const auto& stmt : compoundStmt.GetBody()) {
-            stmt->Accept(*this);
-        }
-        m_CurrentScope = m_CurrentScope->GetParentScope();   
-    }
-
-    void Visit(DeclStatement& declStmt) override {
-        for (const auto& decl : declStmt.GetDeclarations()) {
-            decl->Accept(*this);
-        }
-    }
-
-    void Visit(DefaultStatement& defaultStmt) override {
-        // TODO: check for outer switch statement
-
-        auto body = defaultStmt.GetBody();
-        body->Accept(*this);
-    }
-
-    void Visit(DoStatement& doStmt) override {
-        auto cond = doStmt.GetCondition();
-        cond->Accept(*this);
-
-        auto body = doStmt.GetBody();
-        body->Accept(*this);    
-    }
-
-    void Visit(ForStatement& forStmt) override {
-        auto init = forStmt.GetInit();
-        init->Accept(*this);
-
-        auto cond = forStmt.GetCondition();
-        cond->Accept(*this);
-
-        auto step = forStmt.GetStep();
-        step->Accept(*this);
-
-        auto body = forStmt.GetBody();
-        body->Accept(*this); 
-    }
-
-    void Visit(GotoStatement& gotoStmt) override {
-        auto labelOldDecl = gotoStmt.GetLabel();
-        auto declName = labelOldDecl->GetName();
-
-        auto declOpt = m_CurrentScope->FindSymbol(Scope::NamespaceType::Label, declName);
-        if (!declOpt) {
-            // TODO: handle error
-        }
-
-        auto decl = *declOpt;
-        auto labelDecl = dynamic_cast<LabelDeclaration*>(decl);
-        if (!labelDecl) {
-            // TODO: handle error
-        }
-
-        gotoStmt.SetLabel(labelDecl);
-    }
-
-    void Visit(IfStatement& ifStmt) override {
-        auto cond = ifStmt.GetCondition();
-        cond->Accept(*this);
-
-        auto thenStmt = ifStmt.GetThen();
-        thenStmt->Accept(*this);
-
-        auto elseStmt = ifStmt.GetThen();
-        elseStmt->Accept(*this);
-    }
-
-    void Visit(LabelStatement& labelStmt) override {
-        auto labelDecl = labelStmt.GetLabel();
-        labelDecl->Accept(*this);
-
-        auto body = labelStmt.GetBody();
-        body->Accept(*this);
-    }
-
-    void Visit(LoopJumpStatement& loopJmpStmt) override {
-        // TODO: check for outer loop statement
-    }
-
-    void Visit(ReturnStatement& returnStmt) override {
-        auto retExpr = returnStmt.GetReturnExpression();
-        retExpr->Accept(*this);
-    }
+    void Visit(CaseStatement& caseStmt) override;
+    void Visit(CompoundStatement& compoundStmt) override;
+    void Visit(DeclStatement& declStmt) override;
+    void Visit(DefaultStatement& defaultStmt) override;
+    void Visit(DoStatement& doStmt) override;
+    void Visit(ForStatement& forStmt) override;
+    void Visit(GotoStatement& gotoStmt) override;
+    void Visit(IfStatement& ifStmt) override;
+    void Visit(LabelStatement& labelStmt) override;
+    void Visit(LoopJumpStatement& loopJmpStmt) override;
+    void Visit(ReturnStatement& returnStmt) override;
 
     void Visit(SwitchCase& switchCase) override {
         // Base class
     }
 
-    void Visit(SwitchStatement& switchStmt) override {
-        auto expr = switchStmt.GetExpression();
-        expr->Accept(*this);
-
-        auto body = switchStmt.GetBody();
-        body->Accept(*this);
-    }
+    void Visit(SwitchStatement& switchStmt) override;
 
     void Visit(ValueStatement& valueStmt) override {
         // Base class
     }
 
-    void Visit(WhileStatement& whileStmt) override {
-        auto cond = whileStmt.GetCondition();
-        cond->Accept(*this);
-
-        auto body = whileStmt.GetBody();
-        body->Accept(*this);
-    }
+    void Visit(WhileStatement& whileStmt) override;
 
 
     /*
@@ -292,96 +123,24 @@ private:
         // Base class
     }
 
-    void Visit(BinaryExpression& binaryExpr) override {
-        auto leftOperand = binaryExpr.GetLeftOperand();
-        leftOperand->Accept(*this);        
+    void VisitAssignmentExpression(BinaryExpression& assignExpr);
+    void VisitArrSubscriptExpression(BinaryExpression& arrExpr);
+    void VisitMemberExpression(BinaryExpression& memberExpr);
 
-        auto rightOperand = binaryExpr.GetRightOperand();
-        rightOperand->Accept(*this);
-    }
-
-    void Visit(CallExpression& callExpr) override {
-        auto calleeExpr = callExpr.GetCallee();
-        calleeExpr->Accept(*this);
-
-        for (const auto& argExpr : callExpr.GetArguments()) {
-            argExpr->Accept(*this);
-        }
-    }
-
-    void Visit(CastExpression& castExpr) override {
-        auto subExpr = castExpr.GetSubExpression();
-        subExpr->Accept(*this);
-
-        auto toType = castExpr.GetToType();
-        toType->Accept(*this);
-    }
-
-    // Skip
-    void Visit(CharExpression& charExpr) override {}
-
-    void Visit(ConditionalExpression& condExpr) override {
-        auto condition = condExpr.GetCondition();
-        condition->Accept(*this);
-
-        auto trueExpr = condExpr.GetTrueExpression();
-        trueExpr->Accept(*this);
-
-        auto falseExpr = condExpr.GetFalseExpression();
-        falseExpr->Accept(*this);
-    }
-
-    void Visit(ConstExpression& constExpr) override {
-        auto expr = constExpr.GetExpression();
-        expr->Accept(*this);
-    }
-
-    void Visit(DeclRefExpression& declrefExpr) override {
-        auto oldDecl = declrefExpr.GetDeclaration();
-        auto declName = oldDecl->GetName();
-
-        auto declOpt = m_CurrentScope->FindSymbol(Scope::NamespaceType::Ident, declName);
-        if (!declOpt) {
-            // TODO: handle error
-        }
-
-        auto decl = *declOpt;
-        auto valDecl = dynamic_cast<ValueDeclaration*>(decl);
-        if (!valDecl) {
-            // TODO: handle error
-        }
-
-        declrefExpr.SetDeclaration(valDecl);
-    }
-
-    void Visit(ExpressionList& exprList) override {
-        for (const auto& expr : exprList.GetExpressions()) {
-            expr->Accept(*this);
-        }
-    }
-
-    // Skip
-    void Visit(FloatExpression& floatExpr) override {}
-
-    void Visit(InitializerList& initList) override {
-        for (const auto& init : initList.GetInits()) {
-            init->Accept(*this);
-        }
-    }
-
-    // Skip
-    void Visit(IntExpression& intExpr) override {}
-
-    // Skip
-    void Visit(SizeofTypeExpression& sizeofTypeExpr) override {}
-
-    // Skip
-    void Visit(StringExpression& stringExpr) override {}
-
-    void Visit(UnaryExpression& unaryExpr) override {
-        auto operand = unaryExpr.GetOperand();
-        operand->Accept(*this);
-    }
+    void Visit(BinaryExpression& binaryExpr) override;
+    void Visit(CallExpression& callExpr) override;
+    void Visit(CastExpression& castExpr) override;
+    void Visit(CharExpression& charExpr) override;
+    void Visit(ConditionalExpression& condExpr) override;
+    void Visit(ConstExpression& constExpr) override;
+    void Visit(DeclRefExpression& declrefExpr) override;
+    void Visit(ExpressionList& exprList) override;
+    void Visit(FloatExpression& floatExpr) override;
+    void Visit(InitializerList& initList) override;
+    void Visit(IntExpression& intExpr) override;
+    void Visit(SizeofTypeExpression& sizeofTypeExpr) override;
+    void Visit(StringExpression& stringExpr) override;
+    void Visit(UnaryExpression& unaryExpr) override;
 
 
     /*
@@ -390,43 +149,15 @@ private:
     =================================================================
     */
 
-    void Visit(ArrayType& arrayType) override {
-        // TODO: evaluate constant expression for array size
-
-        auto subType = arrayType.GetSubType();
-        subType->Accept(*this);
-    }
+    void Visit(ArrayType& arrayType) override;
 
     // Skip
     void Visit(BuiltinType& builtinType) override {}
 
-    void Visit(EnumType& enumType) override {
-        // TODO: check for enum declaration in scope
-    }
-
-    void Visit(FunctionType& funcType) override {
-        auto retType = funcType.GetSubType();
-        retType->Accept(*this);
-
-        for (const auto& paramType : funcType.GetParamTypes()) {
-            paramType->Accept(*this);
-        }
-    }
-
-    void Visit(PointerType& ptrType) override {
-        auto subType = ptrType.GetSubType();
-        subType->Accept(*this); 
-    }
-
-    void Visit(QualType& qualType) override {
-        auto subType = qualType.GetSubType();
-        subType->Accept(*this);
-    }
-
-    void Visit(RecordType& recordType) override {
-        // TODO: check for record declaration/definition
-        //       and update info
-    }
+    void Visit(EnumType& enumType) override;
+    void Visit(FunctionType& funcType) override;
+    void Visit(PointerType& ptrType) override;
+    void Visit(RecordType& recordType) override;
 
     void Visit(TagType&) override {
         // Base class
@@ -436,34 +167,71 @@ private:
         // Base class
     }
 
-    void Visit(TypedefType& typedefType) override {
-        auto oldDecl = typedefType.GetDeclaration();
-        auto typedefName = oldDecl->GetName();
-
-        auto declOpt = m_CurrentScope->FindSymbol(Scope::NamespaceType::Ident, typedefName);
-        if (!declOpt) {
-            // TODO: handle error
-        }
-
-        auto decl = *declOpt;
-        auto typedefDecl = dynamic_cast<TypedefDeclaration*>(decl);
-        if (!typedefDecl) {
-            // TODO: handle error
-        }
-
-        typedefType.SetDeclaration(typedefDecl);
-    }
+    void Visit(TypedefType& typedefType) override;
 
 private:
-    void handleCompileError() {
+    bool checkArrayInitialization(QualType arrayQualType, Expression* initExpr);
+
+    std::optional<QualType> decayType(QualType qualType);
+
+    bool areCompatibleTypes(QualType leftQualType, QualType rightQualType, bool isPointer);
+
+    QualType promoteIntegerType(QualType qualType);
+    BuiltinType::Kind promoteIntegerKind(BuiltinType::Kind kind);
+
+    QualType getCommonRealType(QualType leftQualType,
+                               QualType rightQualType);
+
+    BuiltinType::Kind getCommonRealTypeKind(BuiltinType::Kind leftKind,
+                                            BuiltinType::Kind rightKind);
+
+    bool isIncompleteType(QualType qualType);
+    bool isPointerType(QualType qualType);
+    bool isPointerToFunctionType(QualType qualType);
+    bool isPointerToIncompleteType(QualType qualType);
+    bool isVoidType(QualType qualType);
+    bool isPointerToVoidType(QualType qualType);
+    bool isNullPointerConstant(Expression* expr);
+    bool isIntegerType(QualType qualType);
+    bool isFloatType(QualType qualType);
+    bool isRecordType(QualType qualType);
+    bool isRealType(QualType qualType);
+    bool isScalarType(QualType qualType);
+    bool isModifiableLValue(Expression& expr);
+
+    void handleTagDeclaration(TagDeclaration* decl, const std::string& name,
+                              TagDeclaration* scopeDecl);
+
+private:
+    void printSemanticWarning(const std::string& text, const Location& location) {
+        ANCL_WARN("{} {}", location.ToString(), text);
+    }
+
+    void printSemanticError(const std::string& text, const Location& location) {
+        ANCL_ERROR("{} {}", location.ToString(), text);
+
+        // TODO: Handle error
         m_Status = Status::kError;
+        exit(EXIT_FAILURE);
     }
 
 private:
+    ASTProgram& m_Program;
     Status m_Status;
 
     SymbolTable m_SymbolTable;
     Scope* m_CurrentScope = m_SymbolTable.GetGlobalScope();
+
+    FunctionDeclaration* m_CurrentFunctionDecl = nullptr;
+    Scope* m_FunctionScope = nullptr;
+
+    // TODO: Simplify
+    bool m_IgnoreCompoundScope = false;
+    
+    bool m_InsideLoop = false;
+    bool m_InsideSwitch = false;
+
+    bool m_HasReturn = false;
 };
 
 }  // namespace ast
