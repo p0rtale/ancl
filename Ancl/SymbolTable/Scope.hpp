@@ -1,10 +1,9 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <optional>
-#include <cassert>
 
 #include <Ancl/Grammar/AST/Declaration/Declaration.hpp>
 #include <Ancl/Grammar/AST/Declaration/LabelDeclaration.hpp>
@@ -26,101 +25,32 @@ public:
 
 public:
     Scope() = default; 
-    Scope(const std::string& name): m_Name(name) {}
+    Scope(const std::string& name);
 
-    std::string GetName() const {
-        return m_Name;
-    }
+    std::string GetName() const;
 
-    Scope* GetParentScope() const {
-        return m_ParentScope;
-    }
+    Scope* GetParentScope() const;
 
-    void AddChild(Scope* child) {
-        m_ChildrenScopes.push_back(child);
-        child->m_ParentScope = this;
-    }
+    void AddChild(Scope* child);
 
-    std::vector<Scope*> GetChildrenScopes() const {
-        return m_ChildrenScopes;
-    }
+    std::vector<Scope*> GetChildrenScopes() const;
 
-    bool IsGlobalScope() const {
-        return !m_ParentScope;
-    }
+    bool IsGlobalScope() const;
 
-    void AddSymbol(NamespaceType type, const Symbol& symbol, Declaration* decl) {
-        m_OrderedSymbols.push_back({symbol, decl});
-        UpdateSymbol(type, symbol, decl);
-    }
+    void AddSymbol(NamespaceType type, const Symbol& symbol, Declaration* decl);
 
-    void UpdateSymbol(NamespaceType type, const Symbol& symbol, Declaration* decl) {
-        switch (type) {
-        case NamespaceType::Label:
-            m_LabelNamespace[symbol] = static_cast<LabelDeclaration*>(decl);
-            break;
-        case NamespaceType::Tag:
-            m_TagNamespace[symbol] = static_cast<TagDeclaration*>(decl);
-            break;
-        default:
-            m_IdentNamespace[symbol] = decl;
-        }
-    }
+    void UpdateSymbol(NamespaceType type, const Symbol& symbol, Declaration* decl);
 
-    Declaration* GetSymbol(NamespaceType type, const Symbol& symbol) {
-        switch (type) {
-        case NamespaceType::Label:
-            return m_LabelNamespace.at(symbol);
-        case NamespaceType::Tag:
-            return m_TagNamespace.at(symbol);
-        default:
-            return m_IdentNamespace.at(symbol);
-        }
-    }
+    Declaration* GetSymbol(NamespaceType type, const Symbol& symbol);
 
-    const TSymbols& GetSymbols() const {
-        return m_OrderedSymbols;
-    }
+    const TSymbols& GetSymbols() const;
 
-    bool HasSymbol(NamespaceType type, const Symbol& symbol) const {
-        switch (type) {
-        case NamespaceType::Label:
-            return m_LabelNamespace.contains(symbol);
-        case NamespaceType::Tag:
-            return m_TagNamespace.contains(symbol);
-        default:
-            return m_IdentNamespace.contains(symbol);
-        }
-    }
+    bool HasSymbol(NamespaceType type, const Symbol& symbol) const;
 
-    std::optional<Declaration*> FindSymbol(NamespaceType type, const Symbol& symbol) {
-        Scope* scope = findScopeBySymbol(type, symbol);
-        if (scope->HasSymbol(type, symbol)) {
-            return scope->GetSymbol(type, symbol);
-        }
-        return std::nullopt;
-    }
+    std::optional<Declaration*> FindSymbol(NamespaceType type, const Symbol& symbol);
 
 private:
-    Scope* findScopeBySymbol(NamespaceType type, const Symbol& symbol) {
-        Scope* scope = this;
-        while (!scope->IsGlobalScope() && !scope->HasSymbol(type, symbol)) {
-            Scope* parent = scope->GetParentScope();
-            assert(parent);
-            scope = parent;
-        }
-        return scope;
-    }
-
-    // INamespace& dispatch(Declaration* decl) {
-    //     if (std::dynamic_cast<LabelDeclaration*>(decl)) {
-    //         return m_LabelNamespace;
-    //     }
-    //     if (std::dynamic_cast<TagDeclaration*>(decl)) {
-    //         return m_TagNamespace;
-    //     }
-    //     return m_IdentNamespace;
-    // }
+    Scope* findScopeBySymbol(NamespaceType type, const Symbol& symbol);
 
 private:
     std::string m_Name;
