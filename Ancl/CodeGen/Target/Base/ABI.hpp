@@ -5,17 +5,22 @@
 
 #include <Ancl/CodeGen/Target/Base/Register.hpp>
 
+
 namespace gen::target {
 
 class TargetABI {
 public:
     TargetABI() = default;
 
-    uint GetStackAlignment() const {
+    uint64_t GetStackAlignment() const {
         return m_StackAlignment;
     }
 
-    uint GetMaxStructParamSize() const {
+    uint64_t GetRedZoneSize() const {
+        return m_RedZoneSize;
+    }
+
+    uint64_t GetMaxStructParamSize() const {
         return m_MaxStructParamSize;
     }
 
@@ -35,6 +40,10 @@ public:
         return m_FloatReturnRegisters;
     }
 
+    Register GetVectorNumberInfoRegister() const {
+        return m_VectorNumberInfoRegister;
+    }
+
     std::vector<Register> GetCalleeSavedRegisters() const {
         return m_CalleeSavedRegisters;
     } 
@@ -44,8 +53,9 @@ public:
     }
 
 protected:
-    uint m_StackAlignment;
-    uint m_MaxStructParamSize;
+    uint64_t m_StackAlignment;
+    uint64_t m_RedZoneSize;
+    uint64_t m_MaxStructParamSize;
 
     // TODO: std arrays
     std::vector<Register> m_IntArgumentRegisters;
@@ -56,6 +66,8 @@ protected:
 
     std::vector<Register> m_CalleeSavedRegisters;
     std::vector<Register> m_CallerSavedRegisters;
+
+    Register m_VectorNumberInfoRegister;
 };
 
-}  // namespace target
+}  // namespace gen::target

@@ -3,20 +3,21 @@
 #include <unordered_map>
 
 #include <Ancl/CodeGen/Target/Base/InstructionSet.hpp>
-#include <Ancl/CodeGen/Target/AMD64/AMD64RegisterSet.hpp>
 
 
 namespace gen::target::amd64 {
 
-enum OpClass: uint {
+enum OpClass: unsigned int {
     INVALID_CLASS = 0,
+    REL,
     GR, GR8, GR16, GR32, GR64,
-    FR,
-    IMM, IMM8, IMM16, IMM32, IMM64,
+    FR, FR32, FR64,
+    IMM,
 };
 
 class AMD64InstructionSet: public InstructionSet {
 public:
+    // TODO: Use array?
     using TInstrMap = std::unordered_map<TInstrCode, TargetInstruction>;
 
     // TODO: extend i8 and i16 to i32 in AnclIR
@@ -59,7 +60,9 @@ public:
         SUBSD_RR, SUBSD_RM,
 
         // felixcloutier.com/x86/sal:sar:shl:shr
-        SHL_RCL, SHL_RI, SHR_RCL, SHR_RI, SAR_RCL, SAR_RI,
+        SHL_RCL, SHL_RI, SHL_MCL, SHL_MI,
+        SHR_RCL, SHR_RI, SHR_MCL, SHR_MI,
+        SAR_RCL, SAR_RI, SAR_MCL, SAR_MI,
 
         // felixcloutier.com/x86/and
         AND_RR, AND_RM, AND_MR, AND_RI, AND_MI,
@@ -72,13 +75,13 @@ public:
 
         // felixcloutier.com/x86/cmp
         // felixcloutier.com/x86/ucomiss  (floating cmp)
-        CMP_RR, CMP_RM, CMP_MR, CMP_RI, CMP_MI,  
+        CMP_RR, CMP_RM, CMP_MR, CMP_RI, CMP_MI,
         UCOMISS_RR, UCOMISS_RM,
 
         // felixcloutier.com/x86/setcc
         SETE, SETNE,
         SETL, SETLE, SETG, SETGE,  // signed integer
-        SETB, SETBE, SETA, SETAE,  // unsigned integer
+        SETB, SETBE, SETA, SETAE,  // unsigned integer or float
 
         // felixcloutier.com/x86/movzx
         // TODO: from 8->64 to 8->32 
@@ -89,7 +92,7 @@ public:
 
         // felixcloutier.com/x86/movsx:movsxd
         // TODO: MOVSXD for 32->64
-        MOVSX_RR, MOVSX_RM,
+        MOVSX_RR, MOVSX_RM, MOVSXD_RR, MOVSXD_RM,
 
         // felixcloutier.com/x86/cvtsi2ss (integer->float)
         // felixcloutier.com/x86/cvtsi2sd (integer->double)
@@ -139,124 +142,12 @@ public:
     };
 
 public:
-    AMD64InstructionSet() {
-        initInstructionsMap();
-    }
+    AMD64InstructionSet() ;
 
-    TargetInstruction GetInstruction(TInstrCode code) const override {
-        return m_TInstructionsMap.at(code);
-    }
+    TargetInstruction GetInstruction(TInstrCode code) const override;
 
 private:
-    void initInstructionsMap() {
-        auto grOp = TOperandClass{GR};
-        auto frOp = TOperandClass{FR};
-        auto immOp = TOperandClass{IMM};
-
-        // Intel: BaseReg + ScaleImm * IndexReg + DispImm
-        // AT&T:  DispImm(BaseReg, IndexReg, ScaleImm)
-        auto memOp = TOperandClass{/*BaseReg=*/GR, /*ScaleImm=*/IMM, /*IndexReg=*/GR, /*DispImm=*/IMM};
-
-        auto instructions = std::vector<TargetInstruction>{
-            {IMUL_RR,  {grOp, grOp}, "imul"}, {IMUL_RM, {grOp, memOp}, "imul"},
-            {IMUL_RRI, {grOp, grOp, immOp}, "imul"}, {IMUL_RMI, {grOp, memOp, immOp}, "imul"},
-
-            {MULSS_RR,  {grOp, grOp},  "mulss"}, {MULSS_RM,  {grOp, memOp}, "mulss"},
-            {MULSD_RR,  {grOp, grOp},  "mulsd"}, {MULSD_RM,  {grOp, memOp}, "mulsd"},
-
-            {IDIV_R, {grOp},  "idiv"}, {IDIV_M, {memOp}, "idiv"},
-            {DIV_R,  {grOp},  "div"}, {DIV_M,  {memOp}, "div"},
-
-            {DIVSS_RR, {grOp, grOp},  "divss"}, {DIVSS_RM, {grOp, memOp}, "divss"},
-            {DIVSD_RR, {grOp, grOp},  "divsd"}, {DIVSD_RM, {grOp, memOp}, "divsd"},
-
-            {ADD_RR, {grOp,  grOp},  "add"}, {ADD_RM, {grOp,  memOp}, "add"},
-            {ADD_MR, {memOp, grOp},  "add"}, {ADD_RI, {grOp,  immOp}, "add"},
-            {ADD_MI, {memOp, immOp}, "add"},
-
-            {ADDSS_RR, {grOp, grOp},  "addss"}, {ADDSS_RM, {grOp, memOp}, "addss"},
-            {ADDSD_RR, {grOp, grOp},  "addsd"}, {ADDSD_RM, {grOp, memOp}, "addsd"},
-
-            {SUB_RR, {grOp,  grOp},  "sub"}, {SUB_RM, {grOp,  memOp}, "sub"},
-            {SUB_MR, {memOp, grOp},  "sub"}, {SUB_RI, {grOp,  immOp}, "sub"},
-            {SUB_MI, {memOp, immOp}, "sub"},
-
-            {SUBSS_RR, {grOp, grOp},  "subss"}, {SUBSS_RM, {grOp, memOp}, "subss"},
-            {SUBSD_RR, {grOp, grOp},  "subsd"}, {SUBSD_RM, {grOp, memOp}, "subsd"},
-
-            // TODO: Consider CL register when selecting instructions
-            {SHL_RCL, {grOp, grOp},  "shl"}, {SHL_RI,  {grOp, immOp}, "shl"},
-            {SHR_RCL, {grOp, grOp},  "shr"}, {SHR_RI,  {grOp, immOp}, "shr"},
-            {SAR_RCL, {grOp, grOp},  "sar"}, {SAR_RI,  {grOp, immOp}, "sar"},
-
-            {AND_RR, {grOp,  grOp},  "and"}, {AND_RM, {grOp,  memOp}, "and"},
-            {AND_MR, {memOp, grOp},  "and"}, {AND_RI, {grOp,  immOp}, "and"},
-            {AND_MI, {memOp, immOp}, "and"},
-
-            {XOR_RR, {grOp,  grOp},  "xor"}, {XOR_RM, {grOp,  memOp}, "xor"},
-            {XOR_MR, {memOp, grOp},  "xor"}, {XOR_RI, {grOp,  immOp}, "xor"},
-            {XOR_MI, {memOp, immOp}, "xor"},
-
-            {OR_RR, {grOp,  grOp},  "or"}, {OR_RM, {grOp,  memOp}, "or"},
-            {OR_MR, {memOp, grOp},  "or"}, {OR_RI, {grOp,  immOp}, "or"},
-            {OR_MI, {memOp, immOp}, "or"},
-
-            {CMP_RR, {grOp,  grOp},  "cmp"}, {CMP_RM, {grOp,  memOp}, "cmp"},
-            {CMP_MR, {memOp, grOp},  "cmp"}, {CMP_RI, {grOp,  immOp}, "cmp"},
-            {CMP_MI, {memOp, immOp}, "cmp"},
-
-            {UCOMISS_RR, {grOp,  grOp},  "ucomiss"}, {UCOMISS_RM, {grOp,  memOp}, "ucomiss"},
-
-            // TODO: Memory operand support
-            {SETE,  {grOp}, "sete"}, {SETNE, {grOp}, "setne"},
-            {SETL,  {grOp}, "setl"}, {SETLE, {grOp}, "setle"},
-            {SETG,  {grOp}, "setg"}, {SETGE, {grOp}, "setge"},
-            {SETB,  {grOp}, "setb"}, {SETBE, {grOp}, "setbe"},
-            {SETA,  {grOp}, "seta"}, {SETAE, {grOp}, "setae"},
-
-            {MOVZX_RR, {grOp, grOp},  "movz"}, {MOVZX_RM, {grOp, memOp}, "movz"},
-            {MOVSX_RR, {grOp, grOp},  "movs"}, {MOVSX_RM, {grOp, memOp}, "movs"},
-
-            {CDQ, {}, "cdq"}, {CQO, {}, "cqo"},
-
-            {CVTSI2SS_RR, {grOp, grOp},  "cvtsi2ss"}, {CVTSI2SS_RM, {grOp, memOp}, "cvtsi2ss"},
-            {CVTSI2SD_RR, {grOp, grOp},  "cvtsi2sd"}, {CVTSI2SD_RM, {grOp, memOp}, "cvtsi2sd"},
-
-            {CVTTSS2SI_RR, {grOp, grOp},  "cvttss2si"}, {CVTTSS2SI_RM, {grOp, memOp}, "cvttss2si"},
-            {CVTTSD2SI_RR, {grOp, grOp},  "cvttsd2si"}, {CVTTSD2SI_RM, {grOp, memOp}, "cvttsd2si"},
-
-            {CVTSS2SD_RR, {grOp, grOp},  "cvtss2sd"}, {CVTSS2SD_RM, {grOp, memOp}, "cvtss2sd"},
-            {CVTSD2SS_RR, {grOp, grOp},  "cvtsd2ss"}, {CVTSD2SS_RM, {grOp, memOp}, "cvtsd2ss"},
-
-            {CALL, {}, "call"}, {CALL_R, {grOp}, "call"}, {CALL_M, {memOp}, "call"},
-
-            {JMP, {}, "jmp"}, {JMP_R, {grOp}, "jmp"},
-
-            {JE,  {}, "je"},  {JNE, {}, "jne"}, {JL,  {}, "jl"},  {JLE, {}, "jle"}, {JG,  {}, "jg"},
-            {JGE, {}, "jge"}, {JB,  {}, "jb"},  {JBE, {}, "jbe"}, {JA,  {}, "ja"},  {JAE, {}, "jae"},
-
-            {RET, {}, "ret"},
-
-            {MOV_RR, {grOp,  grOp},  "mov"}, {MOV_RM, {grOp, memOp}, "mov"},
-            {MOV_MR, {memOp, grOp},  "mov"}, {MOV_RI, {grOp, }, "mov"},
-            {MOV_MI, {memOp, immOp}, "mov"},
-    
-            {MOVSS_RR, {grOp,  grOp}, "movss"}, {MOVSS_RM, {grOp, memOp}, "movss"},
-            {MOVSS_MR, {memOp, grOp}, "movss"},
-            {MOVSD_RR, {grOp, grOp},  "movsd"}, {MOVSD_RM, {grOp, memOp}, "movsd"},
-            {MOVSD_MR, {memOp, grOp}, "movsd"},
-
-            {LEA, {grOp, memOp}, "lea"},
-
-            {PUSH_R, {grOp}, "push"}, {PUSH_M, {memOp}, "push"}, {PUSH_I, {immOp}, "push"},
-
-            {POP_R, {grOp}, "pop"}, {POP_M, {memOp}, "pop"}
-        };
-
-        for (const auto& instr : instructions) {
-            m_TInstructionsMap[instr.GetInstructionCode()] = instr;
-        }
-    }
+    void initInstructionsMap();
 
 private:
     TInstrMap m_TInstructionsMap;

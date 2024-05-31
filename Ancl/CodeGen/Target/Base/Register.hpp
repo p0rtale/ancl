@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -9,10 +10,10 @@ namespace gen::target {
 class Register {
 public:
     Register() = default;
-    explicit Register(uint number): m_Number(number) {}
+    explicit Register(uint64_t number): m_Number(number) {}
 
-    Register(const std::string& name, uint number, uint bytes,
-             const std::vector<uint>& subRegs)
+    Register(const std::string& name, uint64_t number, uint64_t bytes,
+             const std::vector<uint64_t>& subRegs)
         : m_Name(name), m_Number(number), m_Bytes(bytes),
           m_SubRegNumbers(subRegs) {}
 
@@ -32,31 +33,31 @@ public:
         return m_IsFloat;
     }
 
-    uint GetNumber() const {
+    uint64_t GetNumber() const {
         return m_Number;
     }
 
-    uint GetBytes() const {
+    uint64_t GetBytes() const {
         return m_Bytes;
     }
 
-    void SetParentRegNumber(uint number) {
+    void SetParentRegNumber(uint64_t number) {
         m_ParentRegNumber = number;
     }
 
-    uint GetParentRegNumber() const {
+    uint64_t GetParentRegNumber() const {
         return m_ParentRegNumber;
     }
 
-    std::vector<uint> GetSubRegNumbers() const {
+    std::vector<uint64_t> GetSubRegNumbers() const {
         return m_SubRegNumbers;
     }
 
-    void SetPairedRegNumber(uint number) {
+    void SetPairedRegNumber(uint64_t number) {
         m_PairedRegNumber = number;
     }
 
-    uint GetPairedRegNumber() const {
+    uint64_t GetPairedRegNumber() const {
         return m_PairedRegNumber;
     }
 
@@ -69,13 +70,13 @@ private:
 
     bool m_IsFloat = false;
 
-    uint m_Number = 0;
-    uint m_Bytes = 0;
+    uint64_t m_Number = 0;
+    uint64_t m_Bytes = 0;
 
-    uint m_ParentRegNumber = 0;
-    std::vector<uint> m_SubRegNumbers;
+    uint64_t m_ParentRegNumber = 0;
+    std::vector<uint64_t> m_SubRegNumbers;
 
-    uint m_PairedRegNumber = 0;
+    uint64_t m_PairedRegNumber = 0;
 };
 
 }  // namespace target

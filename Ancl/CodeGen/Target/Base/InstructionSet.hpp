@@ -1,7 +1,5 @@
 #pragma once
 
-#include <unordered_map>
-
 #include <Ancl/CodeGen/Target/Base/Instruction.hpp>
 
 
@@ -12,7 +10,7 @@ public:
     InstructionSet() = default;
     virtual ~InstructionSet() = default;
 
-    virtual TargetInstruction GetInstruction(TInstrCode code) const;
+    virtual TargetInstruction GetInstruction(TInstrCode code) const = 0;
 };
 
 }  // namespace target
