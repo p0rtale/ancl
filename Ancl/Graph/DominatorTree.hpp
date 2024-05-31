@@ -1,160 +1,50 @@
 #pragma once
 
-#include <vector>
+#include <cstdint>
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include <Ancl/AnclIR/BasicBlock.hpp>
+#include <Ancl/AnclIR/Constant/Function.hpp>
 
 
 // http://www.hipersoft.rice.edu/grads/publications/dom14.pdf
 class DominatorTree {
 public:
-    DominatorTree(ir::BasicBlock* entryBlock): m_EntryBlock(entryBlock) {
-        computeReversePostorder();
-        solveDominance();
-        updateChildren();
-        computeDominanceFrontiers();
-    }
+    DominatorTree(ir::Function* function, bool isReverse = false);
 
-    ir::BasicBlock* GetImmediateDominator(ir::BasicBlock* block) const {
-        return m_Dominators.at(block);
-    }
+    ir::BasicBlock* GetImmediateDominator(ir::BasicBlock* block) const;
 
-    std::vector<ir::BasicBlock*> GetChildren(ir::BasicBlock* block) const {
-        if (m_Children.contains(block)) {
-            return m_Children.at(block);
-        }
-        return {};
-    }
+    std::vector<ir::BasicBlock*> GetChildren(ir::BasicBlock* block) const;
 
-    std::unordered_set<ir::BasicBlock*> GetDominanceFrontier(ir::BasicBlock* block) const {
-        if (m_DominanceFrontierSet.contains(block)) {
-            return m_DominanceFrontierSet.at(block);
-        }
-        return {};
-    }
+    std::unordered_set<ir::BasicBlock*> GetDominanceFrontier(ir::BasicBlock* block) const;
 
 private:
-    void computeDominanceFrontiers() {
-        for (ir::BasicBlock* block : m_RPOrder) {
-            auto preds = block->GetPredecessors();
+    void setEntryBlock(ir::BasicBlock* basicBlock);
+    void setEdgeDirections(bool isReverse);
 
-            // Entry block or obvious immediate dominator
-            if (preds.size() <= 1) {
-                continue;
-            }
+    void computeDominanceFrontiers();
 
-            for (ir::BasicBlock* pred : preds) {
-                auto predDominator = pred;
-                while (predDominator != GetImmediateDominator(block)) {
-                    m_DominanceFrontierSet[predDominator].insert(block);
-                    predDominator = GetImmediateDominator(predDominator);
-                }
-            }
-        }
-    }
+    void updateChildren();
 
-    void updateChildren() {
-        for (ir::BasicBlock* block : m_RPOrder) {
-            auto dominator = GetImmediateDominator(block);
-            if (dominator) {
-                m_Children[dominator].push_back(block);
-            }
-        }
-    }
+    ir::BasicBlock* intersectTwoDoms(ir::BasicBlock* firstBlock, ir::BasicBlock* secondBlock);
 
-    ir::BasicBlock* intersectTwoDoms(ir::BasicBlock* firstBlock, ir::BasicBlock* secondBlock) {
-        auto firstDom = firstBlock;
-        auto secondDom = secondBlock;
-        uint firstNumber = m_RPONumbering[firstDom];
-        uint secondNumber = m_RPONumbering[secondDom];
-        while (firstNumber != secondNumber) {
-            while (firstNumber > secondNumber) {
-                firstDom = m_Dominators[firstDom];
-                firstNumber = m_RPONumbering[firstDom];
-            }
-            while (secondNumber > firstNumber) {
-                secondDom = m_Dominators[secondDom];
-                secondNumber = m_RPONumbering[secondDom];
-            }
-        }
-        return firstDom;
-    }
+    ir::BasicBlock* intersectPredsDoms(const std::vector<ir::BasicBlock*>& preds);
 
-    ir::BasicBlock* intersectPredsDoms(const std::vector<ir::BasicBlock*>& preds) {
-        if (preds.empty()) {
-            return nullptr;
-        }
+    void solveDominance();
 
-        auto newIDom = preds[0];
-
-        if (preds.size() == 1) {
-            return newIDom;
-        }
-
-        for (size_t i = 1; i < preds.size(); ++i) {
-            auto block = preds[i];
-            if (m_Dominators[block]) {
-                newIDom = intersectTwoDoms(block, newIDom);
-            }
-        }
-
-        return newIDom;
-    }
-
-    void solveDominance() {
-        for (size_t i = 0; i < m_RPOrder.size(); ++i) {
-            m_RPONumbering[m_RPOrder[i]] = i;
-        }
-
-        auto startBlock = m_RPOrder[0];
-        m_Dominators[startBlock] = startBlock;
-
-        bool changed = true;
-        while (changed) {
-            changed = false;
-
-            // Skip start block
-            for (size_t i = 1; i < m_RPOrder.size(); ++i) {
-                auto block = m_RPOrder[i];
-                auto newIDom = intersectPredsDoms(block->GetPredecessors());
-                if (m_Dominators[block] != newIDom) {
-                    m_Dominators[block] = newIDom;
-                    changed = true;
-                }
-            }
-        }
-
-        m_Dominators[startBlock] = nullptr;
-    }
-
-    void computeReversePostorder() {
-        std::unordered_map<ir::BasicBlock*, bool> visited;
-        std::stack<ir::BasicBlock*> postorder;
-        traversePostorder(m_EntryBlock, postorder, visited);
-
-        m_RPOrder.clear();
-        while (!postorder.empty()) {
-            m_RPOrder.push_back(postorder.top());
-            postorder.pop();
-        }
-    }
+    void computeReversePostorder();
 
     void traversePostorder(ir::BasicBlock* block, std::stack<ir::BasicBlock*>& postorder,
-                           std::unordered_map<ir::BasicBlock*, bool>& visited) {
-        visited[block] = true;
-        for (ir::BasicBlock* next : block->GetSuccessors()) {
-            if (!visited[next]) {
-                traversePostorder(next, postorder, visited);
-            }
-        }
-        postorder.push(block);
-    }
+                           std::unordered_map<ir::BasicBlock*, bool>& visited);
 
 private:
     ir::BasicBlock* m_EntryBlock = nullptr;
+    std::vector<ir::BasicBlock*> (ir::BasicBlock::*p_GetPredecessors)() const = nullptr;
+    std::vector<ir::BasicBlock*> (ir::BasicBlock::*p_GetSuccessors)() const = nullptr;
+
     std::unordered_map<ir::BasicBlock*, ir::BasicBlock*> m_Dominators;
     std::unordered_map<ir::BasicBlock*, std::vector<ir::BasicBlock*>> m_Children;
 
@@ -162,5 +52,5 @@ private:
 
     // Reverse postorder info
     std::vector<ir::BasicBlock*> m_RPOrder;
-    std::unordered_map<ir::BasicBlock*, uint> m_RPONumbering;
+    std::unordered_map<ir::BasicBlock*, uint64_t> m_RPONumbering;
 };
