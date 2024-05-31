@@ -29,11 +29,20 @@ public:
         return m_SubType;
     }
 
+    // TODO: Simplify...
     bool HasSize() const {
-        return m_SizeExpr && m_SizeExpr->IsEvaluated();
+        return m_HasSetValue || m_SizeExpr && m_SizeExpr->IsEvaluated();
+    }
+
+    void SetSize(uint64_t size) {
+        m_SetSizeValue = IntValue(size, /*isSigned=*/false);
+        m_HasSetValue = true;
     }
 
     IntValue GetSize() const {
+        if (m_HasSetValue) {
+            return m_SetSizeValue;
+        }
         if (HasSize()) {
             Value value = m_SizeExpr->GetValue();
             assert(value.IsInteger());
@@ -60,7 +69,11 @@ public:
 
 private:
     QualType m_SubType;
+
     ConstExpression* m_SizeExpr;
+
+    IntValue m_SetSizeValue{0};
+    bool m_HasSetValue = false;
 };
 
 }  // namespace ast

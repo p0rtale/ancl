@@ -23,7 +23,7 @@ public:
         kLongDouble,
     };
 
-    enum Rank : uint {
+    enum Rank : unsigned int {
         kVoidRank = 0,
         kCharRank = 1,
         kUCharRank = 1,
@@ -54,7 +54,7 @@ public:
         return IsSignedInteger() || IsUnsignedInteger();
     }
 
-    uint GetRank() const {
+    unsigned int GetRank() const {
         switch (m_Kind) {
             case Kind::kVoid:        return 0;
             case Kind::kChar:        return 1;
@@ -102,6 +102,10 @@ public:
                 return true;
         }
         return false;
+    }
+
+    bool IsSinglePrecision() const {
+        return m_Kind == Kind::kFloat;
     }
 
     bool IsDoublePrecision() const {
