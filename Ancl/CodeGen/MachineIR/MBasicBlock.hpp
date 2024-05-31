@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <list>
+#include <string>
 
 #include <Ancl/CodeGen/MachineIR/MInstruction.hpp>
 
@@ -12,120 +12,57 @@ class MFunction;
 
 class MBasicBlock {
 public:
-    MBasicBlock(const std::string& name, MFunction* function)
-        : m_Name(name), m_Function(function) {}
+    MBasicBlock(const std::string& name, MFunction* function);
 
-    std::string GetName() const {
-        return m_Name;
-    }
+    std::string GetName() const;
 
-    void SetFunction(MFunction* function) {
-        m_Function = function;
-    }
+    void SetFunction(MFunction* function);
 
-    MFunction* GetFunction() const {
-        return m_Function;
-    }  
+    MFunction* GetFunction() const;
 
-    void AddSuccessor(MBasicBlock* block) {
-        m_Successors.push_back(block);
-    }
+    void AddSuccessor(MBasicBlock* block);
+    std::vector<MBasicBlock*> GetSuccessors() const;
 
-    std::vector<MBasicBlock*> GetSuccessors() const {
-        return m_Successors;
-    }
+    void AddPredecessor(MBasicBlock* block);
+    std::vector<MBasicBlock*> GetPredecessors() const;
 
-    void AddPredecessor(MBasicBlock* block) {
-        m_Predecessors.push_back(block);
-    }
+    size_t GetPredecessorsNumber() const;
+    MBasicBlock* GetPredecessor(size_t index) const;
 
-    std::vector<MBasicBlock*> GetPredecessors() const {
-        return m_Predecessors;
-    }
-
-    size_t GetPredecessorsNumber() const {
-        return m_Predecessors.size();
-    }
-
-    MBasicBlock* GetPredecessor(size_t index) const {
-        return m_Predecessors.at(index);
-    }
 
     using TInstructionIt = std::list<MInstruction>::iterator;
 
-    TInstructionIt GetInstrBegin() {
-        return m_Instructions.begin();
-    }
+    TInstructionIt GetInstrBegin();
+    TInstructionIt GetInstrEnd();
 
-    TInstructionIt GetInstrEnd() {
-        return m_Instructions.end();
-    }
+    TInstructionIt GetInstrRBegin();
+    TInstructionIt GetInstrREnd();
 
-    std::list<MInstruction>& GetInstructions() {
-        return m_Instructions;
-    }
+    TInstructionIt GetLastInstruction();
 
-    void ClearInstructions() {
-        m_Instructions.clear();
-    }
+    std::list<MInstruction>& GetInstructions();
 
-    TInstructionIt AddInstruction(MInstruction instruction) {
-        handleNewInstruction(instruction);
-        m_Instructions.push_back(instruction);
-        return --m_Instructions.end();
-    }
+    void ClearInstructions();
 
-    TInstructionIt AddInstructionToBegin(MInstruction instruction) {
-        handleNewInstruction(instruction);
-        m_Instructions.push_front(instruction);
-        return m_Instructions.begin();
-    }
-
-    TInstructionIt InsertInstr(MInstruction instruction, size_t index) {
-        handleNewInstruction(instruction);
-        auto iterator = m_Instructions.begin();
-        std::advance(iterator, index);
-        return m_Instructions.insert(iterator, instruction);
-    }
-
-    TInstructionIt InsertBefore(MInstruction instruction, TInstructionIt beforeIt) {
-        handleNewInstruction(instruction);
-        return m_Instructions.insert(beforeIt, instruction);
-    }
+    TInstructionIt AddInstruction(MInstruction instruction);
+    TInstructionIt AddInstructionToBegin(MInstruction instruction);
+    TInstructionIt InsertInstr(MInstruction instruction, size_t index);
+    TInstructionIt InsertBeforeLastInstruction(MInstruction instruction);
+    TInstructionIt InsertBefore(MInstruction instruction, TInstructionIt beforeIt);
 
     TInstructionIt InsertBefore(std::list<MInstruction>& instructions,
-                                TInstructionIt beforeIt) {
-        for (auto& instruction : instructions) {
-            handleNewInstruction(instruction);
-        }
-        return m_Instructions.insert(beforeIt, instructions.begin(), instructions.end());
-    }
+                                TInstructionIt beforeIt);
 
-    TInstructionIt InsertAfter(MInstruction instruction, TInstructionIt afterIt) {
-        return InsertBefore(instruction, ++afterIt);
-    }
+    TInstructionIt InsertAfter(MInstruction instruction, TInstructionIt afterIt);
 
     TInstructionIt InsertAfter(std::list<MInstruction>& instructions,
-                               TInstructionIt afterIt) {
-        return InsertBefore(instructions, ++afterIt);
-    }
+                               TInstructionIt afterIt);
 
-    TInstructionIt GetPrevInstruction(TInstructionIt instructionIt) {
-        assert(instructionIt != m_Instructions.begin());
-        return --instructionIt;
-    }
-
-    TInstructionIt GetNextInstruction(TInstructionIt instructionIt) {
-        assert(instructionIt != m_Instructions.end());
-        return ++instructionIt;
-    }
+    TInstructionIt GetPrevInstruction(TInstructionIt instructionIt);
+    TInstructionIt GetNextInstruction(TInstructionIt instructionIt);
 
 private:
-    void handleNewInstruction(MInstruction& instruction) {
-        if (!instruction.HasBasicBlock()) {
-            instruction.SetBasicBlock(this);
-        }
-    }
+    void handleNewInstruction(MInstruction& instruction);
 
 private:
     std::string m_Name;

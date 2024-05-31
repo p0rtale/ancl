@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert>
 #include <list>
 
 #include <Ancl/CodeGen/MachineIR/MOperand.hpp>
@@ -55,376 +54,96 @@ public:
 public:
     MInstruction() = default;
 
-    MInstruction(OpType opType): m_OpType(opType) {}
+    MInstruction(OpType opType);
 
-    MInstruction(OpType opType, CompareKind compareKind)
-        : m_OpType(opType), m_CompareKind(compareKind) {}
+    MInstruction(OpType opType, CompareKind compareKind);
 
-    OpType GetOpType() const {
-        return m_OpType;
-    }
+    OpType GetOpType() const;
+    std::string GetOpTypeString() const;
 
-    std::string GetOpTypeString() const {
-        if (m_OpType == OpType::kCmp || m_OpType == OpType::kUCmp || m_OpType == OpType::kFCmp) {
-            std::string name = "CMP";
-            if (m_OpType == OpType::kUCmp) {
-                name = "UCMP";
-            } else if (m_OpType == OpType::kFCmp) {
-                name = "FCMP";
-            }
-
-            switch (m_CompareKind){
-                case CompareKind::kEqual:
-                    return name + "EQ";
-                case CompareKind::kNEqual:
-                    return name + "NE";
-                case CompareKind::kGreater:
-                    return name + "GT";
-                case CompareKind::kLess:
-                    return name + "LT";
-                case CompareKind::kGreaterEq:
-                    return name + "GE";
-                case CompareKind::kLessEq:
-                    return name + "LE";
-                default:
-                    return name;
-            }
-        }
-
-        switch (m_OpType) {
-            case OpType::kNone:
-                return "";
-            case OpType::kMul:
-                return "MUL";
-            case OpType::kFMul:
-                return "FMUL";
-            case OpType::kSDiv:
-                return "SDIV";
-            case OpType::kUDiv:
-                return "UDIV";
-            case OpType::kFDiv:
-                return "FDIV";
-            case OpType::kSRem:
-                return "SREM";
-            case OpType::kURem:
-                return "UREM";
-            case OpType::kAdd:
-                return "ADD";
-            case OpType::kFAdd:
-                return "FADD";
-            case OpType::kSub:
-                return "SUB";
-            case OpType::kFSub:
-                return "FSUB";
-            case OpType::kShiftL:
-                return "SHIFTL";
-            case OpType::kLShiftR:
-                return "LSHIFTR";
-            case OpType::kAShiftR:
-                return "ASHIFTR";
-            case OpType::kAnd:
-                return "AND";
-            case OpType::kXor:
-                return "XOR";
-            case OpType::kOr:
-                return "OR";
-            case OpType::kITrunc:
-                return "ITRUNC";
-            case OpType::kFTrunc:
-                return "FTRUNC";
-            case OpType::kZExt:
-                return "ZEXT";
-            case OpType::kSExt:
-                return "SEXT";
-            case OpType::kFExt:
-                return "FEXT";
-            case OpType::kFToUI:
-                return "FTOUI";
-            case OpType::kFToSI:
-                return "FTOSI";
-            case OpType::kUIToF:
-                return "UITOF";
-            case OpType::kSIToF:
-                return "SITOF";
-            case OpType::kCall:
-                return "CALL";
-            case OpType::kJump:
-                return "JUMP";
-            case OpType::kBranch:
-                return "BRANCH";
-            case OpType::kRet:
-                return "RET";
-            case OpType::kMov:
-                return "MOV";
-            case OpType::kFMov:
-                return "FMOV";
-            case OpType::kLoad:
-                return "LOAD";
-            case OpType::kStore:
-                return "STORE";
-            case OpType::kStackAddress:
-                return "STACKADDR";
-            case OpType::kGlobalAddress:
-                return "GLOBALADDR";
-            case OpType::kMemberAddress:
-                return "MEMBERADDR";
-            case OpType::kPush:
-                return "PUSH";
-            case OpType::kPop:
-                return "POP";
-            case OpType::kPhi:
-                return "PHI";
-            case OpType::kSubregToReg:
-                return "SUBREG_TO_REG";
-            case OpType::kRegToSubreg:
-                return "REG_TO_SUBREG";
-            default:
-                return "";
-        }
-    }
-
-    bool IsCall() const {
-        return m_OpType == OpType::kCall;
-    }
-
-    bool IsReturn() const {
-        return m_OpType == OpType::kRet;
-    }
-
-    bool IsJump() const {
-        return m_OpType == OpType::kJump;
-    }
-
-    bool IsBranch() const {
-        return m_OpType == OpType::kBranch;
-    }
-
-    bool IsTerminator() const {
-        return IsJump() || IsBranch() || IsReturn();
-    }
-
-    bool IsStore() const {
-        return m_OpType == OpType::kStore;
-    }
-
-    bool IsLoad() const {
-        return m_OpType == OpType::kLoad;
-    }
-
-    bool IsStackAddress() const {
-        return m_OpType == OpType::kStackAddress;
-    }
-
-    bool IsGlobalAddress() const {
-        return m_OpType == OpType::kGlobalAddress;
-    }
-
-    bool IsMemberAddress() const {
-        return m_OpType == OpType::kMemberAddress;
-    }
-
-    bool IsCmp() const {
-        return m_OpType == OpType::kCmp;
-    }
-
-    bool IsMov() const {
-        return m_OpType == OpType::kMov;
-    }
+    bool IsCall() const;
+    bool IsReturn() const;
+    bool IsJump() const;
+    bool IsBranch() const;
+    bool IsTerminator() const;
+    bool IsStore() const;
+    bool IsLoad() const;
+    bool IsStackAddress() const;
+    bool IsGlobalAddress() const;
+    bool IsMemberAddress() const;
+    bool IsCmp() const;
+    bool IsMov() const;
 
     // TODO: Const
-    bool IsRegMov() {
-        if (!IsMov()) {
-            return false;
-        }
+    bool IsRegMov();
 
-        TOperandIt toOperand = GetDefinition();
-        TOperandIt fromOperand = GetUse(0);
+    bool IsSubregToReg() const;
+    bool IsRegToSubreg() const;
+    bool IsPush() const;
+    bool IsPop() const;
+    bool IsPhi() const;
 
-        return toOperand->IsRegister() && fromOperand->IsRegister();
-    }
+    CompareKind GetCompareKind() const;
 
-    bool IsSubregToReg() const {
-        return m_OpType == OpType::kSubregToReg;
-    }
+    bool HasBasicBlock() const;
 
-    bool IsRegToSubreg() const {
-        return m_OpType == OpType::kRegToSubreg;
-    }
+    void SetBasicBlock(MBasicBlock* MBB);
 
-    bool IsPush() const {
-        return m_OpType == OpType::kPush;
-    }
+    MBasicBlock* GetBasicBlock() const;
 
-    bool IsPop() const {
-        return m_OpType == OpType::kPop;
-    }
+    void AddOperand(MOperand operand);
+    void AddOperandToBegin(MOperand operand);
 
-    bool IsPhi() const {
-        return m_OpType == OpType::kPhi;
-    }
+    void RemoveFirstOperand();
 
-    CompareKind GetCompareKind() const {
-        return m_CompareKind;
-    }
+    void AddImplicitRegDefinition(target::Register reg);
+    void AddImplicitRegUse(target::Register reg);
 
-    bool HasBasicBlock() const {
-        return m_BasicBlock;
-    }
+    void AddPhysicalRegister(target::Register reg);
+    void AddVirtualRegister(uint64_t regNumber, MType type);
+    void AddImmInteger(int64_t value, uint64_t bytes = 8);
+    void AddImmFloat(double value, uint64_t bytes = 8);
+    void AddGlobalSymbol(const std::string& symbol);
+    void AddFunction(const std::string& symbol);
+    void AddStackIndex(uint64_t slot, int64_t offset = 0);
+    void AddMemory(uint64_t vreg, uint64_t bytes = 8);
+    void AddBasicBlock(MBasicBlock* basicBlock);
 
-    void SetBasicBlock(MBasicBlock* MBB) {
-        m_BasicBlock = MBB;
-    }
+    bool HasOperands() const;
 
-    MBasicBlock* GetBasicBlock() const {
-        return m_BasicBlock;
-    }
+    size_t GetOperandsNumber() const;
 
-    void AddOperand(MOperand operand) {
-        m_Operands.push_back(operand);
-    }
+    size_t GetUsesNumber() const;
 
-    void AddOperandToBegin(MOperand operand) {
-        m_Operands.push_front(operand);
-    }
-
-    void RemoveFirstOperand() {
-        m_Operands.pop_front();
-    }
-
-    void AddImplicitRegDefinition(target::Register reg) {
-        m_ImplicitRegDefinitions.push_back(reg);
-    }
-
-    void AddImplicitRegUse(target::Register reg) {
-        m_ImplicitRegUses.push_back(reg);
-    }
-
-    void AddPhysicalRegister(target::Register reg) {
-        MType type;
-        if (reg.IsFloat()) {
-            type = MType(MType::Kind::kFloat, reg.GetBytes());
-        } else {
-            type = MType(MType::Kind::kInteger, reg.GetBytes());
-        }
-        AddOperand(MOperand::CreateRegister(reg.GetNumber(), type, /*isVirtual=*/false));
-    }
-
-    void AddVirtualRegister(uint regNumber, MType type) {
-        AddOperand(MOperand::CreateRegister(regNumber, type, /*isVirtual=*/true));
-    }
-
-    void AddImmInteger(int64_t value, uint bytes = 8) {
-        AddOperand(MOperand::CreateImmInteger(value, bytes));
-    }  
-
-    void AddImmFloat(double value, uint bytes = 8) {
-        AddOperand(MOperand::CreateImmFloat(value, bytes));
-    }  
-
-    void AddGlobalSymbol(const std::string& symbol) {
-        AddOperand(MOperand::CreateGlobalSymbol(symbol));
-    }
-
-    void AddFunction(const std::string& symbol) {
-        AddOperand(MOperand::CreateFunction(symbol));
-    }
-
-    void AddStackIndex(uint slot, int64_t offset = 0) {
-        AddOperand(MOperand::CreateStackIndex(slot));
-    }
-
-    void AddMemory(uint vreg, uint bytes = 8) {
-        AddOperand(MOperand::CreateMemory(vreg, bytes));
-    }
-
-    void AddBasicBlock(MBasicBlock* basicBlock) {
-        AddOperand(MOperand::CreateBasicBlock(basicBlock));
-    }
-
-    bool HasOperands() const {
-        return !m_Operands.empty();
-    }
-
-    size_t GetOperandsNumber() const {
-        return m_Operands.size();
-    }
-
-    size_t GetUsesNumber() const {
-        size_t opNumber = GetOperandsNumber();
-        if (!IsDefinition()) {
-            return opNumber;
-        }
-        return opNumber - 1;
-    }
 
     using TOperandIt = std::list<MOperand>::iterator;
 
-    TOperandIt GetOperand(size_t index) {
-        return std::next(m_Operands.begin(), index);
-    }
+    TOperandIt GetOperand(size_t index);
 
     // ADD defReg, useReg -> ADD mem, useReg
     // IDIV
-    void Undefine() {
-        m_IsDefinition = false;
-    }
+    void Undefine();
 
-    bool IsDefinition() const {
-        return !IsReturn() && !IsJump() && !IsBranch() && !IsStore() &&
-               !IsPush() && !IsPop() && m_IsDefinition; 
-    }
+    bool IsDefinition() const;
 
-    TOperandIt GetDefinition() {
-        assert(IsDefinition());
-        return GetOperand(0);
-    }
+    TOperandIt GetDefinition();
 
-    TOperandIt GetUse(size_t index) {
-        if (IsDefinition()) {
-            ++index;
-        }
-        return GetOperand(index);
-    }
+    TOperandIt GetUse(size_t index);
 
-    TOperandIt GetOpBegin() {
-        return m_Operands.begin();
-    }
+    TOperandIt GetOpBegin();
+    TOperandIt GetOpEnd();
 
-    TOperandIt GetOpEnd() {
-        return m_Operands.end();
-    }
+    std::list<MOperand>& GetOperands();
 
-    std::list<MOperand>& GetOperands() {
-        return m_Operands;
-    }
+    std::list<target::Register> GetImplicitRegDefinitions();
+    std::list<target::Register> GetImplicitRegUses();
 
-    std::list<target::Register> GetImplicitRegDefinitions() {
-        return m_ImplicitRegDefinitions;
-    }
+    void SetTargetInstructionCode(uint64_t code);
+    bool HasTargetInstruction() const;
+    uint64_t GetTargetInstructionCode() const;
 
-    std::list<target::Register> GetImplicitRegUses() {
-        return m_ImplicitRegUses;
-    }
-
-    void SetTargetInstructionCode(uint code) {
-        m_TargetInstructionCode = code;
-    }
-
-    bool HasTargetInstruction() const {
-        return m_TargetInstructionCode;
-    }
-
-    uint GetTargetInstructionCode() const {
-        return m_TargetInstructionCode;
-    }
-
-    void SetInstructionClass(uint instrClass) {
-        m_InstructionClass = instrClass;
-    }
-
-    uint GetInstructionClass() const {
-        return m_InstructionClass;
-    }
+    void SetInstructionClass(unsigned int instrClass);
+    unsigned int GetInstructionClass() const;
 
 private:
     OpType m_OpType = OpType::kNone;
@@ -436,8 +155,8 @@ private:
     std::list<target::Register> m_ImplicitRegDefinitions;
     std::list<target::Register> m_ImplicitRegUses;
 
-    uint m_TargetInstructionCode = 0;
-    uint m_InstructionClass = 0;
+    uint64_t m_TargetInstructionCode = 0;
+    unsigned int m_InstructionClass = 0;
 
     MBasicBlock* m_BasicBlock = nullptr;
 

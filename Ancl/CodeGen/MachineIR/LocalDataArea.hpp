@@ -1,11 +1,8 @@
 #pragma once
 
-#include <cassert>
 #include <cstdint>
-#include <vector>
 #include <unordered_map>
-
-#include <Ancl/DataLayout/Alignment.hpp>
+#include <vector>
 
 
 namespace gen {
@@ -13,77 +10,43 @@ namespace gen {
 class LocalDataArea {
 public:
     struct Slot {
-        uint VReg;
-        uint Size;
-        uint Align;
+        uint64_t VReg;
+        uint64_t Size;
+        uint64_t Align;
     };
 
 public:
     LocalDataArea() = default;
 
-    uint GetSize() const {
-        return m_Size;
-    }
+    uint64_t GetSize() const;
 
-    size_t GetSlotsNumber() const {
-        return m_Slots.size();
-    }
+    size_t GetSlotsNumber() const;
+    std::vector<Slot> GetSlots() const;
 
-    std::vector<Slot> GetSlots() const {
-        return m_Slots;
-    }
+    bool HasSlot(uint64_t vreg) const;
 
-    bool HasSlot(uint vreg) const {
-        return m_VRegToSlotPosition.contains(vreg);
-    }
+    uint64_t GetAreaSize() const;
 
-    uint GetAreaSize() const {
-        return m_Size;
-    }
+    uint64_t GetSlotSize(uint64_t vreg) const;
 
-    uint GetSlotSize(uint vreg) const {
-        assert(HasSlot(vreg));
-
-        SlotPosition position = m_VRegToSlotPosition.at(vreg);
-        Slot slot = m_Slots[position.Index];
-        return slot.Size;
-    }
-
-    void AddSlot(uint vreg, uint size, uint align) {
-        m_Slots.push_back(Slot{vreg, size, align});
-
-        alignStack(size, align);
-
-        m_VRegToSlotPosition[vreg] = SlotPosition{
-            .Index = m_Slots.size() - 1,
-            .Offset = m_Size,
-        };
-    }
+    void AddSlot(uint64_t vreg, uint64_t size, uint64_t align);
 
     // TODO: Negative offsets (spilled parameters)
-    uint GetSlotOffset(uint vreg) const {
-        assert(HasSlot(vreg));
-
-        SlotPosition position = m_VRegToSlotPosition.at(vreg);
-        return position.Offset;
-    }
+    uint64_t GetSlotOffset(uint64_t vreg) const;
 
 private:
-    void alignStack(uint size, uint align) {
-        m_Size += size;
-        m_Size = ir::Alignment::Align(m_Size, align);
-    }
+    void alignStack(uint64_t size, uint64_t align);
 
     struct SlotPosition {
         size_t Index;
-        uint Offset;
+        uint64_t Offset;
     };
 
 private:
-    uint m_Size = 0;
+    uint64_t m_Size = 0;
 
     std::vector<Slot> m_Slots;
-    std::unordered_map<uint, SlotPosition> m_VRegToSlotPosition;
+    std::unordered_map<uint64_t, SlotPosition> m_VRegToSlotPosition;
 };
 
 }  // namespace gen

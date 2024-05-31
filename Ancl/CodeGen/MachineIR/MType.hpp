@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 
@@ -16,25 +17,25 @@ public:
 
 public:
     MType() = default;
-    MType(Kind kind, uint bytes)
+    MType(Kind kind, uint64_t bytes)
         : m_Kind(kind), m_Bytes(bytes) {}
 
-    static MType CreateScalar(uint bytes, bool isFloat = false) {
+    static MType CreateScalar(uint64_t bytes, bool isFloat = false) {
         if (isFloat) {
             return MType(Kind::kFloat, bytes);
         }
         return MType(Kind::kInteger, bytes);
     }
 
-    static MType CreatePointer(uint bytes = 8) {
+    static MType CreatePointer(uint64_t bytes = 8) {
         return MType(Kind::kPointer, bytes);
     }
 
-    void SetBytes(uint bytes) {
+    void SetBytes(uint64_t bytes) {
         m_Bytes = bytes;
     }
 
-    uint GetBytes() const {
+    uint64_t GetBytes() const {
         return m_Bytes;
     }
 
@@ -61,7 +62,7 @@ public:
 private:
     Kind m_Kind = Kind::kNone;
 
-    uint m_Bytes = 0;
+    uint64_t m_Bytes = 0;
 };
 
 }  // namespace gen

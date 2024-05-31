@@ -14,8 +14,7 @@ namespace gen {
 
 class MFunction {
 public:
-    // TODO: uint -> uint64_t
-    static constexpr uint kFirstVirtualRegisterNumber = 1 << 16;
+    static constexpr uint64_t kFirstVirtualRegisterNumber = 1 << 16;
 
 public:
     MFunction(const std::string& name, bool isStatic = false)
@@ -57,11 +56,11 @@ public:
         return m_LocalDataArea;
     }
 
-    bool HasSlot(uint vreg) const {
+    bool HasSlot(uint64_t vreg) const {
         return m_LocalDataArea.HasSlot(vreg);
     }
 
-    void AddLocalData(uint vreg, uint size, uint align) {
+    void AddLocalData(uint64_t vreg, uint64_t size, uint64_t align) {
         m_LocalDataArea.AddSlot(vreg, size, align);
     }
 
@@ -73,7 +72,15 @@ public:
         m_IsCaller = true;
     }
 
-    uint NextVReg() {
+    bool IsVariadic() const {
+        return m_IsVariadic;
+    }
+
+    void SetVariadic() {
+        m_IsVariadic = true;
+    }
+
+    uint64_t NextVReg() {
         return m_NextVReg++;
     }
 
@@ -83,10 +90,12 @@ private:
     bool m_IsStatic = false;
     bool m_IsCaller = false;
 
+    bool m_IsVariadic = false;
+
     LocalDataArea m_LocalDataArea;
     std::vector<TScopePtr<MBasicBlock>> m_BasicBlocks;
 
-    uint m_NextVReg = kFirstVirtualRegisterNumber;
+    uint64_t m_NextVReg = kFirstVirtualRegisterNumber;
 };
 
 }  // namespace gen

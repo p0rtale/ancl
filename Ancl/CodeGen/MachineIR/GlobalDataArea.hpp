@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 #include <string>
 
@@ -31,92 +32,30 @@ public:
     };
 
 public:
-    GlobalDataArea(const std::string& name): m_Name(name) {}
+    GlobalDataArea(const std::string& name);
 
-    std::vector<Slot> GetSlots() const {
-        return m_Slots;
-    }
+    std::vector<Slot> GetSlots() const;
 
-    void SetConst() {
-        m_IsConst = true;
-    }
+    void SetConst();
+    bool IsConst() const;
 
-    bool IsConst() const {
-        return m_IsConst;
-    }
+    bool IsLocal() const;
+    void SetLocal();
 
-    bool IsLocal() const {
-        return m_IsLocal;
-    }
+    bool IsInitialized() const;
 
-    void SetLocal() {
-        m_IsLocal = true;
-    }
+    void AddIntegerSlot(uint64_t bytes, uint64_t init);
+    void AddLabelSlot(uint64_t bytes, const std::string& label);
+    void AddStringSlot(const std::string& init);
+    void AddDoubleSlot(double init);
+    void AddFloatSlot(float init);
 
-    bool IsInitialized() const {
-        for (const Slot& slot : m_Slots) {
-            if (slot.Type != DataType::kZero && slot.Init != "0") {
-                return true;
-            }
-        }
-        return false;
-    }
+    std::string GetName() const;
 
-    void AddIntegerSlot(uint bytes, uint init) {
-        DataType type = getIntegerTypeFromBytes(bytes);
-        if (type == DataType::kNone) {
-            assert(init == 0);
-            type = DataType::kZero;
-            init = bytes;
-        }
-        m_Slots.emplace_back(type, std::to_string(init));
-        m_Size += bytes;
-    }
-
-    void AddLabelSlot(uint bytes, const std::string& label) {
-        DataType type = getIntegerTypeFromBytes(bytes);
-        assert(type != DataType::kNone);
-        m_Slots.emplace_back(type, label);
-        m_Size += bytes;
-    }
-
-    void AddStringSlot(const std::string& init) {
-        m_Slots.emplace_back(DataType::kString, init);
-        m_Size += init.size() + 1;  // assume null-terminated string
-    }
-
-    void AddDoubleSlot(double init) {
-        m_Slots.emplace_back(DataType::kDouble, std::to_string(init));
-        m_Size += 8;
-    }
-
-    void AddFloatSlot(float init) {
-        m_Slots.emplace_back(DataType::kFloat, std::to_string(init));
-        m_Size += 4;
-    }
-
-    std::string GetName() const {
-        return m_Name;
-    }
-
-    size_t GetSize() const {
-        return m_Size;
-    }
+    size_t GetSize() const;
 
 private:
-    DataType getIntegerTypeFromBytes(uint bytes) {
-        switch (bytes) {
-        case 1:
-            return DataType::kByte;
-        case 2:
-            return DataType::kShort;
-        case 4:
-            return DataType::kInt;
-        case 8:
-            return DataType::kQuad;
-        }
-        return DataType::kNone;
-    }
+    DataType getIntegerTypeFromBytes(uint64_t bytes);
 
 private:
     std::string m_Name;
