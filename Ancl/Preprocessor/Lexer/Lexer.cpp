@@ -393,7 +393,7 @@ int yyFlexLexer::yylex()
 	return 0;
 	}
 
-#define YY_DECL int preprocessor::Lexer::yylex()
+#define YY_DECL int preproc::Lexer::yylex()
 
 /* %% [1.5] DFA */
 

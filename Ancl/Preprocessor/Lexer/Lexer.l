@@ -1,7 +1,7 @@
 %option noyywrap
 %option c++
 %option prefix="pre"
-%option yyclass="preprocessor::Lexer"
+%option yyclass="preproc::Lexer"
 
 %option debug
 
