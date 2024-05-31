@@ -8,8 +8,6 @@
 
 namespace ir {
 
-class IRProgram;
-
 class StructType: public Type {
 public:
     StructType(IRProgram& program, const std::vector<Type*>& elementTypes);
@@ -20,9 +18,7 @@ public:
 
     std::string GetName() const;
 
-    Type* GetElementType(size_t index) const {
-        return m_ElementTypes.at(index);
-    }
+    Type* GetElementType(size_t index) const;
 
     std::vector<Type*> GetElementTypes() const;
 

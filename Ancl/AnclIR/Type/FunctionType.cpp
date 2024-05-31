@@ -1,8 +1,9 @@
 #include <Ancl/AnclIR/Type/FunctionType.hpp>
+
 #include <Ancl/AnclIR/IRProgram.hpp>
 
-using namespace ir;
 
+namespace ir {
 
 FunctionType::FunctionType(Type* retType, const std::vector<Type*>& paramTypes,
                            bool isVariadic)
@@ -23,10 +24,20 @@ std::vector<Type*> FunctionType::GetParamTypes() const {
     return m_ParamTypes;
 }
 
+bool FunctionType::HasParameters() const {
+    return !m_ParamTypes.empty();
+}
+
 size_t FunctionType::GetParamNumber() const {
     return m_ParamTypes.size();
+}
+
+void FunctionType::SetVariadic() {
+    m_IsVariadic = true;
 }
 
 bool FunctionType::IsVariadic() const {
     return m_IsVariadic;
 }
+
+}  // namespace ir

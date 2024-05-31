@@ -1,18 +1,17 @@
 #pragma once
 
+
 namespace ir {
 
 class IRProgram;
 
 class Type {
 public:
-    Type(IRProgram& program): m_Program(program) {}
+    Type(IRProgram& program);
 
     virtual ~Type() = default;
 
-    IRProgram& GetProgram() const {
-        return m_Program;
-    }
+    IRProgram& GetProgram() const;
 
 private:
     IRProgram& m_Program;

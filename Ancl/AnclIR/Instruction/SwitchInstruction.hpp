@@ -2,10 +2,9 @@
 
 #include <vector>
 
+#include <Ancl/AnclIR/BasicBlock.hpp>
 #include <Ancl/AnclIR/Instruction/TerminatorInstruction.hpp>
 #include <Ancl/AnclIR/Value.hpp>
-#include <Ancl/AnclIR/Type/VoidType.hpp>
-#include <Ancl/AnclIR/BasicBlock.hpp>
 
 
 namespace ir {
@@ -18,39 +17,18 @@ public:
     };
 
 public:
-    SwitchInstruction(Value* value, BasicBlock* defaultBlock, BasicBlock* basicBlock)
-            : TerminatorInstruction(VoidType::Create(value->GetProgram()), basicBlock),
-              m_Value(value), m_DefaultBB(defaultBlock) {
-        // TODO: Cases uses?
-        AddOperand(value);
-        AddOperand(defaultBlock);
+    SwitchInstruction(Value* value, BasicBlock* defaultBlock, BasicBlock* basicBlock);
 
-        // TODO: Link Basic Blocks
-    }
+    Value* GetValue() const;
 
-    Value* GetValue() const {
-        return m_Value;
-    }
+    bool HasDefaultBasicBlock() const;
+    BasicBlock* GetDefaultBasicBlock() const;
 
-    bool HasDefaultBasicBlock() const {
-        return m_DefaultBB;
-    }
+    void AddCase(SwitchCase switchCase);
 
-    BasicBlock* GetDefaultBasicBlock() const {
-        return m_DefaultBB;
-    }
+    std::vector<SwitchCase> GetCases() const;
 
-    void AddCase(SwitchCase switchCase) {
-        m_SwitchCases.push_back(switchCase);
-    }
-
-    std::vector<SwitchCase> GetCases() const {
-        return m_SwitchCases;
-    }
-
-    size_t GetCasesNumber() const {
-        return m_SwitchCases.size();
-    }
+    size_t GetCasesNumber() const;
 
 private:
     Value* m_Value;

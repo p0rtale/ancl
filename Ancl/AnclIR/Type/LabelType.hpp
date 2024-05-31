@@ -5,8 +5,6 @@
 
 namespace ir {
 
-class IRProgram;
-
 class LabelType: public Type {
 public:
     LabelType(IRProgram& program);

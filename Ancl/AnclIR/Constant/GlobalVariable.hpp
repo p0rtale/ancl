@@ -5,78 +5,33 @@
 
 #include <Ancl/AnclIR/Constant/Constant.hpp>
 #include <Ancl/AnclIR/Constant/GlobalValue.hpp>
-
 #include <Ancl/AnclIR/Type/Type.hpp>
-
 
 
 namespace ir {
 
 class GlobalVariable: public GlobalValue {
 public:
-    GlobalVariable(Type* type, LinkageType linkage, const std::string& name)
-            : GlobalValue(type, linkage) {
-        SetName(name);
-    }
+    GlobalVariable(Type* type, LinkageType linkage, const std::string& name);
 
-    void SetInit(Constant* init) {
-        m_Init = std::vector{init};
-    }
+    void SetInit(Constant* init);
+    Constant* GetInit() const;
+    bool HasInit() const;
 
-    Constant* GetInit() const {
-        return m_Init.at(0);
-    }
+    void SetInitString(const std::string& str);
+    std::string GetInitString() const;
+    bool IsInitString() const;
 
-    bool HasInit() const {
-        return !m_Init.empty();
-    }
+    void SetInitList(const std::vector<Constant*>& init);
+    std::vector<Constant*> GetInitList() const;
+    bool IsInitList() const;
 
-    void SetInitString(const std::string& str) {
-        m_IsInitString = true;
-        m_InitString = str;
-    }
+    void SetInitVariable(GlobalVariable* variable);
+    GlobalVariable* GetInitVariable();
+    bool IsInitVariable() const;
 
-    std::string GetInitString() const {
-        return m_InitString;
-    }
-
-    bool IsInitString() const {
-        return m_IsInitString;
-    }
-
-    void SetInitList(const std::vector<Constant*>& init) {
-        m_IsInitList = true;
-        m_Init = init;
-    }
-
-    std::vector<Constant*> GetInitList() const {
-        return m_Init;
-    }
-
-    bool IsInitList() const {
-        return m_IsInitList;
-    }
-
-    void SetInitVariable(GlobalVariable* variable) {
-        m_InitVariable = variable;
-        m_IsInitVariable = true;
-    }
-
-    GlobalVariable* GetInitVariable() {
-        return m_InitVariable;
-    }
-
-    bool IsInitVariable() const {
-        return m_IsInitVariable;
-    }
-
-    bool IsConst() const {
-        return m_IsConst;
-    }
-
-    void SetConst(bool isConst) {
-        m_IsConst = isConst;
-    }
+    bool IsConst() const;
+    void SetConst(bool isConst);
 
 private:
     std::vector<Constant*> m_Init;

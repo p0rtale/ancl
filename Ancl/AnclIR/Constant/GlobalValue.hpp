@@ -13,12 +13,9 @@ public:
     };
 
 public:
-    GlobalValue(Type* type, LinkageType linkage)
-        : Constant(type), m_Linkage(linkage) {}
+    GlobalValue(Type* type, LinkageType linkage);
 
-    LinkageType GetLinkage() const {
-        return m_Linkage;
-    }
+    LinkageType GetLinkage() const;
 
 private:
     LinkageType m_Linkage = LinkageType::kExtern;

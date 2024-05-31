@@ -5,8 +5,6 @@
 
 namespace ir {
 
-class IRProgram;
-
 class VoidType: public Type {
 public:
     VoidType(IRProgram& program);

@@ -2,25 +2,19 @@
 
 #include <string>
 
-#include <Ancl/AnclIR/Instruction/Instruction.hpp>
-#include <Ancl/AnclIR/Type/Type.hpp>
-#include <Ancl/AnclIR/Type/PointerType.hpp>
 #include <Ancl/AnclIR/BasicBlock.hpp>
+#include <Ancl/AnclIR/Instruction/Instruction.hpp>
+#include <Ancl/AnclIR/Type/PointerType.hpp>
+#include <Ancl/AnclIR/Type/Type.hpp>
 
 
 namespace ir {
 
 class AllocaInstruction: public Instruction {
 public:
-    AllocaInstruction(Type* type, const std::string& name, BasicBlock* basicBlock)
-            : Instruction(PointerType::Create(type), basicBlock),
-              m_AllocaType(type) {
-        SetName(name);
-    }
+    AllocaInstruction(Type* type, const std::string& name, BasicBlock* basicBlock);
 
-    Type* GetAllocaType() const {
-        return m_AllocaType;
-    }
+    Type* GetAllocaType() const;
 
 private:
     Type* m_AllocaType;

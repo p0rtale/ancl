@@ -1,14 +1,14 @@
 #pragma once
 
-#include <vector>
-#include <string>
 #include <list>
+#include <string>
+#include <vector>
 
-#include <Ancl/AnclIR/Value.hpp>
-#include <Ancl/AnclIR/Type/LabelType.hpp>
 #include <Ancl/AnclIR/Instruction/Instruction.hpp>
-#include <Ancl/AnclIR/Instruction/TerminatorInstruction.hpp>
 #include <Ancl/AnclIR/Instruction/PhiInstruction.hpp>
+#include <Ancl/AnclIR/Instruction/TerminatorInstruction.hpp>
+#include <Ancl/AnclIR/Type/LabelType.hpp>
+#include <Ancl/AnclIR/Value.hpp>
 
 
 namespace ir {
@@ -30,37 +30,30 @@ public:
 
     void AddInstruction(Instruction* instruction);
 
-    void AddPhiFunction(PhiInstruction* phiInstruction) {
-        m_Instructions.push_front(phiInstruction);
-    }
+    void InsertInstructionBeforeTerminator(Instruction* instruction);
 
-    std::vector<PhiInstruction*> GetPhiFunctions() const {
-        std::vector<PhiInstruction*> phis;
-        for (Instruction* instruction : m_Instructions) {
-            if (auto* phiInstr = dynamic_cast<PhiInstruction*>(instruction)) {
-                phis.push_back(phiInstr);
-            }
-        }
-        return phis;
-    }
+    bool IsEmpty() const;
 
+    void AddPhiFunction(PhiInstruction* phiInstruction);
+    std::vector<PhiInstruction*> GetPhiFunctions() const;
+    bool HasPhiFunctions() const;
+
+    void ReplaceTerminator(TerminatorInstruction* terminator);
     TerminatorInstruction* GetTerminator() const;
 
     std::vector<BasicBlock*> GetSuccessors() const;
 
     std::list<Instruction*> GetInstructions() const;
-
     std::list<Instruction*>& GetInstructionsRef();
 
     void AddPredecessor(BasicBlock* block);
+    void AddPredecessorWithPhiValues(BasicBlock* block, const std::vector<Value*>& values);
 
-    std::vector<BasicBlock*> GetPredecessors() const {
-        return m_Predecessors;
-    }
+    void ReplacePredecessor(BasicBlock* fromBlock, BasicBlock* toBlock);
+    void RemovePredecessor(BasicBlock* block);
 
-    size_t GetPredecessorsNumber() const {
-        return m_Predecessors.size();
-    }
+    std::vector<BasicBlock*> GetPredecessors() const;
+    size_t GetPredecessorsNumber() const;
 
 private:
     Function* m_Function;

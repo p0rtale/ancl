@@ -2,10 +2,10 @@
 
 #include <string>
 
+#include <Ancl/AnclIR/BasicBlock.hpp>
 #include <Ancl/AnclIR/Instruction/Instruction.hpp>
 #include <Ancl/AnclIR/Type/Type.hpp>
 #include <Ancl/AnclIR/Value.hpp>
-#include <Ancl/AnclIR/BasicBlock.hpp>
 
 
 namespace ir {
@@ -24,56 +24,15 @@ public:
 
 public:
     CastInstruction(OpType opType, const std::string& name,
-                    Value* fromValue, Type* toType,
-                    BasicBlock* basicBlock)
-            : Instruction(toType, basicBlock), m_OpType(opType) {
-        SetName(name);
-        AddOperand(fromValue);
-    }
+                    Value* fromValue, Type* toType, BasicBlock* basicBlock);
 
-    Value* GetFromOperand() const {
-        return GetOperand(0);
-    }
+    Value* GetFromOperand() const;
 
-    Type* GetFromType() const {
-        return GetOperand(0)->GetType();
-    }
+    Type* GetFromType() const;
+    Type* GetToType() const;
 
-    Type* GetToType() const {
-        return GetType();
-    }
-
-    OpType GetOpType() const {
-        return m_OpType;
-    }
-
-    std::string GetOpTypeStr() const {
-        switch (m_OpType) {
-            case OpType::kNone:  return "None";
-
-            case OpType::kITrunc:  return "itrunc";
-            case OpType::kFTrunc:  return "ftrunc";
-            
-            case OpType::kZExt:  return "zext";
-            case OpType::kSExt:  return "sext";
-            case OpType::kFExt:  return "fext";
-
-            case OpType::kFToUI:  return "ftoui";
-            case OpType::kFToSI:  return "ftosi";
-
-            case OpType::kUIToF:  return "uitof";
-            case OpType::kSIToF:  return "sitof";
-
-            case OpType::kPtrToI:  return "ptrtoi";
-            case OpType::kIToPtr:  return "itoptr";
-
-            case OpType::kBitcast:  return "bitcast";
-
-            default: {
-                return "";
-            }
-        }
-    }
+    OpType GetOpType() const;
+    std::string GetOpTypeStr() const;
 
 private:
     OpType m_OpType = OpType::kNone;

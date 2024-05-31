@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include <Ancl/AnclIR/Value.hpp>
 #include <Ancl/AnclIR/Type/Type.hpp>
+#include <Ancl/AnclIR/Value.hpp>
 
 
 namespace ir {
@@ -18,32 +18,25 @@ class BasicBlock;
 */
 class Instruction: public Value {
 public:
-    Instruction(Type* type, BasicBlock* basicBlock)
-        : Value(type), m_BasicBlock(basicBlock) {}
+    Instruction(Type* type, BasicBlock* basicBlock);
 
-    BasicBlock* GetBasicBlock() const {
-        return m_BasicBlock;
-    }
+    void SetName(const std::string& name);
 
-    void AddOperand(Value* operand) {
-        m_Operands.push_back(operand);
-    }
+    void SetBasicBlock(BasicBlock* basicBlock);
+    BasicBlock* GetBasicBlock() const;
 
-    bool HasOperand(size_t index) const {
-        return index < m_Operands.size();
-    }
+    void AddOperand(Value* operand);
+    void DeleteOperand(size_t index);
 
-    Value* GetOperand(size_t index) const {
-        return m_Operands.at(index);
-    }
+    bool HasOperand(size_t index) const;
+    Value* GetOperand(size_t index) const;
+    void SetOperand(Value* operand, size_t index);
 
-    void SetOperand(Value* operand, size_t index) {
-        m_Operands[index] = operand;
-    }
+    void ClearOperands();
 
-    std::vector<Value*> GetOperands() const {
-        return m_Operands;
-    }
+    bool HasOperands() const;
+    size_t GetOperandsNumber() const;
+    std::vector<Value*> GetOperands() const;
 
 private:
     BasicBlock* m_BasicBlock;

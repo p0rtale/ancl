@@ -1,8 +1,9 @@
 #include <Ancl/AnclIR/Type/ArrayType.hpp>
+
 #include <Ancl/AnclIR/IRProgram.hpp>
 
-using namespace ir;
 
+namespace ir {
 
 ArrayType::ArrayType(Type* subType, uint64_t size)
     : Type(subType->GetProgram()),
@@ -20,3 +21,5 @@ Type* ArrayType::GetSubType() const {
 uint64_t ArrayType::GetSize() const {
     return m_Size;
 }
+
+}  // namespace ir

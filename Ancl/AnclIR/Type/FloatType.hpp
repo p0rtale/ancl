@@ -5,8 +5,6 @@
 
 namespace ir {
 
-class IRProgram;
-
 class FloatType: public Type {
 public:
     enum class Kind {

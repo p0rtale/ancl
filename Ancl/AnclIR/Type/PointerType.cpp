@@ -1,8 +1,9 @@
 #include <Ancl/AnclIR/Type/PointerType.hpp>
+
 #include <Ancl/AnclIR/IRProgram.hpp>
 
-using namespace ir;
 
+namespace ir {
 
 PointerType::PointerType(IRProgram& program, Type* subType)
     : Type(program), m_SubType(subType) {}
@@ -15,3 +16,5 @@ PointerType* PointerType::Create(Type* subType) {
 Type* PointerType::GetSubType() const {
     return m_SubType;
 }
+
+}  // namespace ir

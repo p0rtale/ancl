@@ -7,8 +7,6 @@
 
 namespace ir {
 
-class IRProgram;
-
 class IntType: public Type {
 public:
     IntType(IRProgram& program, uint64_t bytesNumber);

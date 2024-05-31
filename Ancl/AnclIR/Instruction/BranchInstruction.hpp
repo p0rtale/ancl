@@ -1,9 +1,9 @@
 #pragma once
 
+#include <Ancl/AnclIR/BasicBlock.hpp>
 #include <Ancl/AnclIR/Instruction/TerminatorInstruction.hpp>
 #include <Ancl/AnclIR/Type/Type.hpp>
 #include <Ancl/AnclIR/Value.hpp>
-#include <Ancl/AnclIR/BasicBlock.hpp>
 
 
 namespace ir {
@@ -16,14 +16,19 @@ public:
     BranchInstruction(BasicBlock* trueBB, BasicBlock* basicBlock);
 
     bool IsConditional() const;
-
     bool IsUnconditional() const;
 
     Value* GetCondition() const;
 
-    BasicBlock* GetTrueBasicBlock() const;
+    void SetTrueBasicBlock(BasicBlock* basicBlock);
+    void SetFalseBasicBlock(BasicBlock* basicBlock);
 
+    BasicBlock* GetTrueBasicBlock() const;
     BasicBlock* GetFalseBasicBlock() const;
+
+    void ToUnconditional(BasicBlock* basicBlock);
+    void ToUnconditionalTrue();
+    void ToUnconditionalFalse();
 
 private:
     BasicBlock* m_TrueBB = nullptr;

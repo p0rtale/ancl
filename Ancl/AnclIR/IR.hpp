@@ -33,6 +33,8 @@
 #include <Ancl/AnclIR/Instruction/Instruction.hpp>
 #include <Ancl/AnclIR/Instruction/LoadInstruction.hpp>
 #include <Ancl/AnclIR/Instruction/MemberInstruction.hpp>
+#include <Ancl/AnclIR/Instruction/MemoryCopyInstruction.hpp>
+#include <Ancl/AnclIR/Instruction/MemorySetInstruction.hpp>
 #include <Ancl/AnclIR/Instruction/ReturnInstruction.hpp>
 #include <Ancl/AnclIR/Instruction/StoreInstruction.hpp>
 #include <Ancl/AnclIR/Instruction/SwitchInstruction.hpp>

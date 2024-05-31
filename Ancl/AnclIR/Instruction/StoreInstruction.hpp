@@ -2,38 +2,23 @@
 
 #include <string>
 
+#include <Ancl/AnclIR/BasicBlock.hpp>
 #include <Ancl/AnclIR/Instruction/Instruction.hpp>
 #include <Ancl/AnclIR/Value.hpp>
-#include <Ancl/AnclIR/Type/VoidType.hpp>
-#include <Ancl/AnclIR/BasicBlock.hpp>
 
 
 namespace ir {
 
 class StoreInstruction: public Instruction {
 public:
-    StoreInstruction(Value* value, Value* address, const std::string& name, BasicBlock* basicBlock)
-            : Instruction(VoidType::Create(value->GetProgram()), basicBlock) {
-        SetName(name);
-        AddOperand(value);
-        AddOperand(address);
-    }
+    StoreInstruction(Value* value, Value* address,
+                     const std::string& name, BasicBlock* basicBlock);
 
-    Value* GetValueOperand() const {
-        return GetOperand(0);
-    }
+    Value* GetValueOperand() const;
+    Value* GetAddressOperand() const;
 
-    Value* GetAddressOperand() const {
-        return GetOperand(1);
-    }
-
-    void SetVolatile() {
-        m_IsVolatile = true;
-    }
-
-    bool IsVolatile() const {
-        return m_IsVolatile;
-    }
+    void SetVolatile();
+    bool IsVolatile() const;
 
 private:
     bool m_IsVolatile = false;

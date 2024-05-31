@@ -1,80 +1,47 @@
 #pragma once
 
-#include <vector>
 #include <string>
+#include <vector>
 
-#include <Ancl/AnclIR/Constant/GlobalValue.hpp>
-#include <Ancl/AnclIR/Type/FunctionType.hpp>
-#include <Ancl/AnclIR/Parameter.hpp>
 #include <Ancl/AnclIR/BasicBlock.hpp>
+#include <Ancl/AnclIR/Constant/GlobalValue.hpp>
+#include <Ancl/AnclIR/Parameter.hpp>
+#include <Ancl/AnclIR/Type/FunctionType.hpp>
+#include <Ancl/Base.hpp>
 
 
 namespace ir {
 
 class Function: public GlobalValue {
 public:
-    Function(FunctionType* type, LinkageType linkage, const std::string& name)
-            : GlobalValue(type, linkage) {
-        SetName(name);
-    }
+    Function(FunctionType* type, LinkageType linkage, const std::string& name);
 
-    void SetDeclaration() {
-        m_IsDeclaration = true;
-    }
+    void SetDeclaration();
+    bool IsDeclaration() const;
 
-    bool IsDeclaration() const {
-        return m_IsDeclaration;
-    }
+    void SetInline();
+    bool IsInline() const;
 
-    void SetInline() {
-        m_IsInline = true;
-    }
+    void AddParameter(Parameter* parameter);
+    std::vector<Parameter*> GetParameters() const;
 
-    bool IsInline() const {
-        return m_IsInline;
-    }
+    void AddBasicBlock(BasicBlock* basicBlock);
 
-    void AddParameter(Parameter* parameter) {
-        m_Parameters.push_back(parameter);
-    }
+    void SetEntryBlock(BasicBlock* basicBlock);
+    BasicBlock* GetEntryBlock() const;
 
-    std::vector<Parameter*> GetParameters() const {
-        return m_Parameters;
-    }
+    void SetLastBlock(size_t basicBlockIdx);
+    BasicBlock* GetLastBlock() const;
 
-    void AddBasicBlock(BasicBlock* basicBlock) {
-        m_BasicBlocks.push_back(basicBlock);
-    }
+    void SetBasicBlocks(const std::vector<BasicBlock*>& blocks);
+    std::vector<BasicBlock*> GetBasicBlocks() const;
 
-    BasicBlock* GetEntryBlock() const {
-        if (m_BasicBlocks.empty()) {
-            return nullptr;
-        }
-        return m_BasicBlocks.front();
-    }
+    void SetReturnValue(Value* value);
+    bool HasReturnValue() const;
+    Value* GetReturnValue() const;
 
-    BasicBlock* GetLastBlock() const {
-        if (m_BasicBlocks.empty()) {
-            return nullptr;
-        }
-        return m_BasicBlocks.back();
-    }
-
-    std::vector<BasicBlock*> GetBasicBlocks() const {
-        return m_BasicBlocks;
-    }
-
-    void SetReturnValue(Value* value) {
-        m_ReturnValue = value;
-    }
-
-    bool HasReturnValue() const {
-        return m_ReturnValue;
-    }
-
-    Value* GetReturnValue() const {
-        return m_ReturnValue;
-    }
+    std::string GetNewInstructionName(const std::string& name);
+    std::string GetNewBasicBlockName(const std::string& name);
 
 private:
     bool m_IsInline = false;
@@ -83,7 +50,12 @@ private:
     std::vector<BasicBlock*> m_BasicBlocks;
 
     std::vector<Parameter*> m_Parameters;
+
     Value* m_ReturnValue = nullptr;
+
+    class ValueNaming;
+    TScopePtr<ValueNaming> m_InstructionNamingImpl;
+    TScopePtr<ValueNaming> m_BasicBlockNamingImpl;
 };
 
 }  // namespace ir

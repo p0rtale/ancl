@@ -4,8 +4,8 @@
 #include <vector>
 
 #include <Ancl/AnclIR/Instruction/Instruction.hpp>
-#include <Ancl/AnclIR/Value.hpp>
 #include <Ancl/AnclIR/Type/Type.hpp>
+#include <Ancl/AnclIR/Value.hpp>
 
 
 namespace ir {
@@ -14,33 +14,19 @@ class PhiInstruction: public Instruction {
 public:
     PhiInstruction(Type* type, const std::string& name, BasicBlock* basicBlock);
 
-    size_t GetArgumentsNumber() const {
-        return m_Arguments.size();
-    }
+    size_t GetArgumentsNumber() const;
 
-    void SetIncomingValue(size_t index, Value* value) {
-        m_Arguments.at(index).ArgValue = value;
-    }
+    void SetIncomingValue(size_t index, Value* value);
+    Value* GetIncomingValue(size_t index) const;
 
-    Value* GetIncomingValue(size_t index) const {
-        return m_Arguments.at(index).ArgValue;
-    }    
+    void SetIncomingBlock(size_t index, BasicBlock* block);
+    BasicBlock* GetIncomingBlock(size_t index) const;
 
-    void SetIncomingBlock(size_t index, BasicBlock* block) {
-        m_Arguments.at(index).Block = block;
-    }
-
-    BasicBlock* GetIncomingBlock(size_t index) const {
-        return m_Arguments.at(index).Block;
-    }   
+    void AddArgument(BasicBlock* block, Value* value);
+    void DeleteArgument(size_t index);
 
 private:
-    struct PhiArg {
-        BasicBlock* Block;
-        Value* ArgValue;
-    };
-
-    std::vector<PhiArg> m_Arguments;
+    std::vector<BasicBlock*> m_IncomingBlocks;
 };
 
 }  // namespace ir

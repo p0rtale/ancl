@@ -2,33 +2,23 @@
 
 #include <string>
 
-#include <Ancl/AnclIR/Instruction/Instruction.hpp>
-#include <Ancl/AnclIR/Value.hpp>
-#include <Ancl/AnclIR/Type/Type.hpp>
 #include <Ancl/AnclIR/BasicBlock.hpp>
+#include <Ancl/AnclIR/Instruction/Instruction.hpp>
+#include <Ancl/AnclIR/Type/Type.hpp>
+#include <Ancl/AnclIR/Value.hpp>
 
 
 namespace ir {
 
 class LoadInstruction: public Instruction {
 public:
-    LoadInstruction(Value* pointer, Type* type, const std::string& name, BasicBlock* basicBlock)
-            : Instruction(type, basicBlock) {
-        SetName(name);
-        AddOperand(pointer);
-    }
+    LoadInstruction(Value* pointer, Type* type, const std::string& name,
+                    BasicBlock* basicBlock);
 
-    Value* GetPtrOperand() const {
-        return GetOperand(0);
-    }
+    Value* GetPtrOperand() const;
 
-    void SetVolatile() {
-        m_IsVolatile = true;
-    }
-
-    bool IsVolatile() const {
-        return m_IsVolatile;
-    }
+    void SetVolatile();
+    bool IsVolatile() const;
 
 private:
     bool m_IsVolatile = false;

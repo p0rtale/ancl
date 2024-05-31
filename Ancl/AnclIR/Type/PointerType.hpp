@@ -5,8 +5,6 @@
 
 namespace ir {
 
-class IRProgram;
-
 class PointerType: public Type {
 public:
     PointerType(IRProgram& program, Type* subType);
