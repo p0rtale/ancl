@@ -8,7 +8,7 @@ using namespace preproc;
 
 
 int main() {
-    ancl::Logger::init();
+    ancl::Logger::Init();
     Preprocessor preproc;
 
     std::string filename = "main.c";
