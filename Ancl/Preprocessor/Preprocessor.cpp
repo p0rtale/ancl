@@ -8,17 +8,15 @@
 namespace preproc {
 
 std::string Preprocessor::Run(const std::string& filename, bool debug) {
-    ANCL_INFO("Run Ancl preprocessor (filename={}, debug={})", filename, debug);
-
     initRun(filename, debug);
-    ANCL_INFO("Initialization completed");
+    // ANCL_INFO("Initialization completed");
 
     Token tokenPrevious;
     Token tokenCurrent;
     while (!m_StreamStack.IsEmpty()) {
         tokenCurrent = scanTokenWithComments();
         if (tokenCurrent.isEnd()) {
-            ANCL_INFO("End of stream");
+            // ANCL_INFO("End of stream");
             auto coords = tokenCurrent.getCoords();
             size_t currentLine = coords.Begin.Line - m_LineOffset;
             m_LineOffset += currentLine - 1;
@@ -35,35 +33,35 @@ std::string Preprocessor::Run(const std::string& filename, bool debug) {
         std::string preprocessed;
         switch (tokenCurrent.getType()) {
         case TokenType::NewLine:
-            ANCL_TRACE("Process NewLine");
+            // ANCL_TRACE("Process NewLine");
             preprocessed = "\n";
             break;
         case TokenType::Include:
-            ANCL_TRACE("Process Include");
+            // ANCL_TRACE("Process Include");
             preprocessed = processInclude();
             break;
         case TokenType::Define:
-            ANCL_TRACE("Process Define");
+            // ANCL_TRACE("Process Define");
             preprocessed = processDefine();
             break;
         case TokenType::IfDef:
-            ANCL_TRACE("Process IfDef");
+            // ANCL_TRACE("Process IfDef");
             preprocessed = processConditionalDefine(false);
             break;
         case TokenType::IfnDef:
-            ANCL_TRACE("Process IfnDef");
+            // ANCL_TRACE("Process IfnDef");
             preprocessed = processConditionalDefine(true);
             break;
         case TokenType::EndIf:
-            ANCL_TRACE("Process EndIf");
+            // ANCL_TRACE("Process EndIf");
             preprocessed = processConditionalEnd();
             break;
         case TokenType::Identifier:
-            ANCL_TRACE("Process Identifier");
+            // ANCL_TRACE("Process Identifier");
             preprocessed = processIdentifier(tokenCurrent.getValue());
             break;
         case TokenType::Space:
-            ANCL_TRACE("Process Space");
+            // ANCL_TRACE("Process Space");
             if (tokenPrevious.isAmongTypes({
                         TokenType::NewLine,
                         TokenType::Include, TokenType::Define,
@@ -76,7 +74,7 @@ std::string Preprocessor::Run(const std::string& filename, bool debug) {
             }
             break;
         default:
-            ANCL_TRACE("Process Token");
+            // ANCL_TRACE("Process Token");
             preprocessed = tokenCurrent.getValue();
         }
 
@@ -84,7 +82,7 @@ std::string Preprocessor::Run(const std::string& filename, bool debug) {
         tokenPrevious = tokenCurrent;
     }
 
-    ANCL_INFO("Preprocessor is completed");
+    // ANCL_INFO("Preprocessor is completed");
 
     return m_PreprocessedString;
 }
@@ -93,7 +91,7 @@ void Preprocessor::initRun(const std::string& filename, bool debug) {
     if (debug) {
         m_Lexer.set_debug(true);
     }
-    ANCL_INFO("Add new stream");
+    // ANCL_INFO("Add new stream");
     m_StreamStack.PushStream(filename, 1);
     m_PreprocessedString = std::format("#line {} \"{}\"\n", 1, filename);
 }
@@ -172,10 +170,10 @@ std::string Preprocessor::processConditionalDefine(bool negative) {
 
     bool isDefined = m_Defines.contains(defineIdentifier);
     if (isDefined == !negative) {
-        ANCL_TRACE("processConditionalDefine: go inside conditional define");
+        // ANCL_TRACE("processConditionalDefine: go inside conditional define");
         m_IsInsideCondDef = true;
     } else {
-        ANCL_TRACE("processConditionalDefine: skip conditional define to EndIf");
+        // ANCL_TRACE("processConditionalDefine: skip conditional define to EndIf");
         size_t linesCount = 2;  // IfDef + EndIf
         auto firstToken = scanFirstNonSpace();
         while (!firstToken.isEndIf() && !firstToken.isEnd()) {
@@ -240,8 +238,8 @@ std::string Preprocessor::processInclude() {
 
     Token nextToken = skipSpacesToLineEnd();
 
-    ANCL_INFO("processInclude: includeFilename=\"{}\"", includeFilename);
-    ANCL_INFO("Add new stream");
+    // ANCL_INFO("processInclude: includeFilename=\"{}\"", includeFilename);
+    // ANCL_INFO("Add new stream");
     auto coords = nextToken.getCoords();
     size_t line = coords.End.Line - m_LineOffset;
     m_LineOffset += line - 1;
@@ -259,42 +257,42 @@ std::string Preprocessor::processIdentifier(const std::string& identifierValue) 
 }
 
 Token Preprocessor::scanTokenWithComments() {
-    auto token = m_Lexer.scanToken();
+    auto token = m_Lexer.ScanToken();
     while (token.isComment()) {
         auto coords = token.getCoords();
         size_t newlinesCount = coords.End.Line - coords.Begin.Line;
         if (newlinesCount > 0) {
             m_PreprocessedString.append(std::string(newlinesCount, '\n'));
         }
-        token = m_Lexer.scanToken();
+        token = m_Lexer.ScanToken();
     }
 
     auto [positionBegin, positionEnd] = token.getCoords();
-    ANCL_TRACE("Scan Token {}({}) {},{}-{},{}",
-        static_cast<uint32_t>(token.getType()), token.getValue(),
-        positionBegin.Line, positionBegin.Column, positionEnd.Line, positionEnd.Column);
+    // ANCL_TRACE("Scan Token {}({}) {},{}-{},{}",
+    //     static_cast<uint32_t>(token.getType()), token.getValue(),
+    //     positionBegin.Line, positionBegin.Column, positionEnd.Line, positionEnd.Column);
 
     return token;
 }
 
 Token Preprocessor::scanFirstNonSpace() {
-    auto token = m_Lexer.scanToken();
+    auto token = m_Lexer.ScanToken();
     while (token.isSpace()) {
-        token = m_Lexer.scanToken();
+        token = m_Lexer.ScanToken();
     }
 
     auto [positionBegin, positionEnd] = token.getCoords();
-    ANCL_TRACE("Scan Token {}({}) {},{}-{},{}",
-        static_cast<uint32_t>(token.getType()), token.getValue(),
-        positionBegin.Line, positionBegin.Column, positionEnd.Line, positionEnd.Column);
+    // ANCL_TRACE("Scan Token {}({}) {},{}-{},{}",
+    //     static_cast<uint32_t>(token.getType()), token.getValue(),
+    //     positionBegin.Line, positionBegin.Column, positionEnd.Line, positionEnd.Column);
 
     return token; 
 }
 
 Token Preprocessor::skipSpacesToLineEnd() {
-    auto token = m_Lexer.scanToken();
+    auto token = m_Lexer.ScanToken();
     while (token.isSpace() || token.isComment()) {
-        token = m_Lexer.scanToken();
+        token = m_Lexer.ScanToken();
     }
 
     auto [positionBegin, positionEnd] = token.getCoords();
@@ -305,17 +303,17 @@ Token Preprocessor::skipSpacesToLineEnd() {
             positionBegin.Line, positionBegin.Column, positionEnd.Line, positionEnd.Column);
     }
 
-    ANCL_TRACE("Scan Token {}({}) {},{}-{},{}",
-        static_cast<uint32_t>(tokenType), token.getValue(),
-        positionBegin.Line, positionBegin.Column, positionEnd.Line, positionEnd.Column);
+    // ANCL_TRACE("Scan Token {}({}) {},{}-{},{}",
+    //     static_cast<uint32_t>(tokenType), token.getValue(),
+    //     positionBegin.Line, positionBegin.Column, positionEnd.Line, positionEnd.Column);
 
     return token;
 }
 
 void Preprocessor::skipLine() {
-    auto token = m_Lexer.scanToken();
+    auto token = m_Lexer.ScanToken();
     while (!token.isNewLine() && !token.isEnd()) {
-        token = m_Lexer.scanToken();
+        token = m_Lexer.ScanToken();
     }
 }
 
