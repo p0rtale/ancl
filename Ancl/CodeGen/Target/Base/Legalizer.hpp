@@ -1,41 +1,86 @@
 #pragma once
 
-#include <Ancl/CodeGen/Target/Base/Machine.hpp>
 #include <Ancl/CodeGen/MachineIR/MInstruction.hpp>
+#include <Ancl/CodeGen/Selection/SelectionTree.hpp>
 
 
 namespace gen::target {
+
+class TargetMachine;
 
 class Legalizer {
 public:
     Legalizer(TargetMachine* targetMachine)
         : m_TargetMachine(targetMachine) {}
 
-    virtual void LegalizeMul(MInstruction* instruction) = 0;
-    virtual void LegalizeDiv(MInstruction* instruction) = 0;
-    virtual void LegalizeRem(MInstruction* instruction) = 0;
-    virtual void LegalizeAdd(MInstruction* instruction) = 0;
-    virtual void LegalizeSub(MInstruction* instruction) = 0;
+    virtual ~Legalizer() = default;
 
-    virtual void LegalizeShift(MInstruction* instruction) = 0;
-    virtual void LegalizeAnd(MInstruction* instruction) = 0;
-    virtual void LegalizeXor(MInstruction* instruction) = 0;
-    virtual void LegalizeOr(MInstruction* instruction) = 0;
+    virtual bool IsLegalizationRequired(SelectionNode *instruction) = 0;
 
-    virtual void LegalizeCmp(MInstruction* instruction) = 0;
+    virtual void LegalizeMul(SelectionNode* instruction) = 0;
+    virtual void LegalizeDiv(SelectionNode* instruction) = 0;
+    virtual void LegalizeRem(SelectionNode* instruction) = 0;
+    virtual void LegalizeAdd(SelectionNode* instruction) = 0;
+    virtual void LegalizeSub(SelectionNode* instruction) = 0;
+    virtual void LegalizeShift(SelectionNode* instruction) = 0;
+    virtual void LegalizeAnd(SelectionNode* instruction) = 0;
+    virtual void LegalizeXor(SelectionNode* instruction) = 0;
+    virtual void LegalizeOr(SelectionNode* instruction) = 0;
+    virtual void LegalizeCmp(SelectionNode* instruction) = 0;
+    virtual void LegalizeZExt(SelectionNode* instruction) = 0;
 
-    virtual void LegalizeTrunc(MInstruction* instruction) = 0;
-    virtual void LegalizeExt(MInstruction* instruction) = 0;
+    void Legalize(SelectionNode* node) {
+        if (!IsLegalizationRequired(node)) {
+            return;
+        }
 
-    virtual void LegalizeLoad(MInstruction* instruction) = 0;
-    virtual void LegalizeStore(MInstruction* instruction) = 0;
+        MInstruction& nodeInstruction = node->GetInstructionRef();
+        switch (nodeInstruction.GetOpType()) {
+            case MInstruction::OpType::kMul:
+                return LegalizeMul(node); 
 
-    void Legalize(MInstruction* instruction) {
-        // TODO: ...
+            case MInstruction::OpType::kSDiv:
+            case MInstruction::OpType::kUDiv:
+                return LegalizeDiv(node);
+
+            case MInstruction::OpType::kSRem:
+            case MInstruction::OpType::kURem:
+                return LegalizeRem(node);
+
+            case MInstruction::OpType::kAdd:
+                return LegalizeAdd(node);
+
+            case MInstruction::OpType::kSub:
+                return LegalizeSub(node);
+
+            case MInstruction::OpType::kShiftL:
+            case MInstruction::OpType::kLShiftR:
+            case MInstruction::OpType::kAShiftR:
+                return LegalizeShift(node);
+    
+            case MInstruction::OpType::kAnd:
+                return LegalizeAnd(node);
+
+            case MInstruction::OpType::kXor:
+                return LegalizeXor(node);
+
+            case MInstruction::OpType::kOr:
+                return LegalizeOr(node);
+
+            case MInstruction::OpType::kCmp:
+                return LegalizeCmp(node);
+
+            case MInstruction::OpType::kZExt:
+                return LegalizeZExt(node);
+
+            default:
+                ANCL_CRITICAL("It is impossible to legalize instruction");
+                break;
+        }
     }
 
-private:
+protected:
     TargetMachine* m_TargetMachine;
 };
 
-}  // namespace target
+}  // namespace gen::target

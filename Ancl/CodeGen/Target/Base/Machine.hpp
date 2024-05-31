@@ -1,10 +1,11 @@
 #pragma once
 
 #include <Ancl/Base.hpp>
-#include <Ancl/CodeGen/Target/Base/ABI.hpp>
-#include <Ancl/CodeGen/Target/Base/RegisterSet.hpp>
-#include <Ancl/CodeGen/Target/Base/InstructionSet.hpp>
 #include <Ancl/CodeGen/Selection/SelectionTree.hpp>
+#include <Ancl/CodeGen/Target/Base/ABI.hpp>
+#include <Ancl/CodeGen/Target/Base/InstructionSet.hpp>
+#include <Ancl/CodeGen/Target/Base/Legalizer.hpp>
+#include <Ancl/CodeGen/Target/Base/RegisterSet.hpp>
 
 
 namespace gen::target {
@@ -28,12 +29,17 @@ public:
         return m_ABI.get();
     }
 
-    virtual uint GetPointerByteSize() = 0;
+    Legalizer* GetLegalizer() {
+        return m_Legalizer.get();
+    }
+
+    virtual uint64_t GetPointerByteSize() = 0;
 
 protected:
     TScopePtr<RegisterSet> m_RegisterSet = nullptr;
     TScopePtr<InstructionSet> m_InstructionSet = nullptr;
     TScopePtr<TargetABI> m_ABI = nullptr;
+    TScopePtr<Legalizer> m_Legalizer = nullptr;
 };
 
-}  // namespace target
+}  // namespace gen::target
