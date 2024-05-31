@@ -8,9 +8,9 @@ namespace ancl {
 
 class Logger {
 public:
-    static void init();
+    static void Init();
 
-    static std::shared_ptr<spdlog::logger> getLogger() {
+    static std::shared_ptr<spdlog::logger> GetLogger() {
         return s_Logger;
     }
 
@@ -21,8 +21,8 @@ private:
 }  // namespace ancl
 
 
-#define ANCL_TRACE(...)    ::ancl::Logger::getLogger()->trace(__VA_ARGS__)
-#define ANCL_INFO(...)     ::ancl::Logger::getLogger()->info(__VA_ARGS__)
-#define ANCL_WARN(...)     ::ancl::Logger::getLogger()->warn(__VA_ARGS__)
-#define ANCL_ERROR(...)    ::ancl::Logger::getLogger()->error(__VA_ARGS__)
-#define ANCL_CRITICAL(...) ::ancl::Logger::getLogger()->critical(__VA_ARGS__)
+#define ANCL_TRACE(...)    ::ancl::Logger::GetLogger()->trace(__VA_ARGS__)
+#define ANCL_INFO(...)     ::ancl::Logger::GetLogger()->info(__VA_ARGS__)
+#define ANCL_WARN(...)     ::ancl::Logger::GetLogger()->warn(__VA_ARGS__)
+#define ANCL_ERROR(...)    ::ancl::Logger::GetLogger()->error(__VA_ARGS__)
+#define ANCL_CRITICAL(...) ::ancl::Logger::GetLogger()->critical(__VA_ARGS__)
