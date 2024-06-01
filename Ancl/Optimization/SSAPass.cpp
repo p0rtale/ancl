@@ -42,6 +42,15 @@ void SSAPass::renameAllocas(BasicBlock* block) {
     for (auto it = instructions.begin(); it != instructions.end();) {
         auto instr = *it;
 
+        std::vector<Value*> operands = instr->GetOperands();
+        for (size_t i = 0; i < operands.size(); ++i) {
+            if (auto* load = dynamic_cast<LoadInstruction*>(operands[i])) {
+                if (m_LoadValueMap.contains(load)) {
+                    instr->SetOperand(m_LoadValueMap[load], i);
+                }
+            }
+        }
+
         bool isPromotableInstr = false;
         if (auto* store = dynamic_cast<StoreInstruction*>(instr)) {
             auto* toOperand = store->GetAddressOperand();
@@ -68,15 +77,6 @@ void SSAPass::renameAllocas(BasicBlock* block) {
         } else if (auto* alloca = dynamic_cast<AllocaInstruction*>(instr)) {
             if (isPromotable(alloca)) {
                 isPromotableInstr = true;
-            }
-        }
-
-        std::vector<Value*> operands = instr->GetOperands();
-        for (size_t i = 0; i < operands.size(); ++i) {
-            if (auto* load = dynamic_cast<LoadInstruction*>(operands[i])) {
-                if (m_LoadValueMap.contains(load)) {
-                    instr->SetOperand(m_LoadValueMap[load], i);
-                }
             }
         }
 

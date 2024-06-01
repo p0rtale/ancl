@@ -1,3 +1,4 @@
+import argparse
 import subprocess
 
 RED_COLOR = '\033[31m'
@@ -28,36 +29,45 @@ def print_output_failed(test_file, ancl_output, system_output):
     print("===========================")
 
 
-test_files = [
-    "basic/answer.c",
-    "call/variadic_hello.c", "call/long_answer.c",
-    "loop/count.c", "loop/fib.c", "loop/nested.c",
-]
+def main():
+    parser = argparse.ArgumentParser(description='Testing')
+    parser.add_argument('--opt', dest='opt', default=False, action='store_true',
+                        help='Test with optimizations')
 
-use_optimizations = False
+    args = parser.parse_args()
 
-for test_file in test_files:
-    subprocess.call([SYSTEM_COMPILER, test_file, f"-o{SYSTEM_EXEFILE}", "-I."])
+    test_files = [
+        "basic/answer.c",
+        "call/variadic_hello.c", "call/long_answer.c",
+        "loop/count.c", "loop/fib.c", "loop/nested.c",
+    ]
 
-    ancl_flags = [f"-f{test_file}", f"-n{ANCL_ASMFILE}"]
-    if use_optimizations:
-        ancl_flags.append("-O")
+    for test_file in test_files:
+        subprocess.call([SYSTEM_COMPILER, test_file, f"-o{SYSTEM_EXEFILE}", "-I."])
 
-    subprocess.call([ANCL_COMPILER, *ancl_flags], stdout=subprocess.DEVNULL)
-    subprocess.call([SYSTEM_COMPILER, ANCL_ASMFILE, f"-o{ANCL_EXEFILE}"])
+        ancl_flags = [f"-f{test_file}", f"-n{ANCL_ASMFILE}"]
+        if args.opt:
+            ancl_flags.append("-O")
 
-    system_proc = subprocess.run(SYSTEM_EXEFILE, shell=True, stdout=subprocess.PIPE)
-    ancl_proc = subprocess.run(ANCL_EXEFILE, shell=True, stdout=subprocess.PIPE)
+        subprocess.call([ANCL_COMPILER, *ancl_flags], stdout=subprocess.DEVNULL)
+        subprocess.call([SYSTEM_COMPILER, ANCL_ASMFILE, f"-o{ANCL_EXEFILE}"])
 
-    system_retcode = system_proc.returncode
-    ancl_retcode = ancl_proc.returncode
+        system_proc = subprocess.run(SYSTEM_EXEFILE, shell=True, stdout=subprocess.PIPE)
+        ancl_proc = subprocess.run(ANCL_EXEFILE, shell=True, stdout=subprocess.PIPE)
 
-    system_output = system_proc.stdout.decode()
-    ancl_output = ancl_proc.stdout.decode()
+        system_retcode = system_proc.returncode
+        ancl_retcode = ancl_proc.returncode
 
-    if ancl_retcode != system_retcode:
-        print_ret_failed(test_file, ancl_retcode, system_retcode)
-    elif ancl_output != system_output:
-        print_output_failed(test_file, ancl_output, system_output)
-    else:
-        print_ok(test_file)
+        system_output = system_proc.stdout.decode()
+        ancl_output = ancl_proc.stdout.decode()
+
+        if ancl_retcode != system_retcode:
+            print_ret_failed(test_file, ancl_retcode, system_retcode)
+        elif ancl_output != system_output:
+            print_output_failed(test_file, ancl_output, system_output)
+        else:
+            print_ok(test_file)
+
+
+if __name__ == "__main__":
+    main()
