@@ -56,9 +56,8 @@ void Driver::PreprocessToFile(const std::string& sourceFilename, const std::stri
     ANCL_INFO("Preprocessed file: \"{}\"", outputFilename);
 }
 
-Driver::ParseResult Driver::Parse(const std::string& sourceFilename) {
-    std::ifstream inputFileStream{sourceFilename};
-    antlr4::ANTLRInputStream inputAntlrStream{inputFileStream};
+Driver::ParseResult Driver::Parse(std::istream& inputStream) {
+    antlr4::ANTLRInputStream inputAntlrStream{inputStream};
 
     anclgrammar::CLexer lexer{&inputAntlrStream};
     antlr4::CommonTokenStream tokens{&lexer};
@@ -71,7 +70,7 @@ Driver::ParseResult Driver::Parse(const std::string& sourceFilename) {
         }
     }
 
-    ANCL_INFO("Parsing \"{}\"...", sourceFilename);
+    ANCL_INFO("Parsing...");
     anclgrammar::CParser parser{&tokens};
     auto* syntaxTreeEntry = parser.translationUnit();
 
@@ -80,7 +79,7 @@ Driver::ParseResult Driver::Parse(const std::string& sourceFilename) {
         return ParseResult::kError;
     }
 
-    ANCL_INFO("Creating AST...", sourceFilename);
+    ANCL_INFO("Creating AST...");
     buildAST(syntaxTreeEntry, lineTokens);
 
     return ParseResult::kOK;

@@ -31,7 +31,7 @@ public:
     std::string Preprocess(const std::string& sourceFilename, bool debug = false);
     void PreprocessToFile(const std::string& sourceFilename, const std::string& outputFilename);
 
-    ParseResult Parse(const std::string& sourceFilename);
+    ParseResult Parse(std::istream& inputStream);
 
     void RunSemanticPass();
 

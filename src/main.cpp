@@ -1,3 +1,6 @@
+#include <string>
+#include <sstream>
+
 #include <Ancl/Driver/CLI11.hpp>
 #include <Ancl/Driver/Driver.hpp>
 
@@ -9,26 +12,30 @@ int main(int argc, char** argv) {
     std::string sourceFile;
     app.add_option("-f,--file", sourceFile, "Input C file")->required();
 
-    std::string preprocFilename = "preproc.c";
+    std::string preprocFilename;
     app.add_option("-p,--preproc", preprocFilename, "Preprocessor output filename");
 
-    std::string astDotFilename = "ast.dot";
+    std::string astDotFilename;
     app.add_option("-a,--ast", astDotFilename, "Filename to output AST in DOT format");
 
-    std::string scopeDotFilename = "scope.dot";
+    std::string scopeDotFilename;
     app.add_option("-s,--scope", scopeDotFilename, "Filename to output semantic scopes in DOT format");
 
-    std::string anclIRPath = ".";
+    std::string anclIRPath;
     app.add_option("-r,--ir", anclIRPath, "Ancl IR output directory")->check(CLI::ExistingDirectory);
 
-    std::string machineIRPath = ".";
+    std::string machineIRPath;
     app.add_option("-m,--mir", machineIRPath, "Machine IR output directory")->check(CLI::ExistingDirectory);
 
-    std::string intelPath = "intel.s";
-    app.add_option("-n,--intel-asm", intelPath, "Intel assembler output filename");
+    auto* asmGroup = app.add_option_group("asm");
 
-    std::string gasPath = "gas.s";
-    app.add_option("-g,--gas-asm", gasPath, "GAS assembler output filename");
+    std::string intelPath;
+    asmGroup->add_option("-n,--intel-asm", intelPath, "Intel assembler output filename");
+
+    std::string gasPath;
+    asmGroup->add_option("-g,--gas-asm", gasPath, "GAS assembler output filename");
+
+    asmGroup->require_option(1);
 
     bool useOptimizations = false;
     app.add_option("-O,--optim", useOptimizations, "Use optimizations");
@@ -53,9 +60,16 @@ int main(int argc, char** argv) {
     anclDriver.SetIntelEmitterPath(intelPath);
     anclDriver.SetGASEmitterPath(gasPath);
 
-    anclDriver.PreprocessToFile(sourceFile, preprocFilename);
-
-    Driver::ParseResult result = anclDriver.Parse(preprocFilename);
+    Driver::ParseResult result = Driver::ParseResult::kOK;
+    if (preprocFilename.empty()) {
+        std::string preprocessed = anclDriver.Preprocess(sourceFile);
+        std::istringstream stream{preprocessed};
+        result = anclDriver.Parse(stream);
+    } else {
+        anclDriver.PreprocessToFile(sourceFile, preprocFilename);
+        std::ifstream stream{preprocFilename};
+        result = anclDriver.Parse(stream);
+    }
     if (result != Driver::ParseResult::kOK) {
         return EXIT_FAILURE;
     }
