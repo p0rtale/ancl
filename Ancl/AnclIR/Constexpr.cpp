@@ -150,17 +150,11 @@ Constant* Constexpr::EvaluateCastConstExpr(Constant* value, Type* toType) {
         return m_IRProgram.CreateValue<ir::IntConstant>(intToType, IntValue(value));
     }
 
-    // TODO: AMD64 requires the materialization of float constants,
-    //       so the castes between float and double cannot be removed.
-    //       Add this requirement to TargetMachine?
-
-    // FloatValue floatValue = floatConst->GetValue();
-    // if (toSize == 32) {
-    //     return m_IRProgram.CreateValue<ir::FloatConstant>(floatToType, FloatValue((float)floatValue.GetValue()));
-    // }
-    // return floatConst;
-
-    return value;
+    FloatValue floatValue = floatConst->GetValue();
+    if (toSize == 32) {
+        return m_IRProgram.CreateValue<ir::FloatConstant>(floatToType, FloatValue((float)floatValue.GetValue()));
+    }
+    return floatConst;
 }
 
 Constant* Constexpr::evaluateIntegerBinaryConstExpr(IntConstant* leftValue, IntConstant* rightValue,
