@@ -11,16 +11,11 @@ BranchInstruction::BranchInstruction(Value* condition, BasicBlock* trueBB,
           m_TrueBB(trueBB), m_FalseBB(falseBB) {
     // TODO: Blocks uses?
     AddOperand(condition);
-
-    trueBB->AddPredecessor(basicBlock);
-    falseBB->AddPredecessor(basicBlock);
 }
 
 BranchInstruction::BranchInstruction(BasicBlock* trueBB, BasicBlock* basicBlock)
         : TerminatorInstruction(VoidType::Create(trueBB->GetProgram()), basicBlock),
-          m_TrueBB(trueBB) {
-    trueBB->AddPredecessor(basicBlock);
-}
+          m_TrueBB(trueBB) {}
 
 bool BranchInstruction::IsConditional() const {
     return HasOperand(0);
@@ -60,6 +55,7 @@ void BranchInstruction::ToUnconditional(BasicBlock* basicBlock) {
     }
     ClearOperands();
 
+    basicBlock->AddPredecessor(branchBlock);
     m_TrueBB = basicBlock;
 }
 

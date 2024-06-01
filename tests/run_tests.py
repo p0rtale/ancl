@@ -39,7 +39,7 @@ def main():
     test_files = [
         "basic/answer.c",
         "call/variadic_hello.c", "call/long_answer.c",
-        "loop/count.c", "loop/fib.c", "loop/nested.c",
+        "loop/count.c", "loop/fib.c", "loop/nested.c", "loop/goto.c",
     ]
 
     for test_file in test_files:

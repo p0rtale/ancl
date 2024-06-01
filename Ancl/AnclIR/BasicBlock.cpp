@@ -33,6 +33,10 @@ void BasicBlock::AddInstruction(Instruction* instruction) {
         return;
     }
 
+    if (auto* terminator = dynamic_cast<TerminatorInstruction*>(instruction)) {
+        handleNewTerminator(terminator);
+    }
+
     instruction->SetBasicBlock(this);
     m_Instructions.push_back(instruction);
 }
@@ -74,8 +78,13 @@ bool BasicBlock::HasPhiFunctions() const {
 
 void BasicBlock::ReplaceTerminator(TerminatorInstruction* terminator) {
     assert(!m_Instructions.empty());
+    handleNewTerminator(terminator);
     terminator->SetBasicBlock(this);
     m_Instructions.back() = terminator;
+}
+
+bool BasicBlock::IsTerminated() const {
+    return GetTerminator();
 }
 
 TerminatorInstruction* BasicBlock::GetTerminator() const {
@@ -158,6 +167,16 @@ std::vector<BasicBlock*> BasicBlock::GetPredecessors() const {
 
 size_t BasicBlock::GetPredecessorsNumber() const {
     return m_Predecessors.size();
+}
+
+void BasicBlock::handleNewTerminator(TerminatorInstruction* terminator) {
+    // TODO: switch
+    if (auto* branch = dynamic_cast<ir::BranchInstruction*>(terminator)) {
+        branch->GetTrueBasicBlock()->AddPredecessor(this);
+        if (branch->IsConditional()) {
+            branch->GetFalseBasicBlock()->AddPredecessor(this);
+        }
+    }
 }
 
 }  // namespace ir

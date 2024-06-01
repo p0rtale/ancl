@@ -118,10 +118,19 @@ void IRGenAstVisitor::Visit(FunctionDeclaration& funcDecl) {
 }
 
 void IRGenAstVisitor::Visit(LabelDeclaration& labelDecl) {
-    ir::BasicBlock* nextBB = createBasicBlock(labelDecl.GetName());
+    std::string labelName = labelDecl.GetName();
 
-    auto* branch = m_IRProgram.CreateValue<ir::BranchInstruction>(nextBB, m_CurrentBB);
-    m_CurrentBB->AddInstruction(branch);
+    ir::BasicBlock* nextBB = nullptr;
+    if (m_FunBBMap.contains(labelName)) {
+        nextBB = m_FunBBMap[labelName];
+    } else {
+        nextBB = createBasicBlock(labelName);
+    }
+
+    if (!m_CurrentBB->IsTerminated()) {
+        auto* branch = m_IRProgram.CreateValue<ir::BranchInstruction>(nextBB, m_CurrentBB);
+        m_CurrentBB->AddInstruction(branch);
+    }
 
     m_CurrentBB = nextBB;
     Statement* labelStatement = labelDecl.GetStatement();
@@ -427,7 +436,14 @@ void IRGenAstVisitor::Visit(ForStatement& forStmt) {
 
 void IRGenAstVisitor::Visit(GotoStatement& gotoStmt) {
     LabelDeclaration* labelDecl = gotoStmt.GetLabel();
-    ir::BasicBlock* labelBB = m_FunBBMap[labelDecl->GetName()];
+    std::string labelName = labelDecl->GetName();
+
+    ir::BasicBlock* labelBB = nullptr;
+    if (m_FunBBMap.contains(labelName)) {
+        labelBB = m_FunBBMap[labelName];
+    } else {
+        labelBB = createBasicBlock(labelName);
+    }
 
     auto* branch = m_IRProgram.CreateValue<ir::BranchInstruction>(labelBB, m_CurrentBB);
     m_CurrentBB->AddInstruction(branch);
@@ -489,9 +505,6 @@ void IRGenAstVisitor::Visit(IfStatement& ifStmt) {
 void IRGenAstVisitor::Visit(LabelStatement& labelStmt) {
     LabelDeclaration* labelDecl = labelStmt.GetLabel();
     labelDecl->Accept(*this);
-
-    Statement* body = labelStmt.GetBody();
-    body->Accept(*this);
 }
 
 void IRGenAstVisitor::Visit(LoopJumpStatement& loopJmpStmt) {
@@ -1358,7 +1371,7 @@ ir::Value* IRGenAstVisitor::generateLogNotExpression(ir::Value* operandValue, as
     }
 
     return generateCompareZeroInstruction(ast::BinaryExpression::OpType::kEqual,
-                                            operandValue, exprType);
+                                          operandValue, exprType);
 }
 
 ir::Value* IRGenAstVisitor::generateSizeofExpression(ir::Value* operandValue) {
@@ -1656,7 +1669,7 @@ ir::Instruction* IRGenAstVisitor::generateCompareZeroInstruction(BinaryExpressio
     // TODO: Handle float
     auto* intType = ir::IntType::Create(m_IRProgram, 4);
     auto* zeroValue = m_IRProgram.CreateValue<ir::IntConstant>(intType, IntValue(0));
-    return createCompareInstruction(ast::BinaryExpression::OpType::kNEqual,
+    return createCompareInstruction(opType,
                                     value, zeroValue, astType);
 }
 

@@ -104,13 +104,8 @@ bool CleanPass::removeEmptyBlock(BasicBlock* basicBlock, BasicBlock* successor) 
                 } else {
                     branch->SetFalseBasicBlock(successor);
                 }
+                successor->AddPredecessor(predecessor);
             }
-
-            // if (blockPhiArguments.empty()) {
-            successor->AddPredecessor(predecessor);
-            // } else {
-            //     successor->AddPredecessorWithPhiValues(predecessor, blockPhiArguments);
-            // }
         } else {
             // TODO: Handle switch
         }

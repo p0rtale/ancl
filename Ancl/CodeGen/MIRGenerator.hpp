@@ -917,6 +917,9 @@ private:
             return nullptr;
         }
 
+        m_MBBMap.clear();
+        m_IRValueToVReg.clear();
+
         auto mirFunctionScope = CreateScope<MFunction>(irFunction->GetName());
         MFunction* mirFunction = mirFunctionScope.get();
 

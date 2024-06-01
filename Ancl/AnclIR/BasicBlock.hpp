@@ -39,6 +39,7 @@ public:
     bool HasPhiFunctions() const;
 
     void ReplaceTerminator(TerminatorInstruction* terminator);
+    bool IsTerminated() const;
     TerminatorInstruction* GetTerminator() const;
 
     std::vector<BasicBlock*> GetSuccessors() const;
@@ -54,6 +55,9 @@ public:
 
     std::vector<BasicBlock*> GetPredecessors() const;
     size_t GetPredecessorsNumber() const;
+
+private:
+    void handleNewTerminator(TerminatorInstruction* terminator);
 
 private:
     Function* m_Function;
