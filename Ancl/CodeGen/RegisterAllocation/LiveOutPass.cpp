@@ -31,7 +31,7 @@ void LiveOUTPass::initSets() {
                     break;
                 }
                 MInstruction::TOperandIt useOperand = instruction.GetUse(i);
-                if (!useOperand->IsVRegister()) {
+                if (!useOperand->IsVRegister() || useOperand->IsInvalidRegister()) {
                     continue;
                 }
                 if (!varKillSet.contains(useOperand->GetRegister())) {
@@ -41,7 +41,7 @@ void LiveOUTPass::initSets() {
 
             if (instruction.IsDefinition()) {
                 MInstruction::TOperandIt defOperand = instruction.GetDefinition();
-                if (defOperand->IsVRegister()) {
+                if (defOperand->IsValidVRegister()) {
                     varKillSet.insert(defOperand->GetRegister());
                 }
             }
