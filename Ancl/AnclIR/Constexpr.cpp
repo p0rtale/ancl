@@ -95,9 +95,11 @@ Constant* Constexpr::EvaluateCompareConstExpr(Constant* leftValue, Constant* rig
         case CompareInstruction::OpType::kISGreater:
         case CompareInstruction::OpType::kISLessEq:
         case CompareInstruction::OpType::kISGreaterEq:
+        case CompareInstruction::OpType::kIEqual:
+        case CompareInstruction::OpType::kINEqual:
             return evaluateIntegerCompareConstExpr(static_cast<IntConstant*>(leftValue),
-                                                    static_cast<IntConstant*>(rightValue),
-                                                    opType);
+                                                   static_cast<IntConstant*>(rightValue),
+                                                   opType);
 
         case CompareInstruction::OpType::kFLess:
         case CompareInstruction::OpType::kFGreater:
@@ -106,8 +108,8 @@ Constant* Constexpr::EvaluateCompareConstExpr(Constant* leftValue, Constant* rig
         case CompareInstruction::OpType::kFEqual:
         case CompareInstruction::OpType::kFNEqual:
             return evaluateFloatCompareConstExpr(static_cast<FloatConstant*>(leftValue),
-                                                    static_cast<FloatConstant*>(rightValue),
-                                                    opType);
+                                                 static_cast<FloatConstant*>(rightValue),
+                                                 opType);
 
         default:
             assert(false);
