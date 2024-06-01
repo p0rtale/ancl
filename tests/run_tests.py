@@ -31,12 +31,19 @@ def print_output_failed(test_file, ancl_output, system_output):
 test_files = [
     "basic/answer.c",
     "call/variadic_hello.c", "call/long_answer.c",
-    "loop/count.c", "loop/fib.c",
+    "loop/count.c", "loop/fib.c", "loop/nested.c",
 ]
+
+use_optimizations = False
 
 for test_file in test_files:
     subprocess.call([SYSTEM_COMPILER, test_file, f"-o{SYSTEM_EXEFILE}", "-I."])
-    subprocess.call([ANCL_COMPILER, f"-f{test_file}", f"-n{ANCL_ASMFILE}"], stdout=subprocess.DEVNULL)
+
+    ancl_flags = [f"-f{test_file}", f"-n{ANCL_ASMFILE}"]
+    if use_optimizations:
+        ancl_flags.append("-O")
+
+    subprocess.call([ANCL_COMPILER, *ancl_flags], stdout=subprocess.DEVNULL)
     subprocess.call([SYSTEM_COMPILER, ANCL_ASMFILE, f"-o{ANCL_EXEFILE}"])
 
     system_proc = subprocess.run(SYSTEM_EXEFILE, shell=True, stdout=subprocess.PIPE)

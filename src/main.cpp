@@ -38,10 +38,10 @@ int main(int argc, char** argv) {
     asmGroup->require_option(1);
 
     bool useOptimizations = false;
-    app.add_option("-O,--optim", useOptimizations, "Use optimizations");
+    app.add_flag("-O,--optim", useOptimizations, "Use optimizations");
 
     bool isLinearScan = false;
-    app.add_option("--linscan", isLinearScan, "Use Linear Scan Allocator");
+    app.add_flag("--linscan", isLinearScan, "Use Linear Scan Allocator");
 
     CLI11_PARSE(app, argc, argv);
 

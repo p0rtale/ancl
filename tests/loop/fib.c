@@ -8,7 +8,10 @@ int main() {
     int n = 30;
 
     printf("%d %d", x, y);
-    for (int i = 2; i < n; ++i) {     
+    for (int i = 2; i < n; ++i) {
+        x = y;
+        y = z;
+        z = x + y;
         printf("%d", z);     
     }  
 
