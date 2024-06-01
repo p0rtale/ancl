@@ -74,7 +74,12 @@ void GlobalColoringAllocator::BuildGraph(LiveOUTPass& liveOutPass) {
                             continue;
                         }
                         if (m_LiveRanges.contains(defRegNumber) && m_LiveRanges.contains(activeRegNumber)) {
-                            m_LiveRanges[activeRegNumber].Interferences.insert(defOperand->GetRegister());
+                            if (defOperand->IsPRegister()) {
+                                uint64_t defPRegNumber = defOperand->GetRegister();
+                                insertPRegisterInterference(activeRegNumber, m_RegisterSet->GetRegister(defPRegNumber)); 
+                            } else {
+                                m_LiveRanges[activeRegNumber].Interferences.insert(defOperand->GetRegister());
+                            }
                         }
                     }
                 }
@@ -89,7 +94,8 @@ void GlobalColoringAllocator::BuildGraph(LiveOUTPass& liveOutPass) {
                             continue;
                         }
                         if (m_LiveRanges.contains(activeRegNumber)) {
-                            m_LiveRanges[activeRegNumber].Interferences.insert(use->GetRegister());
+                            uint64_t usePRegNumber = use->GetRegister();
+                            insertPRegisterInterference(activeRegNumber, m_RegisterSet->GetRegister(usePRegNumber));
                         }
                     }
                 } else if (use->IsValidVRegister()) {
@@ -116,7 +122,7 @@ void GlobalColoringAllocator::BuildGraph(LiveOUTPass& liveOutPass) {
                 if (instruction.IsCall()) {  // Kill caller-saved registers
                     for (const target::Register& targetReg : targetABI->GetCallerSavedRegisters()) {
                         if (targetReg.IsFloat() == m_IsFloatClass) {
-                            m_LiveRanges[activeRegNumber].Interferences.insert(targetReg.GetNumber());
+                            insertPRegisterInterference(activeRegNumber, targetReg);
                         }
                     }
                 }
@@ -124,12 +130,12 @@ void GlobalColoringAllocator::BuildGraph(LiveOUTPass& liveOutPass) {
                 // [EAX, EDX] <- DIV r/m <- [EAX, EDX]
                 for (const target::Register& targetReg : instruction.GetImplicitRegDefinitions()) {
                     if (targetReg.IsFloat() == m_IsFloatClass) {
-                        m_LiveRanges[activeRegNumber].Interferences.insert(targetReg.GetNumber());
+                        insertPRegisterInterference(activeRegNumber, targetReg);
                     }
                 }
                 for (const target::Register& targetReg : instruction.GetImplicitRegUses()) {
                     if (targetReg.IsFloat() == m_IsFloatClass) {
-                        m_LiveRanges[activeRegNumber].Interferences.insert(targetReg.GetNumber());
+                        insertPRegisterInterference(activeRegNumber, targetReg);
                     }
                 }
             }
@@ -198,7 +204,8 @@ void GlobalColoringAllocator::CoalesceCopies() {
                     auto& fromRegInterferences = m_LiveRanges.at(fromRegNumber).Interferences;
                     for (uint64_t reg : fromRegInterferences) {
                         if (m_LiveRanges.contains(reg)) {
-                            m_LiveRanges.at(reg).Interferences.insert(toOperand->GetRegister());
+                            uint64_t toPRegNumber = toOperand->GetRegister();
+                            insertPRegisterInterference(reg, m_RegisterSet->GetRegister(toPRegNumber));
                         }
                     }
 
@@ -210,7 +217,8 @@ void GlobalColoringAllocator::CoalesceCopies() {
                     auto& toRegInterferences = m_LiveRanges.at(toRegNumber).Interferences;
                     for (uint64_t reg : toRegInterferences) {
                         if (m_LiveRanges.contains(reg)) {
-                            m_LiveRanges.at(reg).Interferences.insert(fromOperand->GetRegister());
+                            uint64_t fromPRegNumber = fromOperand->GetRegister();
+                            insertPRegisterInterference(reg, m_RegisterSet->GetRegister(fromPRegNumber));
                         }
                     }
 
@@ -429,6 +437,29 @@ bool GlobalColoringAllocator::RenameAndSpill() {
     }
 
     return m_SpillSet.empty();
+}
+
+void GlobalColoringAllocator::insertPRegisterInterference(uint64_t vregNumber,
+                                                          const target::Register& preg) {
+    m_LiveRanges[vregNumber].Interferences.insert(preg.GetNumber());
+
+    uint64_t parentRegNumber = preg.GetParentRegNumber();
+    while (parentRegNumber) {
+        target::Register parentReg = m_RegisterSet->GetRegister(parentRegNumber);
+        m_LiveRanges[vregNumber].Interferences.insert(parentReg.GetNumber());
+        parentRegNumber = parentReg.GetParentRegNumber();
+    }
+
+    insertSubPRegsInterference(vregNumber, preg);
+}
+
+void GlobalColoringAllocator::insertSubPRegsInterference(uint64_t vregNumber,
+                                                         const target::Register& preg) {
+    for (uint64_t subRegNumber : preg.GetSubRegNumbers()) {
+        const target::Register& subReg = m_RegisterSet->GetRegister(subRegNumber);
+        m_LiveRanges[vregNumber].Interferences.insert(subReg.GetNumber());
+        insertSubPRegsInterference(vregNumber, m_RegisterSet->GetRegister(subRegNumber));
+    }
 }
 
 }  // namespace gen

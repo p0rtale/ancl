@@ -30,6 +30,9 @@ public:
     bool RenameAndSpill();
 
 private:
+    void insertPRegisterInterference(uint64_t vregNumber, const target::Register& preg);
+    void insertSubPRegsInterference(uint64_t vregNumber, const target::Register& preg);
+
     struct LiveRange {
         uint64_t Number = 0;
         std::unordered_set<uint64_t> Interferences;

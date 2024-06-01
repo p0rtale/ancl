@@ -13,7 +13,7 @@ int main() {
         y = z;
         z = x + y;
         printf("%d", z);     
-    }  
+    }
 
     return EXIT_SUCCESS;
 }
