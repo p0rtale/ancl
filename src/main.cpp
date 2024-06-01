@@ -6,8 +6,8 @@ int main(int argc, char** argv) {
     CLI::App app{"Ancl"};
     argv = app.ensure_utf8(argv);
 
-    std::string sourceFile = "main.c";
-    app.add_option("-f,--file", sourceFile, "Input C file");
+    std::string sourceFile;
+    app.add_option("-f,--file", sourceFile, "Input C file")->required();
 
     std::string preprocFilename = "preproc.c";
     app.add_option("-p,--preproc", preprocFilename, "Preprocessor output filename");

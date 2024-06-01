@@ -12,11 +12,5 @@ find_package(FLEX REQUIRED)
 add_compile_options(-fPIC)
 
 add_subdirectory(Ancl)
-add_subdirectory(play)
+add_subdirectory(src)
 
-# Install:
-# sudo apt install libspdlog-dev
-# sudo apt install g++-13
-
-# Run:
-# cmake -DCMAKE_CXX_COMPILER=/usr/bin/g++-13
