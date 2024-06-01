@@ -1477,7 +1477,7 @@ std::any BuildAstVisitor::visitLabeledStatement(CParser::LabeledStatementContext
 
         Statement* statement = nullptr;
         if (ctx->statement()) {
-            std::any statementAny = ctx->statement();
+            std::any statementAny = visitStatement(ctx->statement());
             statement = std::any_cast<Statement*>(statementAny);
         }
         labelDecl->SetStatement(statement);

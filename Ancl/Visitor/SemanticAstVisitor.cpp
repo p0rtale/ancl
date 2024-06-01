@@ -1,5 +1,7 @@
 #include <Ancl/Visitor/SemanticAstVisitor.hpp>
 
+#include <ranges>
+
 #include <Ancl/Visitor/IntConstExprAstVisitor.hpp>
 
 
@@ -209,18 +211,25 @@ void SemanticAstVisitor::Visit(FunctionDeclaration& funcDecl) {
         paramDecl->Accept(*this);
     }
 
-    m_HasReturn = false;
-
     Statement* body = funcDecl.GetBody();
     if (body) {
-        m_CurrentFunctionDecl = &funcDecl;
+        // TODO: Place inside classes
+        m_UnlabeledGotos.clear();
+        m_CurrentLabelDecl = nullptr;
+        m_HasReturn = false;
         m_IgnoreCompoundScope = true;
+        m_CurrentFunctionDecl = &funcDecl;
+
         body->Accept(*this);
-        m_CurrentFunctionDecl = nullptr;
     
         auto* funcType = static_cast<FunctionType*>(funcDeclType);
         if (!isVoidType(funcType->GetSubType()) && !m_HasReturn) {
             printSemanticError("non-void function does not return a value", funcDecl.GetLocation());
+        }
+
+        for (GotoStatement* gotoStmt : std::views::values(m_UnlabeledGotos)) {
+            printSemanticError(std::format("use of undeclared label '{}'", gotoStmt->GetLabel()->GetName()), 
+                               gotoStmt->GetLocation());
         }
     }
 
@@ -236,6 +245,16 @@ void SemanticAstVisitor::Visit(LabelDeclaration& labelDecl) {
                             labelDecl.GetLocation());
     } else {
         m_FunctionScope->AddSymbol(Scope::NamespaceType::Label, labelName, &labelDecl);
+    }
+
+    if (m_CurrentLabelDecl) {
+        labelDecl.SetPreviousLabelDeclaration(m_CurrentLabelDecl);
+    }
+    m_CurrentLabelDecl = &labelDecl;
+
+    if (m_UnlabeledGotos.contains(labelName)) {
+        m_UnlabeledGotos[labelName]->SetLabel(&labelDecl);
+        m_UnlabeledGotos.erase(labelName);
     }
 }
 
@@ -537,8 +556,8 @@ void SemanticAstVisitor::Visit(GotoStatement& gotoStmt) {
     std::string declName = labelOldDecl->GetName();
 
     if (!m_FunctionScope->HasSymbol(Scope::NamespaceType::Label, declName)) {
-        printSemanticError(std::format("use of undeclared label '{}'", declName), 
-                            gotoStmt.GetLocation());
+        m_UnlabeledGotos[declName] = &gotoStmt;
+        return;
     }
 
     Declaration* decl = m_FunctionScope->GetSymbol(Scope::NamespaceType::Label, declName);

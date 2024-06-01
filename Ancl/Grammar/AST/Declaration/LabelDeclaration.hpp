@@ -22,6 +22,18 @@ public:
         return m_Statement;
     }
 
+    void SetPreviousLabelDeclaration(LabelDeclaration* nextLabelDecl) {
+        m_PrevLabelDeclaration = nextLabelDecl;
+    }
+
+    bool IsFirstLabelDeclaration() {
+        return m_PrevLabelDeclaration;
+    }
+
+    LabelDeclaration* GetPrevLabelDeclaration() const {
+        return m_PrevLabelDeclaration;
+    }
+
     bool IsLabelDecl() const override {
         return true;
     }
@@ -36,6 +48,8 @@ public:
 
 private:
     Statement* m_Statement;
+
+    LabelDeclaration* m_PrevLabelDeclaration;
 };
 
 }  // namespace ast

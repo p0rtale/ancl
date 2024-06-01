@@ -231,6 +231,9 @@ private:
     bool m_InsideLoop = false;
     bool m_InsideSwitch = false;
 
+    std::unordered_map<std::string, GotoStatement*> m_UnlabeledGotos;
+    LabelDeclaration* m_CurrentLabelDecl = nullptr;
+
     bool m_HasReturn = false;
 };
 
