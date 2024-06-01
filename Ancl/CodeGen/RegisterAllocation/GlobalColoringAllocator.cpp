@@ -53,15 +53,16 @@ void GlobalColoringAllocator::BuildGraph(LiveOUTPass& liveOutPass) {
 
             if (instruction.IsDefinition()) {
                 MInstruction::TOperandIt defOperand = instruction.GetDefinition();
+                uint64_t defRegNumber = defOperand->GetRegister();
+
                 if (defOperand->IsValidVRegister()) {
-                    uint64_t defRegNumber = defOperand->GetRegister();
                     liveNowSet.erase(defRegNumber);
 
                     for (uint64_t activeRegNumber : liveNowSet) {
                         if (isCopy && activeRegNumber == instruction.GetUse(0)->GetRegister()) {
                             continue;
                         }
-                        if (m_LiveRanges.contains(defRegNumber)) {
+                        if (m_LiveRanges.contains(defRegNumber) && m_LiveRanges.contains(activeRegNumber)) {
                             m_LiveRanges[defRegNumber].Interferences.insert(activeRegNumber);
                         }
                     }
@@ -72,7 +73,7 @@ void GlobalColoringAllocator::BuildGraph(LiveOUTPass& liveOutPass) {
                         if (isCopy && activeRegNumber == instruction.GetUse(0)->GetRegister()) {
                             continue;
                         }
-                        if (m_LiveRanges.contains(activeRegNumber)) {
+                        if (m_LiveRanges.contains(defRegNumber) && m_LiveRanges.contains(activeRegNumber)) {
                             m_LiveRanges[activeRegNumber].Interferences.insert(defOperand->GetRegister());
                         }
                     }
@@ -108,6 +109,10 @@ void GlobalColoringAllocator::BuildGraph(LiveOUTPass& liveOutPass) {
 
             target::TargetABI* targetABI = m_TargetMachine->GetABI();
             for (uint64_t activeRegNumber : liveNowSet) {
+                if (!m_LiveRanges.contains(activeRegNumber)) {
+                    continue;
+                }
+
                 if (instruction.IsCall()) {  // Kill caller-saved registers
                     for (const target::Register& targetReg : targetABI->GetCallerSavedRegisters()) {
                         if (targetReg.IsFloat() == m_IsFloatClass) {
@@ -245,15 +250,18 @@ void GlobalColoringAllocator::Color() {
 
         std::vector<uint64_t> selectedPRegNumbers;
         for (uint64_t interfereNumber : currentliveRange.Interferences) {
-            if (!m_LiveRanges.contains(interfereNumber)) {
-                continue;
-            }
-            LiveRange& activeLiveRange = m_LiveRanges[interfereNumber];
-            if (!activeLiveRange.IsVirtual) {
-                auto selected = m_RegisterSelector.SelectRegister(m_RegisterSet->GetRegister(activeLiveRange.Number));
-                if (selected.IsValid()) {
-                    selectedPRegNumbers.push_back(activeLiveRange.Number);
+            uint64_t pregNumber = interfereNumber;
+            if (m_LiveRanges.contains(interfereNumber)) {
+                LiveRange& activeLiveRange = m_LiveRanges[interfereNumber];
+                if (activeLiveRange.IsVirtual) {
+                    continue;
                 }
+                pregNumber = activeLiveRange.Number;
+            }
+
+            auto selected = m_RegisterSelector.SelectRegister(m_RegisterSet->GetRegister(pregNumber));
+            if (selected.IsValid()) {
+                selectedPRegNumbers.push_back(pregNumber);
             }
         }
 
@@ -282,7 +290,11 @@ void GlobalColoringAllocator::Color() {
         } else {
             if (!targetRegister.IsValid()) {
                 targetRegister = m_RegisterSet->GetRegister(*m_ActiveCalleeSavedRegisters.begin());
+                MType liveRangeType = currentliveRange.VirtualRegister->GetType();
                 m_ActiveCalleeSavedRegisters.erase(targetRegister.GetNumber());
+                while (targetRegister.GetBytes() > liveRangeType.GetBytes()) {
+                    targetRegister = m_RegisterSet->GetRegister(targetRegister.GetSubRegNumbers()[0]);
+                }
             }
 
             currentliveRange.IsVirtual = false;

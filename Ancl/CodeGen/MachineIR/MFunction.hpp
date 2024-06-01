@@ -84,6 +84,10 @@ public:
         return m_NextVReg++;
     }
 
+    bool IsVRegNumber(uint64_t number) const {
+        return m_NextVReg >= kFirstVirtualRegisterNumber;
+    }
+
 private:
     std::string m_Name;
 
