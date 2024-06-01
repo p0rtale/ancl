@@ -149,6 +149,25 @@ private:
     =================================================================
     */
 
+    QualType AcceptQualType(QualType qualType) {
+        Type* type = qualType.GetSubType();
+        type->Accept(*this);
+
+        if (auto* typedefType = dynamic_cast<TypedefType*>(type)) {
+            return typedefType->GetDeclaration()->GetType();
+        }
+
+        if (auto* nodeType = dynamic_cast<INodeType*>(type)) {
+            QualType qualType = nodeType->GetSubType();
+            if (auto* typedefType = dynamic_cast<TypedefType*>(qualType.GetSubType())) {
+                TypedefDeclaration* typedefDecl = typedefType->GetDeclaration();
+                nodeType->SetSubType(typedefDecl->GetType());
+            }
+        }
+
+        return qualType;
+    }
+
     void Visit(ArrayType& arrayType) override;
 
     // Skip

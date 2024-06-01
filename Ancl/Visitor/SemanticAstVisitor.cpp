@@ -141,9 +141,9 @@ void SemanticAstVisitor::Visit(EnumDeclaration& enumDecl) {
 }
 
 void SemanticAstVisitor::Visit(FieldDeclaration& fieldDecl) {
-    QualType fieldDeclQualType = fieldDecl.GetType();
+    QualType fieldDeclQualType = AcceptQualType(fieldDecl.GetType());
+    fieldDecl.SetType(fieldDeclQualType);
     Type* fieldDeclType = fieldDeclQualType.GetSubType();
-    fieldDeclType->Accept(*this);
 
     std::string fieldName = fieldDecl.GetName();
     if (isIncompleteType(fieldDeclQualType)) {
@@ -160,9 +160,9 @@ void SemanticAstVisitor::Visit(FieldDeclaration& fieldDecl) {
 }
 
 void SemanticAstVisitor::Visit(FunctionDeclaration& funcDecl) {
-    QualType funcDeclQualType = funcDecl.GetType();
+    QualType funcDeclQualType = AcceptQualType(funcDecl.GetType());
+    funcDecl.SetType(funcDeclQualType);
     Type* funcDeclType = funcDeclQualType.GetSubType();
-    funcDeclType->Accept(*this);
 
     std::string funcName = funcDecl.GetName();
 
@@ -259,9 +259,9 @@ void SemanticAstVisitor::Visit(LabelDeclaration& labelDecl) {
 }
 
 void SemanticAstVisitor::Visit(ParameterDeclaration& paramDecl) {
-    QualType paramDeclQualType = paramDecl.GetType();
+    QualType paramDeclQualType = AcceptQualType(paramDecl.GetType());
+    paramDecl.SetType(paramDeclQualType);
     Type* paramDeclType = paramDeclQualType.GetSubType();
-    paramDeclType->Accept(*this);
 
     std::string paramName = paramDecl.GetName();
     assert(m_FunctionScope);
@@ -316,9 +316,9 @@ void SemanticAstVisitor::Visit(TranslationUnit& unit) {
 }
 
 void SemanticAstVisitor::Visit(TypedefDeclaration& typedefDecl) {
-    QualType typedefQualType = typedefDecl.GetType();
+    QualType typedefQualType = AcceptQualType(typedefDecl.GetType());
+    typedefDecl.SetType(typedefQualType);
     Type* typedefType = typedefQualType.GetSubType();
-    typedefType->Accept(*this);
 
     std::string typedefName = typedefDecl.GetName();
     if (m_CurrentScope->HasSymbol(Scope::NamespaceType::Ident, typedefName)) {
@@ -338,9 +338,9 @@ void SemanticAstVisitor::Visit(TypedefDeclaration& typedefDecl) {
 }
 
 void SemanticAstVisitor::Visit(VariableDeclaration& varDecl) {
-    QualType varDeclQualType = varDecl.GetType();
+    QualType varDeclQualType = AcceptQualType(varDecl.GetType());
+    varDecl.SetType(varDeclQualType);
     Type* varDeclType = varDeclQualType.GetSubType();
-    varDeclType->Accept(*this);
 
     std::string varName = varDecl.GetName();
     if (m_CurrentScope->IsGlobalScope()) {  // Global variable
