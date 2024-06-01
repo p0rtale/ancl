@@ -635,7 +635,7 @@ void IRGenAstVisitor::Visit(BinaryExpression& binaryExpr) {
             opType == BinaryExpression::OpType::kArrowMember) {
         auto* declRefExpr = dynamic_cast<ast::DeclRefExpression*>(rightOperand);
         assert(declRefExpr && "Must be DeclRefExpr");
-        m_IRValue = generateStructMemberExpression(leftValue, declRefExpr, leftQualType.GetSubType());
+        m_IRValue = generateStructMemberExpression(opType, leftValue, declRefExpr, leftQualType.GetSubType());
         return;
     }
 
@@ -1414,9 +1414,16 @@ ir::Value* IRGenAstVisitor::generateNegExpression(ir::Value* value) {
     return instruction;
 }
 
-ir::Instruction* IRGenAstVisitor::generateStructMemberExpression(ir::Value* structValue,
+ir::Instruction* IRGenAstVisitor::generateStructMemberExpression(BinaryExpression::OpType opType,
+                                                                 ir::Value* structValue,
                                                                  ast::DeclRefExpression* memberExpr,
                                                                  ast::Type* astType) {
+    if (opType == BinaryExpression::OpType::kArrowMember) {
+        auto* astPtrType = dynamic_cast<ast::PointerType*>(astType);
+        QualType recordQualType = astPtrType->GetSubType();
+        astType = recordQualType.GetSubType();
+    }
+
     auto* recordType = dynamic_cast<ast::RecordType*>(astType);
     assert(recordType);
 

@@ -151,7 +151,9 @@ std::vector<gen::MOperand> AMD64TargetMachine::mergeMemberAddress(SelectionNode*
             break;
         }
 
-        assert(childInstruction.IsMemberAddress());
+        if (!childInstruction.IsMemberAddress()) {
+            break;
+        }
 
         baseRegister = *childInstruction.GetUse(0);
         MOperand childScaleImmediate = *childInstruction.GetUse(1);

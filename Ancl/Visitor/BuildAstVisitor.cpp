@@ -1276,10 +1276,10 @@ std::any BuildAstVisitor::visitParameterDeclaration(CParser::ParameterDeclaratio
 
     DeclarationInfo declarationInfo = createDeclaration(declSpecs, declList, ctx, /*isParam=*/true);
 
-    if (declarationInfo.TagPreDecl) {
-        printSemanticWarning("tag declaration will not be visible outside of function",
-                             m_LocationBuilder.CreateASTLocation(ctx->declspecs));
-    }
+    // if (declarationInfo.TagPreDecl) {
+    //     printSemanticWarning("tag declaration will not be visible outside of function",
+    //                          m_LocationBuilder.CreateASTLocation(ctx->declspecs));
+    // }
 
     Declaration* decl = declarationInfo.Decl;
     if (!decl) {

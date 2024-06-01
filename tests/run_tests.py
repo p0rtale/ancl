@@ -40,6 +40,8 @@ def main():
         "basic/answer.c",
         "call/variadic_hello.c", "call/long_answer.c",
         "loop/count.c", "loop/fib.c", "loop/nested.c", "loop/goto.c",
+        "array/reverse.c",
+        "struct/readwrite.c",
     ]
 
     for test_file in test_files:

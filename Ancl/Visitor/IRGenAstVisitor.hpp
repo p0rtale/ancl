@@ -204,7 +204,8 @@ private:
 
     ir::Value* generateNegExpression(ir::Value* value);
 
-    ir::Instruction* generateStructMemberExpression(ir::Value* structValue,
+    ir::Instruction* generateStructMemberExpression(BinaryExpression::OpType opType,
+                                                    ir::Value* structValue,
                                                     ast::DeclRefExpression* memberExpr,
                                                     ast::Type* astType);
 
