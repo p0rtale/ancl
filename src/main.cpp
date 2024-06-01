@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     app.add_flag("-O,--optim", useOptimizations, "Use optimizations");
 
     bool isLinearScan = false;
-    app.add_flag("--linscan", isLinearScan, "Use Linear Scan Allocator");
+    app.add_flag("--linscan", isLinearScan, "Use Linear Scan Allocator (works unstable with spilling)");
 
     CLI11_PARSE(app, argc, argv);
 

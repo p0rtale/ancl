@@ -218,7 +218,14 @@ void LinearScanAllocator::spillLiveRange(LiveRange* liveRange,
     auto spillIt = --activeLiveRanges.end();
     LiveRange* spill = spillIt->second;
     if (spill->End > liveRange->End) {
-        assignPhysicalRegister(liveRange->Number, getAssignedRegister(spill->Number));
+        target::Register targetRegister = getAssignedRegister(spill->Number);
+        MOperand* liveRangeOperand = m_OperandsMap[liveRange->Number];
+        MType liveRangeType = liveRangeOperand->GetType();
+        while (targetRegister.GetBytes() > liveRangeType.GetBytes()) {
+            targetRegister = m_RegisterSet->GetRegister(targetRegister.GetSubRegNumbers().at(0));
+        }
+        assignPhysicalRegister(liveRange->Number, targetRegister);
+
         assignLocalData(spill);
         activeLiveRanges.erase(spillIt);
         activeLiveRanges.insert({liveRange->End, liveRange});
