@@ -1,4 +1,4 @@
-int printf(const char *format, ...);
+#include "include/std.h"
 
 int doFirst() {
     volatile int x = 0;
@@ -37,12 +37,12 @@ int main() {
         goto cleanupSecond;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 
 cleanupFirst:
     undoFirst();
 cleanupSecond:
     undoSecond();
 exit:
-    return 0;
+    return EXIT_SUCCESS;
 }

@@ -833,6 +833,10 @@ void SemanticAstVisitor::VisitArrSubscriptExpression(BinaryExpression& arrExpr) 
         printSemanticError("array subscript is not an integer", arrExpr.GetLocation());
     }
 
+    if (auto* arrayType = dynamic_cast<ArrayType*>(leftQualType.GetSubType())) {
+        leftQualType = *decayType(leftQualType.GetSubType());
+    }
+
     if (!isPointerType(leftQualType)) {
         printSemanticError("subscripted value is not an array or pointer", arrExpr.GetLocation());
     }
@@ -1430,6 +1434,8 @@ void SemanticAstVisitor::Visit(InitializerList& initList) {
     }
 
     // TODO: ...
+    ANCL_CRITICAL("Initializer lists are not supported yet :(");
+    exit(EXIT_FAILURE);
 }
 
 void SemanticAstVisitor::Visit(IntExpression& intExpr) {
@@ -1717,7 +1723,10 @@ bool SemanticAstVisitor::checkArrayInitialization(QualType arrayQualType, Expres
         return true;
     }
 
-    // TODO: Check initializer list
+    // TODO: ...
+    ANCL_CRITICAL("Initializer lists are not supported yet :(");
+    exit(EXIT_FAILURE);
+
     printSemanticError("array initializer must be an initializer list or string literal",
                        initExpr->GetLocation());
 

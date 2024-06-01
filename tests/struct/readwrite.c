@@ -7,8 +7,8 @@ struct personal_info {
     char gender;
 };
 
-void print_info(struct personal_info* p){
-	printf("%d, %s, %f\n", p->age, p->name, p->height);
+void print_info(struct personal_info* p) {
+    printf("%d, %s, %f\n", p->age, p->name, p->height);
 }
 
 int main() {
