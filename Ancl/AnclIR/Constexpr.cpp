@@ -154,7 +154,7 @@ Constant* Constexpr::EvaluateCastConstExpr(Constant* value, Type* toType) {
     if (toSize == 32) {
         return m_IRProgram.CreateValue<ir::FloatConstant>(floatToType, FloatValue((float)floatValue.GetValue()));
     }
-    return floatConst;
+    return m_IRProgram.CreateValue<ir::FloatConstant>(floatToType, FloatValue(floatValue.GetValue()));
 }
 
 Constant* Constexpr::evaluateIntegerBinaryConstExpr(IntConstant* leftValue, IntConstant* rightValue,
