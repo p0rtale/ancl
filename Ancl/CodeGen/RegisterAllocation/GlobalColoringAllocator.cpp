@@ -394,6 +394,9 @@ bool GlobalColoringAllocator::RenameAndSpill() {
         MBasicBlock* firstBlock = m_Function.GetFirstBasicBlock();
         MBasicBlock* lastBlock = m_Function.GetLastBasicBlock();
         if (!m_ActiveCalleeSavedRegisters.contains(calleeSavedReg.GetNumber())) {
+            LocalDataArea& localData = m_Function.GetLocalDataArea();
+            localData.HandleNewSpilledCalleeSaved();
+
             MInstruction pushReg(MInstruction::OpType::kPush);
             pushReg.AddPhysicalRegister(calleeSavedReg);
             MInstruction targetPushReg = InstructionSelector::SelectInstruction(pushReg, m_TargetMachine);

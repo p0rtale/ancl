@@ -40,6 +40,12 @@ void PrologueEpiloguePass::adjustStackCallImpl(MFunction* function, bool isDown)
 
     uint64_t stackAlignment = targetABI->GetStackAlignment();
     uint64_t alignedSize = ir::Alignment::Align(stackSize, stackAlignment);
+
+    // TODO: It is better to check the size of spilled registers
+    if (localData.GetSpilledCalleeSavedNumber() % 2 == 1) {
+        alignedSize += 8;
+    }
+
     if (alignedSize == 0) {
         return;
     }

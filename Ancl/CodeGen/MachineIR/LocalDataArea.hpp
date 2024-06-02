@@ -34,6 +34,14 @@ public:
     // TODO: Negative offsets (spilled parameters)
     uint64_t GetSlotOffset(uint64_t vreg) const;
 
+    void HandleNewSpilledCalleeSaved() {
+        ++m_SpilledCalleeSavedNumber;
+    }
+
+    uint64_t GetSpilledCalleeSavedNumber() const {
+        return m_SpilledCalleeSavedNumber;
+    }
+
 private:
     void alignStack(uint64_t size, uint64_t align);
 
@@ -44,6 +52,8 @@ private:
 
 private:
     uint64_t m_Size = 0;
+
+    uint64_t m_SpilledCalleeSavedNumber = 0;
 
     std::vector<Slot> m_Slots;
     std::unordered_map<uint64_t, SlotPosition> m_VRegToSlotPosition;
