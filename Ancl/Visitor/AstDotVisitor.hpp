@@ -405,10 +405,12 @@ public:
     }
 
     void Visit(DeclRefExpression& declrefExpr) override {
-        printNode("declref_expression", "DeclRefExpr",
+        ValueDeclaration* decl = declrefExpr.GetDeclaration();
+
+        printNode("declref_expression", std::format("DeclRefExpr [{}]", decl->GetName()),
                   declrefExpr.GetLocation().ToString());
 
-        acceptNode(declrefExpr.GetDeclaration(), "Decl");
+        // acceptNode(declrefExpr.GetDeclaration(), "Decl");
     }
 
     void Visit(ExpressionList& exprList) override {

@@ -8,6 +8,10 @@ namespace gen {
 MBasicBlock::MBasicBlock(const std::string& name, MFunction* function)
     : m_Name(name), m_Function(function) {}
 
+void MBasicBlock::SetName(const std::string& name) {
+    m_Name = name;
+}
+
 std::string MBasicBlock::GetName() const {
     return m_Name;
 }

@@ -14,6 +14,8 @@ class MBasicBlock {
 public:
     MBasicBlock(const std::string& name, MFunction* function);
 
+    void SetName(const std::string& name);
+
     std::string GetName() const;
 
     void SetFunction(MFunction* function);

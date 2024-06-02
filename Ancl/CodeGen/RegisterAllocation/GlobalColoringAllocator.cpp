@@ -189,8 +189,20 @@ void GlobalColoringAllocator::CoalesceCopies() {
             continue;
         }
 
+        bool isFromVirtual = fromOperand->IsValidVRegister();
+        bool isFromPhysical = fromOperand->IsPRegister();
+        if (isFromVirtual && !m_LiveRanges.at(fromRegNumber).IsVirtual) {
+            isFromVirtual = false;
+        }
+
+        bool isToVirtual = toOperand->IsValidVRegister();
+        bool isToPhysical = toOperand->IsPRegister();
+        if (isToVirtual && !m_LiveRanges.at(toRegNumber).IsVirtual) {
+            isToVirtual = false;
+        }
+
         if (instruction->IsRegMov()) {
-            if (toOperand->IsValidVRegister() && fromOperand->IsValidVRegister()) {
+            if (isToVirtual && isFromVirtual) {
                 if (!m_LiveRanges.at(toRegNumber).Interferences.contains(fromRegNumber)) {
                     auto& toRegInterferences = m_LiveRanges.at(toRegNumber).Interferences;
                     auto& fromRegInterferences = m_LiveRanges.at(fromRegNumber).Interferences;
@@ -204,7 +216,7 @@ void GlobalColoringAllocator::CoalesceCopies() {
                     m_LiveRangeCopyMap[fromRegNumber] = toRegNumber;
                     m_LiveRanges.erase(fromRegNumber);
                 }
-            } else if (toOperand->IsPRegister() && fromOperand->IsValidVRegister()) {
+            } else if (isToPhysical && isFromVirtual) {
                 if (!m_LiveRanges.at(fromRegNumber).Interferences.contains(toRegNumber)) {
                     auto& fromRegInterferences = m_LiveRanges.at(fromRegNumber).Interferences;
                     for (uint64_t reg : fromRegInterferences) {
@@ -217,7 +229,7 @@ void GlobalColoringAllocator::CoalesceCopies() {
                     m_LiveRanges.at(fromRegNumber).Number = toRegNumber;
                     m_LiveRanges.at(fromRegNumber).IsVirtual = false;
                 } 
-            } else if (toOperand->IsValidVRegister() && fromOperand->IsPRegister()) {
+            } else if (isToVirtual && isFromPhysical) {
                 if (!m_LiveRanges.at(toRegNumber).Interferences.contains(fromRegNumber)) {
                     auto& toRegInterferences = m_LiveRanges.at(toRegNumber).Interferences;
                     for (uint64_t reg : toRegInterferences) {

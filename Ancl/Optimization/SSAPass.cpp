@@ -102,7 +102,7 @@ void SSAPass::renameAllocas(BasicBlock* block) {
         for (PhiInstruction* phi : phis) {
             if (m_PhiAllocaMap.contains(phi)) {
                 AllocaInstruction* alloca = m_PhiAllocaMap[phi];
-                if (m_AllocaValueStacks.contains(alloca)) {
+                if (m_AllocaValueStacks.contains(alloca) && !m_AllocaValueStacks[alloca].empty()) {
                     Value* allocaValue = m_AllocaValueStacks[alloca].top();
                     phi->SetIncomingValue(predIndex, allocaValue);
                 }

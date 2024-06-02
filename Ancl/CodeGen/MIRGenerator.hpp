@@ -943,6 +943,15 @@ private:
             }
         }
 
+        auto& mirBlocks = mirFunction->GetBasicBlocks();
+        for (size_t i = 0; i < mirBlocks.size(); ++i) {
+            if (i == 0) {
+                continue;
+            }
+            auto& mirBlock = mirBlocks[i];
+            mirBlock->SetName(std::format("{}.{}", mirFunction->GetName(), mirBlock->GetName()));
+        }
+
         return mirFunctionScope;
     }
 

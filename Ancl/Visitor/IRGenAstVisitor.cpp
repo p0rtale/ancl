@@ -113,6 +113,14 @@ void IRGenAstVisitor::Visit(FunctionDeclaration& funcDecl) {
             }
         }
 
+        ir::BasicBlock* retBlock = m_CurrentFunction->GetLastBlock();
+        for (ir::BasicBlock* block : m_CurrentFunction->GetBasicBlocks()) {
+            if (!block->IsTerminated()) {
+                auto* branch = m_IRProgram.CreateValue<ir::BranchInstruction>(retBlock, block);
+                block->AddInstruction(branch);
+            }
+        }
+
         resetFunctionData();
     }
 }
