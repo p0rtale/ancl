@@ -1139,19 +1139,6 @@ void AMD64TargetMachine::selectJump(SelectionNode* node) {
 }
 
 void AMD64TargetMachine::selectBranch(SelectionNode* node) {
-    MInstruction instruction = node->GetInstruction();
-    
-    std::vector<MInstruction> targetInstructions;
-
-    // Must be CMP child
-    SelectionNode* conditionNode = node->GetChild(0);
-    assert(conditionNode);
-
-    MInstruction conditionInstr = conditionNode->GetInstruction();
-    assert(conditionInstr.IsCmp());
-
-    conditionNode->MarkAsSelected();
-
     /*
         Branch condVR labelTrue labelFalse
         ----------------------------------
@@ -1163,43 +1150,66 @@ void AMD64TargetMachine::selectBranch(SelectionNode* node) {
     // TODO: Handle fall-through
     // TODO: Invert condition
 
-    bool isMemory = false;
+    MInstruction instruction = node->GetInstruction();
+    
+    std::vector<MInstruction> targetInstructions;
 
-    MInstruction targetCmp{MInstruction::OpType::kCmp};
-    targetCmp.Undefine();
-    targetCmp.SetBasicBlock(conditionInstr.GetBasicBlock());
+    MInstruction conditionInstr;
+    SelectionNode* conditionNode = node->GetChild(0);
+    if (conditionNode) {
+        conditionInstr = conditionNode->GetInstruction();
+        assert(conditionInstr.IsCmp());
 
-    MInstruction::TOperandIt firstUse = conditionInstr.GetUse(0);
-    MInstruction::TOperandIt secondUse = conditionInstr.GetUse(1);
+        conditionNode->MarkAsSelected();
 
-    targetCmp.SetInstructionClass(firstUse->GetRegisterClass());
+        bool isMemory = false;
 
-    if (SelectionNode* child = conditionNode->GetChild(0)) {
-        std::vector<MOperand> operands = trySelectMemory(child);
-        if (operands.size() > 1) {
-            isMemory = true;
+        MInstruction targetCmp{MInstruction::OpType::kCmp};
+        targetCmp.Undefine();
+        targetCmp.SetBasicBlock(conditionInstr.GetBasicBlock());
+
+        MInstruction::TOperandIt firstUse = conditionInstr.GetUse(0);
+        MInstruction::TOperandIt secondUse = conditionInstr.GetUse(1);
+
+        targetCmp.SetInstructionClass(firstUse->GetRegisterClass());
+
+        if (SelectionNode* child = conditionNode->GetChild(0)) {
+            std::vector<MOperand> operands = trySelectMemory(child);
+            if (operands.size() > 1) {
+                isMemory = true;
+            }
+            for (const MOperand& operand : operands) {
+                targetCmp.AddOperand(operand);
+            }
+        } else {
+            targetCmp.AddOperand(*firstUse);
         }
-        for (const MOperand& operand : operands) {
-            targetCmp.AddOperand(operand);
+
+        targetCmp.AddOperand(*secondUse);
+
+        if (secondUse->IsImmediate()) {
+            targetCmp.SetTargetInstructionCode(AMD64InstructionSet::CMP_RI);
+            if (isMemory) {
+                targetCmp.SetTargetInstructionCode(AMD64InstructionSet::CMP_MI);
+            }
+        } else {
+            targetCmp.SetTargetInstructionCode(AMD64InstructionSet::CMP_RR);
+            if (isMemory) {
+                targetCmp.SetTargetInstructionCode(AMD64InstructionSet::CMP_MR);
+            }
         }
+        targetInstructions.push_back(targetCmp);
     } else {
-        targetCmp.AddOperand(*firstUse);
-    }
+        MBasicBlock* block = instruction.GetBasicBlock();
+        MBasicBlock::TInstructionIt terminatorIt = block->GetLastInstruction();
 
-    targetCmp.AddOperand(*secondUse);
-
-    if (secondUse->IsImmediate()) {
-        targetCmp.SetTargetInstructionCode(AMD64InstructionSet::CMP_RI);
-        if (isMemory) {
-            targetCmp.SetTargetInstructionCode(AMD64InstructionSet::CMP_MI);
+        MInstruction::TOperandIt condOperand = instruction.GetUse(0);
+        while (!terminatorIt->IsDefinition() ||
+                    terminatorIt->GetDefinition()->GetRegister() != condOperand->GetRegister()) {
+            --terminatorIt;
         }
-    } else {
-        targetCmp.SetTargetInstructionCode(AMD64InstructionSet::CMP_RR);
-        if (isMemory) {
-            targetCmp.SetTargetInstructionCode(AMD64InstructionSet::CMP_MR);
-        }
+        conditionInstr = *terminatorIt;
     }
-    targetInstructions.push_back(targetCmp);
 
     MInstruction targetJcc{MInstruction::OpType::kBranch};
     targetJcc.SetBasicBlock(conditionInstr.GetBasicBlock());

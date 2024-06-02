@@ -77,6 +77,8 @@ std::string CompareInstruction::GetOpTypeStr() const {
         case OpType::kISGreater:    return "icmp sgt";
         case OpType::kISLessEq:     return "icmp sle";
         case OpType::kISGreaterEq:  return "icmp sge";
+        case OpType::kIEqual:       return "icmp eq";
+        case OpType::kINEqual:      return "icmp ne";
 
         case OpType::kFLess:       return "fcmp lt";
         case OpType::kFGreater:    return "fcmp gt";

@@ -234,7 +234,7 @@ void AMD64Legalizer::moveImmediateToEnd(SelectionNode* node) {
 void AMD64Legalizer::materializeLeftImmediate(SelectionNode* node) {
     MInstruction instruction = node->GetInstruction();
 
-    MInstruction newInstruction{instruction.GetOpType()};
+    MInstruction newInstruction(instruction.GetOpType(), instruction.GetCompareKind());
     newInstruction.SetBasicBlock(instruction.GetBasicBlock());
     if (instruction.IsDefinition()) {
         newInstruction.AddOperand(*instruction.GetDefinition());

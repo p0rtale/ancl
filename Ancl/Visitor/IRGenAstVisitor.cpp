@@ -890,7 +890,6 @@ void IRGenAstVisitor::Visit(ConditionalExpression& condExpr) {
     m_CurrentBB = endBB;
 
     ir::LoadInstruction* loadInstr = createLoadInstruction(result, trueValue->GetType());
-    // m_CurrentBB->AddInstruction(loadInstr);  ???
 
     m_IRValue = loadInstr; 
 }
@@ -1664,12 +1663,24 @@ ir::MemoryCopyInstruction* IRGenAstVisitor::createMemoryCopyInstruction(ir::Valu
 
 ir::StoreInstruction* IRGenAstVisitor::createStoreInstruction(ir::Value* value, ir::Value* address,
                                                               bool isVolatile) {
+    // TODO:...
+    auto* ptrType = static_cast<ir::PointerType*>(address->GetType());
+    if (auto* ptrSubType = dynamic_cast<ir::PointerType*>(ptrType->GetSubType())) {
+        if (auto* intValue = dynamic_cast<ir::IntConstant*>(value)) {
+            if (ir::Alignment::GetTypeSize(intValue->GetType()) < ir::Alignment::GetPointerTypeSize()) {
+                auto* intType = ir::IntType::Create(m_IRProgram, ir::Alignment::GetPointerTypeSize());
+                value = m_IRProgram.CreateValue<ir::IntConstant>(intType, intValue->GetValue());
+            }
+        }
+    }
+
     auto* storeInstr = m_IRProgram.CreateValue<ir::StoreInstruction>(
         value, address, "", m_CurrentBB
     );
     if (isVolatile) {
         storeInstr->SetVolatile();
     }
+
     m_CurrentBB->AddInstruction(storeInstr);
     return storeInstr;
 }
@@ -1700,8 +1711,7 @@ ir::Instruction* IRGenAstVisitor::generateCompareZeroInstruction(BinaryExpressio
     // TODO: Handle float
     auto* intType = ir::IntType::Create(m_IRProgram, 4);
     auto* zeroValue = m_IRProgram.CreateValue<ir::IntConstant>(intType, IntValue(0));
-    return createCompareInstruction(opType,
-                                    value, zeroValue, astType);
+    return createCompareInstruction(opType, value, zeroValue, astType);
 }
 
 ir::Value* IRGenAstVisitor::generateLogInstruction(BinaryExpression::OpType opType,
@@ -1729,20 +1739,17 @@ ir::Value* IRGenAstVisitor::generateLogInstruction(BinaryExpression::OpType opTy
                             leftValue, leftType);
     }
 
-    ir::StoreInstruction* leftStoreInstr = createStoreInstruction(leftCmpInstr, result);
-
     ir::BasicBlock* trueBB = rightBB;
     ir::BasicBlock* falseBB = endBB;
     if (!isAnd) {
         std::swap(trueBB, falseBB);
     }
 
+    ir::StoreInstruction* leftStoreInstr = createStoreInstruction(leftCmpInstr, result);
+
     auto* branchInstr = m_IRProgram.CreateValue<ir::BranchInstruction>(
         leftCmpInstr, trueBB, falseBB, m_CurrentBB
     );
-
-    m_CurrentBB->AddInstruction(leftCmpInstr);
-    m_CurrentBB->AddInstruction(leftStoreInstr);
     m_CurrentBB->AddInstruction(branchInstr);
 
     // Right expression
@@ -1762,16 +1769,12 @@ ir::Value* IRGenAstVisitor::generateLogInstruction(BinaryExpression::OpType opTy
 
     auto* branchEndInstr = m_IRProgram.CreateValue<ir::BranchInstruction>(
                             endBB, m_CurrentBB);
-
-    m_CurrentBB->AddInstruction(rightCmpInstr);
-    m_CurrentBB->AddInstruction(rightStoreInstr);
     m_CurrentBB->AddInstruction(branchEndInstr);
 
     // End
-    m_CurrentBB = rightBB;
+    m_CurrentBB = endBB;
 
     ir::LoadInstruction* loadInstr = createLoadInstruction(result, ir::IntType::Create(m_IRProgram, 1));
-    m_CurrentBB->AddInstruction(loadInstr);
 
     return loadInstr;
 }
@@ -1780,17 +1783,23 @@ ir::Value* IRGenAstVisitor::generateLogInstruction(BinaryExpression::OpType opTy
 ir::Instruction* IRGenAstVisitor::createCompareInstruction(BinaryExpression::OpType opType,
                                                            ir::Value* leftValue, ir::Value* rightValue,
                                                            ast::Type* astType) {
-    auto* builtinType = static_cast<ast::BuiltinType*>(astType);
-    bool isSignedInt = builtinType->IsSignedInteger();
-    bool isUnsignedInt = builtinType->IsUnsignedInteger();
-    bool isFloat = builtinType->IsFloat();
+    bool isSignedInt = false;
+    bool isUnsignedInt = false;
+    bool isFloat = false;
+    bool isPointer = dynamic_cast<ast::PointerType*>(astType);
+    if (auto* builtinType = dynamic_cast<ast::BuiltinType*>(astType)) {
+        isSignedInt = builtinType->IsSignedInteger();
+        isUnsignedInt = builtinType->IsUnsignedInteger();
+        isFloat = builtinType->IsFloat();
+    }
+
 
     auto irOpType = ir::CompareInstruction::OpType::kNone;
     switch (opType) {
         case BinaryExpression::OpType::kLess:
             if (isSignedInt) {
                 irOpType = ir::CompareInstruction::OpType::kISLess;
-            } else if (isUnsignedInt) {
+            } else if (isUnsignedInt || isPointer) {
                 irOpType = ir::CompareInstruction::OpType::kIULess;
             } else if (isFloat) {
                 irOpType = ir::CompareInstruction::OpType::kFLess;
@@ -1799,7 +1808,7 @@ ir::Instruction* IRGenAstVisitor::createCompareInstruction(BinaryExpression::OpT
         case BinaryExpression::OpType::kGreater:
             if (isSignedInt) {
                 irOpType = ir::CompareInstruction::OpType::kISGreater;
-            } else if (isUnsignedInt) {
+            } else if (isUnsignedInt || isPointer) {
                 irOpType = ir::CompareInstruction::OpType::kIUGreater;
             } else if (isFloat) {
                 irOpType = ir::CompareInstruction::OpType::kFGreater;
@@ -1808,7 +1817,7 @@ ir::Instruction* IRGenAstVisitor::createCompareInstruction(BinaryExpression::OpT
         case BinaryExpression::OpType::kLessEq:
             if (isSignedInt) {
                 irOpType = ir::CompareInstruction::OpType::kISLessEq;
-            } else if (isUnsignedInt) {
+            } else if (isUnsignedInt || isPointer) {
                 irOpType = ir::CompareInstruction::OpType::kIULessEq;
             } else if (isFloat) {
                 irOpType = ir::CompareInstruction::OpType::kFLessEq;
@@ -1817,21 +1826,21 @@ ir::Instruction* IRGenAstVisitor::createCompareInstruction(BinaryExpression::OpT
         case BinaryExpression::OpType::kGreaterEq:
             if (isSignedInt) {
                 irOpType = ir::CompareInstruction::OpType::kISGreaterEq;
-            } else if (isUnsignedInt) {
+            } else if (isUnsignedInt || isPointer) {
                 irOpType = ir::CompareInstruction::OpType::kIUGreaterEq;
             } else if (isFloat) {
                 irOpType = ir::CompareInstruction::OpType::kFGreaterEq;
             }
             break;
         case BinaryExpression::OpType::kEqual:
-            if (isSignedInt || isUnsignedInt) {
+            if (isSignedInt || isUnsignedInt || isPointer) {
                 irOpType = ir::CompareInstruction::OpType::kIEqual;
             } else if (isFloat) {
                 irOpType = ir::CompareInstruction::OpType::kFEqual;
             }
             break;
         case BinaryExpression::OpType::kNEqual:
-            if (isSignedInt || isUnsignedInt) {
+            if (isSignedInt || isUnsignedInt || isPointer) {
                 irOpType = ir::CompareInstruction::OpType::kINEqual;
             } else if (isFloat) {
                 irOpType = ir::CompareInstruction::OpType::kFNEqual;
