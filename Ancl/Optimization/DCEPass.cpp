@@ -36,6 +36,16 @@ void DCEPass::runMark() {
             }
         }
 
+        if (auto* phiInstr = dynamic_cast<PhiInstruction*>(instruction)) {
+            for (size_t i = 0; i < phiInstr->GetOperandsNumber(); ++i) {
+                BasicBlock* block = phiInstr->GetIncomingBlock(i);
+                TerminatorInstruction* terminator = block->GetTerminator();
+                if (!isMarkedInstruction(terminator)) {
+                    workList.push_back(terminator);
+                }
+            }
+        }
+
         BasicBlock* basicBlock = instruction->GetBasicBlock();
         for (BasicBlock* reverseFrontier : m_ReverseDomTree.GetDominanceFrontier(basicBlock)) {
             TerminatorInstruction* terminator = reverseFrontier->GetTerminator();
@@ -68,7 +78,6 @@ void DCEPass::runSweep() {
                     while (!isMarkedBasicBlock(nearestMarkedDominator)) {
                         nearestMarkedDominator = m_ReverseDomTree.GetImmediateDominator(nearestMarkedDominator);
                     }
-
                     branch->ToUnconditional(nearestMarkedDominator);
                 }
                 ++it;

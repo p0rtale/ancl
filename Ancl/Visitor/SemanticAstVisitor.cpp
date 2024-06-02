@@ -1328,6 +1328,8 @@ void SemanticAstVisitor::Visit(ConditionalExpression& condExpr) {
 
         trueResultType = getCommonRealType(trueResultType, falseResultType);
         falseResultType = trueResultType;
+
+        condExpr.SetType(trueQualType);
     } else if (bothRecord) {
         if (!areCompatibleTypes(trueQualType, falseQualType, /*isPointer=*/false)) {
             printSemanticError("incompatible operand record types",

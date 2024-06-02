@@ -846,7 +846,6 @@ void IRGenAstVisitor::Visit(ConditionalExpression& condExpr) {
         compareInstr, trueBB, falseBB, m_CurrentBB
     );
 
-    m_CurrentBB->AddInstruction(compareInstr);
     m_CurrentBB->AddInstruction(branchInstr);
 
     // True
@@ -864,7 +863,6 @@ void IRGenAstVisitor::Visit(ConditionalExpression& condExpr) {
     auto* trueBranchEndInstr = m_IRProgram.CreateValue<ir::BranchInstruction>(
                                 endBB, m_CurrentBB);
 
-    m_CurrentBB->AddInstruction(trueStoreInstr);
     m_CurrentBB->AddInstruction(trueBranchEndInstr);
 
     // False
@@ -878,7 +876,6 @@ void IRGenAstVisitor::Visit(ConditionalExpression& condExpr) {
     auto* falseBranchEndInstr = m_IRProgram.CreateValue<ir::BranchInstruction>(
                                     endBB, m_CurrentBB);
 
-    m_CurrentBB->AddInstruction(falseBranchEndInstr);
     m_CurrentBB->AddInstruction(falseBranchEndInstr);
 
     // End

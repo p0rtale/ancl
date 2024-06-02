@@ -7,4 +7,6 @@
 
 
 int printf(const char *format, ...);
+
 void *malloc(size_t size);
+void free(void *ptr);
