@@ -169,7 +169,9 @@ void Driver::GenerateMachineIR() {
     gen::MIRGenerator machineIRGenerator(m_MIRProgram, m_IRProgram, m_TargetMachine.get());
     machineIRGenerator.Generate();
     emitMachineIR("MachineIR.txt");
-    ANCL_INFO("Machine IR is saved in \"{}\" directory", m_MIREmitterPath.string());
+    if (!m_MIREmitterPath.empty()) {
+        ANCL_INFO("Machine IR is saved in \"{}\" directory", m_MIREmitterPath.string());
+    }
 }
 
 void Driver::RunInstructionSelection() {

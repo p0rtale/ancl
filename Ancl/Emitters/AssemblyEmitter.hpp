@@ -1,5 +1,7 @@
 #pragma once
 
+#include <fstream>
+
 #include <Ancl/CodeGen/MachineIR/MIRProgram.hpp>
 #include <Ancl/CodeGen/Target/Base/Machine.hpp>
 
