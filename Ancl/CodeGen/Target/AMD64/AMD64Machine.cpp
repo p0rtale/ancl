@@ -636,7 +636,7 @@ void AMD64TargetMachine::selectShiftL(SelectionNode* node) {
     MInstruction::TOperandIt definition = instruction.GetDefinition();
     instruction.SetInstructionClass(definition->GetRegisterClass());
 
-    MInstruction::TOperandIt secondUse = instruction.GetOperand(1);
+    MInstruction::TOperandIt secondUse = instruction.GetUse(1);
     if (secondUse->IsImmediate()) {
         instruction.SetTargetInstructionCode(AMD64InstructionSet::SHL_RI);
     } else if (secondUse->IsVRegister()) {
@@ -654,7 +654,7 @@ void AMD64TargetMachine::selectLShiftR(SelectionNode* node) {
     MInstruction::TOperandIt definition = instruction.GetDefinition();
     instruction.SetInstructionClass(definition->GetRegisterClass());
 
-    MInstruction::TOperandIt secondUse = instruction.GetOperand(1);
+    MInstruction::TOperandIt secondUse = instruction.GetUse(1);
     if (secondUse->IsImmediate()) {
         instruction.SetTargetInstructionCode(AMD64InstructionSet::SHR_RI);
     } else if (secondUse->IsVRegister()) {
@@ -672,7 +672,7 @@ void AMD64TargetMachine::selectAShiftR(SelectionNode* node) {
     MInstruction::TOperandIt definition = instruction.GetDefinition();
     instruction.SetInstructionClass(definition->GetRegisterClass());
 
-    MInstruction::TOperandIt secondUse = instruction.GetOperand(1);
+    MInstruction::TOperandIt secondUse = instruction.GetUse(1);
     if (secondUse->IsImmediate()) {
         instruction.SetTargetInstructionCode(AMD64InstructionSet::SAR_RI);
     } else if (secondUse->IsVRegister()) {

@@ -39,6 +39,7 @@ def main():
     test_files = [
         "basic/answer.c", "basic/conv.c",
         "call/variadic_hello.c", "call/long_answer.c",
+        "exprs/conditional.c", "exprs/allexprs.c",
         "loop/count.c", "loop/fib.c", "loop/nested.c", "loop/goto.c",
         "array/reverse.c",
         "struct/readwrite.c", "struct/union.c",

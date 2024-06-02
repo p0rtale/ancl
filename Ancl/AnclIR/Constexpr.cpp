@@ -143,6 +143,9 @@ Constant* Constexpr::EvaluateCastConstExpr(Constant* value, Type* toType) {
     if (!fromFloat && toFloat) {
         IntValue intValue = intConst->GetValue();
         double value = intValue.GetUnsignedValue();
+        if (intValue.IsSigned()) {
+            value = intValue.GetSignedValue();
+        }
         return m_IRProgram.CreateValue<ir::FloatConstant>(floatToType, FloatValue(value));
     }
 
@@ -247,8 +250,7 @@ Constant* Constexpr::evaluateFloatBinaryConstExpr(FloatConstant* leftValue, Floa
             break;
     }
 
-    // return m_IRProgram.CreateValue<FloatConstant>(type, FloatValue(result));
-    return nullptr;
+    return m_IRProgram.CreateValue<FloatConstant>(type, FloatValue(result));
 }
 
 Constant* Constexpr::evaluateIntegerCompareConstExpr(IntConstant* leftValue, IntConstant* rightValue,
