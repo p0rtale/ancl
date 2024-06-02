@@ -268,6 +268,7 @@ void GlobalColoringAllocator::Color() {
     }
 
     m_SpillSet.clear();
+    m_CalleeSavedSpillSet.clear();
     for (auto [spillMetric, liveRangeNumber] : liveRangesColorOrder) {
         LiveRange& currentliveRange = m_LiveRanges[liveRangeNumber];
         if (!currentliveRange.IsVirtual) {
@@ -318,6 +319,7 @@ void GlobalColoringAllocator::Color() {
                 targetRegister = m_RegisterSet->GetRegister(*m_ActiveCalleeSavedRegisters.begin());
                 MType liveRangeType = currentliveRange.VirtualRegister->GetType();
                 m_ActiveCalleeSavedRegisters.erase(targetRegister.GetNumber());
+                m_CalleeSavedSpillSet.insert(targetRegister.GetNumber());
                 while (targetRegister.GetBytes() > liveRangeType.GetBytes()) {
                     targetRegister = m_RegisterSet->GetRegister(targetRegister.GetSubRegNumbers()[0]);
                 }
@@ -405,7 +407,7 @@ bool GlobalColoringAllocator::RenameAndSpill() {
 
         MBasicBlock* firstBlock = m_Function.GetFirstBasicBlock();
         MBasicBlock* lastBlock = m_Function.GetLastBasicBlock();
-        if (!m_ActiveCalleeSavedRegisters.contains(calleeSavedReg.GetNumber())) {
+        if (m_CalleeSavedSpillSet.contains(calleeSavedReg.GetNumber())) {
             LocalDataArea& localData = m_Function.GetLocalDataArea();
             localData.HandleNewSpilledCalleeSaved();
 

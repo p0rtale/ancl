@@ -49,6 +49,7 @@ private:
     };
 
     std::set<uint64_t> m_ActiveCalleeSavedRegisters;
+    std::unordered_set<uint64_t> m_CalleeSavedSpillSet;
 
     std::unordered_set<uint64_t> m_SpillSet;
     std::unordered_map<uint64_t, uint64_t> m_LiveRangeCopyMap;
