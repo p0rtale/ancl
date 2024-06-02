@@ -44,7 +44,7 @@ def main():
         "array/reverse.c",
         "struct/readwrite.c", "struct/union.c",
         "alignment/basic.c",
-        "hard/bintree.c",
+        "hard/bintree.c", "hard/avl.c",
     ]
 
     for test_file in test_files:
