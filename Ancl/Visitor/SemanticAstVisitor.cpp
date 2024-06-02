@@ -1446,6 +1446,7 @@ void SemanticAstVisitor::Visit(IntExpression& intExpr) {
 
 void SemanticAstVisitor::Visit(SizeofTypeExpression& sizeofTypeExpr) {
     QualType qualType = sizeofTypeExpr.GetSubType();
+    qualType = AcceptQualType(qualType);
 
     if (isIncompleteType(qualType)) {
         printSemanticError("invalid application of 'sizeof' to an incomplete type",

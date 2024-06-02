@@ -16,12 +16,12 @@ uint64_t Alignment::Align(uint64_t minSize, uint64_t alignment) {
 Alignment::StructLayout Alignment::GetStructLayout(StructType* structType) {
     StructLayout layout{
         .Size = 0,
-        .Alignment = 8,
+        .Alignment = 1,
     };
 
     for (ir::Type* elemType : structType->GetElementTypes()) {
         uint64_t elemSize = GetTypeSize(elemType);
-        uint64_t elemAlignment = GetTypeAlignment(elemType);
+        uint64_t elemAlignment = GetTypeAlignment(elemType, /*isStackAlignment=*/false);
 
         layout.Size = Align(layout.Size, elemAlignment);
         layout.Offsets.push_back(layout.Size);
@@ -29,9 +29,9 @@ Alignment::StructLayout Alignment::GetStructLayout(StructType* structType) {
         layout.Alignment = std::max(layout.Alignment, elemAlignment);
     }
 
-    // if (layout.Size % layout.Alignment != 0) {
-    //     layout.Size = Align(layout.Size, layout.Alignment);
-    // }
+    if (layout.Size % layout.Alignment != 0) {
+        layout.Size = Align(layout.Size, layout.Alignment);
+    }
 
     return layout;
 }
@@ -107,7 +107,7 @@ uint64_t GetFloatTypeAlignment(FloatType* floatType) {
     return 0;
 }
 
-uint64_t Alignment::GetTypeAlignment(Type* type) {
+uint64_t Alignment::GetTypeAlignment(Type* type, bool isStackAlignment) {
     if (auto* labelType = dynamic_cast<LabelType*>(type)) {
         return 8;
     }
@@ -132,11 +132,15 @@ uint64_t Alignment::GetTypeAlignment(Type* type) {
         if (GetTypeSize(arrayType) >= 16) {
             return 16;
         }
-        return GetTypeAlignment(arrayType->GetSubType());
+        return GetTypeAlignment(arrayType->GetSubType(), isStackAlignment);
     }
 
     if (auto* structType = dynamic_cast<StructType*>(type)) {
-        return GetStructTypeAlignment(structType);
+        uint64_t structAlignment = GetStructTypeAlignment(structType);
+        if (isStackAlignment && structAlignment < 8) {
+            return 8;
+        }
+        return structAlignment;
     }
 
     ANCL_WARN("Invalid IR type");

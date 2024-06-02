@@ -1173,7 +1173,7 @@ void IRGenAstVisitor::Visit(RecordType& recordType) {
         uint64_t elemSize = ir::Alignment::GetTypeSize(elemType);
         maxSize = std::max(maxSize, elemSize);
 
-        uint64_t elemAlignment = ir::Alignment::GetTypeAlignment(elemType);
+        uint64_t elemAlignment = ir::Alignment::GetTypeAlignment(elemType, /*isStackAlignment=*/false);
         if (elemAlignment > maxAlignment) {
             maxAlignment = elemAlignment;
             maxAlignType = elemType;

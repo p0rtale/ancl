@@ -42,6 +42,7 @@ def main():
         "loop/count.c", "loop/fib.c", "loop/nested.c", "loop/goto.c",
         "array/reverse.c",
         "struct/readwrite.c", "struct/union.c",
+        "alignment/basic.c",
     ]
 
     for test_file in test_files:

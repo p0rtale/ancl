@@ -30,7 +30,7 @@ public:
 
     static uint64_t GetTypeBitSize(Type* type);
 
-    static uint64_t GetTypeAlignment(Type* type);
+    static uint64_t GetTypeAlignment(Type* type, bool isStackAlignment = true);
 };
 
 }  // namespace ir
