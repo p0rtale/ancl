@@ -19,8 +19,6 @@ GlobalColoringAllocator::GlobalColoringAllocator(MFunction& function,
 void GlobalColoringAllocator::Allocate(LiveOUTPass& liveOutPass) {
     m_RegisterSelector.Init(m_IsFloatClass);
 
-    CreateNodes();
-
     target::TargetABI* targetABI = m_TargetMachine->GetABI();
     for (const target::Register& targetReg : targetABI->GetCalleeSavedRegisters()) {
         if (targetReg.IsFloat() == m_IsFloatClass) {
@@ -30,6 +28,7 @@ void GlobalColoringAllocator::Allocate(LiveOUTPass& liveOutPass) {
 
     bool isAllocated = false;
     while (!isAllocated) {
+        CreateNodes();
         BuildGraph(liveOutPass);
         CoalesceCopies();
         Color();
@@ -38,6 +37,8 @@ void GlobalColoringAllocator::Allocate(LiveOUTPass& liveOutPass) {
 }
 
 void GlobalColoringAllocator::BuildGraph(LiveOUTPass& liveOutPass) {
+    m_CopyList.clear();
+
     for (auto& basicBlock : m_Function.GetBasicBlocks()) {
         std::unordered_set<uint64_t> liveNowSet = liveOutPass.GetLiveOUT(basicBlock.get());
 
@@ -144,6 +145,8 @@ void GlobalColoringAllocator::BuildGraph(LiveOUTPass& liveOutPass) {
 }
 
 void GlobalColoringAllocator::CreateNodes() {
+    m_LiveRanges.clear();
+
     for (auto& basicBlock : m_Function.GetBasicBlocks()) {
         for (MInstruction& instruction : basicBlock->GetInstructions()) {
             for (MOperand& operand : instruction.GetOperands()) {
@@ -164,6 +167,8 @@ void GlobalColoringAllocator::CreateNodes() {
 }
 
 void GlobalColoringAllocator::CoalesceCopies() {
+    m_LiveRangeCopyMap.clear();
+
     for (MInstruction* instruction : m_CopyList) {
         MInstruction::TOperandIt toOperand = instruction->GetOperand(0);
         MInstruction::TOperandIt fromOperand = instruction->GetOperand(1);
@@ -250,6 +255,7 @@ void GlobalColoringAllocator::Color() {
         liveRangesColorOrder.insert({spillMetric, number});
     }
 
+    m_SpillSet.clear();
     for (auto [spillMetric, liveRangeNumber] : liveRangesColorOrder) {
         LiveRange& currentliveRange = m_LiveRanges[liveRangeNumber];
         if (!currentliveRange.IsVirtual) {
@@ -347,10 +353,12 @@ MBasicBlock::TInstructionIt GlobalColoringAllocator::SpillForInstruction(MBasicB
     if (instrIt->IsDefinition()) {
         MInstruction::TOperandIt definition = instrIt->GetDefinition();
         if (definition->IsValidVRegister() && m_SpillSet.contains(definition->GetRegister())) {
-            m_SpillSet.erase(definition->GetRegister());
+            handleSpillSlot(definition);
+            uint64_t stackIndex = definition->GetRegister();
+            definition->SetRegister(m_Function.NextVReg());
 
             MInstruction storeInstr{MInstruction::OpType::kStore};
-            storeInstr.AddStackIndex(definition->GetRegister());
+            storeInstr.AddStackIndex(stackIndex);
             storeInstr.AddOperand(*definition);
             MInstruction targetStore = InstructionSelector::SelectInstruction(storeInstr, m_TargetMachine);
             return basicBlock->InsertAfter(targetStore, instrIt);
@@ -360,11 +368,13 @@ MBasicBlock::TInstructionIt GlobalColoringAllocator::SpillForInstruction(MBasicB
     for (size_t i = 0; i < instrIt->GetUsesNumber(); ++i) {
         MInstruction::TOperandIt use = instrIt->GetUse(i);
         if (use->IsValidVRegister() && m_SpillSet.contains(use->GetRegister())) {
-            m_SpillSet.erase(use->GetRegister());
+            handleSpillSlot(use);
+            uint64_t stackIndex = use->GetRegister();
+            use->SetRegister(m_Function.NextVReg());
 
             MInstruction loadInstr{MInstruction::OpType::kLoad};
             loadInstr.AddOperand(*use);
-            loadInstr.AddStackIndex(use->GetRegister());
+            loadInstr.AddStackIndex(stackIndex);
             MInstruction targetLoad = InstructionSelector::SelectInstruction(loadInstr, m_TargetMachine);
             basicBlock->InsertBefore(targetLoad, instrIt);
             return instrIt;
@@ -407,7 +417,7 @@ bool GlobalColoringAllocator::RenameAndSpill() {
                     }
                     operand.SetRegister(regNumber);
 
-                    if (m_LiveRanges.contains(regNumber)) {
+                    if (m_LiveRanges.contains(regNumber) && !m_LiveRanges[regNumber].IsVirtual) {
                         operand.SetVirtual(false);
                         operand.SetRegister(m_LiveRanges[regNumber].Number);
                     }
@@ -423,6 +433,8 @@ bool GlobalColoringAllocator::RenameAndSpill() {
                 MInstruction::TOperandIt fromOperand = instrIt->GetOperand(1);
                 if (fromOperand->GetRegister() == toOperand->GetRegister()) {
                     toDelete = true;
+                } else {
+                    instrIt = SpillForInstruction(instrIt);
                 }
             } else {
                 instrIt = SpillForInstruction(instrIt);
@@ -459,6 +471,15 @@ void GlobalColoringAllocator::insertSubPRegsInterference(uint64_t vregNumber,
         const target::Register& subReg = m_RegisterSet->GetRegister(subRegNumber);
         m_LiveRanges[vregNumber].Interferences.insert(subReg.GetNumber());
         insertSubPRegsInterference(vregNumber, m_RegisterSet->GetRegister(subRegNumber));
+    }
+}
+
+void GlobalColoringAllocator::handleSpillSlot(MInstruction::TOperandIt spillOperand) {
+    LocalDataArea& localData = m_Function.GetLocalDataArea();
+    uint64_t stackIndex = spillOperand->GetRegister();
+    if (!localData.HasSlot(stackIndex)) {
+        MType type = spillOperand->GetType();
+        localData.AddSlot(stackIndex, type.GetBytes(), type.GetBytes());
     }
 }
 

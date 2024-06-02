@@ -1109,9 +1109,9 @@ void SemanticAstVisitor::Visit(BinaryExpression& binaryExpr) {
         binaryExpr.SetLeftOperand(cast);     
     }
     if (!areEqualQualTypes(rightQualType, rightResultType)) {
-        auto* cast = m_Program.CreateAstNode<CastExpression>(binaryExpr.GetLeftOperand(),
+        auto* cast = m_Program.CreateAstNode<CastExpression>(binaryExpr.GetRightOperand(),
                                                                 rightResultType);
-        binaryExpr.SetLeftOperand(cast);     
+        binaryExpr.SetRightOperand(cast);     
     }
 }
 

@@ -33,6 +33,8 @@ private:
     void insertPRegisterInterference(uint64_t vregNumber, const target::Register& preg);
     void insertSubPRegsInterference(uint64_t vregNumber, const target::Register& preg);
 
+    void handleSpillSlot(MInstruction::TOperandIt spillOperand);
+
     struct LiveRange {
         uint64_t Number = 0;
         std::unordered_set<uint64_t> Interferences;

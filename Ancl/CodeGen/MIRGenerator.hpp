@@ -87,22 +87,18 @@ private:
         }
 
         if (auto* irFloatConstant = dynamic_cast<ir::FloatConstant*>(irConstant)) {
-            static uint64_t counter = 0;
-
-            std::string labelName = ".L.float";
-            if (counter > 0) {
-                labelName += "." + std::to_string(counter);
-            }
-
             FloatValue floatValue = irFloatConstant->GetValue();
             uint64_t floatBytes = ir::Alignment::GetTypeSize(irFloatConstant->GetType());
+
+            static uint64_t counter = 0;
+            std::string labelName = ".L.float." + std::to_string(++counter);
 
             GlobalDataArea globalDataArea{labelName};
             globalDataArea.SetConst();
             globalDataArea.SetLocal();
 
             double value = floatValue.GetValue();
-            if (floatValue.IsDoublePrecision()) {
+            if (floatBytes == 8) {
                 globalDataArea.AddDoubleSlot(value);
             } else {
                 globalDataArea.AddFloatSlot(static_cast<float>(value));
@@ -1067,6 +1063,8 @@ private:
 
     std::unordered_map<std::string, uint64_t> m_IRValueToVReg;
     std::unordered_map<std::string, std::vector<uint64_t>> m_IRValueToVRegList;
+
+    std::unordered_map<std::string, std::string> m_FloatLabelNumbers;
 
     std::unordered_map<std::string, MBasicBlock*> m_MBBMap;
 };
