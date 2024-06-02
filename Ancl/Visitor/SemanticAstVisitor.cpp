@@ -342,6 +342,11 @@ void SemanticAstVisitor::Visit(VariableDeclaration& varDecl) {
     varDecl.SetType(varDeclQualType);
     Type* varDeclType = varDeclQualType.GetSubType();
 
+    if (isIncompleteType(varDeclQualType)) {
+        printSemanticError("variable has incomplete type",
+                           varDecl.GetLocation());    
+    }
+
     std::string varName = varDecl.GetName();
     if (m_CurrentScope->IsGlobalScope()) {  // Global variable
         varDecl.SetGlobal();
@@ -437,7 +442,7 @@ void SemanticAstVisitor::Visit(VariableDeclaration& varDecl) {
             printSemanticError("initializing with an expression of incompatible type",
                                 initExpr->GetLocation());     
         }
-    } else if (bothPtr && !isPointerToVoidType(exprQualType)) {
+    } else if (bothPtr && !isPointerToVoidType(varDeclQualType) && !isPointerToVoidType(exprQualType)) {
         auto* varDeclPtrType = dynamic_cast<PointerType*>(varDeclQualType.GetSubType());
         QualType varDeclSubType = varDeclPtrType->GetSubType();
         auto* exprPtrType = dynamic_cast<PointerType*>(exprQualType.GetSubType());
@@ -647,7 +652,7 @@ void SemanticAstVisitor::Visit(ReturnStatement& returnStmt) {
             printSemanticError("returning record from a function with incompatible result type",
                                 retExpr->GetLocation());     
         }
-    } else if (bothPtr && !isPointerToVoidType(exprQualType)) {
+    } else if (bothPtr && !isPointerToVoidType(returnQualType) && !isPointerToVoidType(exprQualType)) {
         if (!areCompatibleTypes(returnQualType, exprQualType, /*isPointer=*/true)) {
             printSemanticError("incompatible pointer types returning from a function",
                                 retExpr->GetLocation());  
@@ -739,7 +744,7 @@ void SemanticAstVisitor::VisitAssignmentExpression(BinaryExpression& assignExpr)
                 printSemanticError("assigning from incompatible tag type",
                                     assignExpr.GetLocation());     
             }
-        } else if (bothPtr && !isPointerToVoidType(rightQualType)) {
+        } else if (bothPtr && !isPointerToVoidType(leftQualType) && !isPointerToVoidType(rightQualType)) {
             auto* leftPtrType = static_cast<PointerType*>(leftQualType.GetSubType());
             QualType leftSubType = leftPtrType->GetSubType();
             auto* rightPtrType = static_cast<PointerType*>(rightQualType.GetSubType());
@@ -1199,7 +1204,7 @@ void SemanticAstVisitor::Visit(CallExpression& callExpr) {
                 printSemanticError("incompatible argument and parameter types",
                                     argExpr->GetLocation());     
             }
-        } else if (bothPtr && !isPointerToVoidType(argQualType)) {
+        } else if (bothPtr && !isPointerToVoidType(paramQualType) && !isPointerToVoidType(argQualType)) {
             if (!areCompatibleTypes(paramQualType, argQualType, /*isPointer=*/true)) {
                 printSemanticError("pointers to compatible types are required",
                                     argExpr->GetLocation());  
@@ -1861,7 +1866,12 @@ BuiltinType::Kind SemanticAstVisitor::getCommonRealTypeKind(BuiltinType::Kind le
 }
 
 bool SemanticAstVisitor::isIncompleteType(QualType qualType) {
+    if (isVoidType(qualType)) {
+        return true;
+    }
+
     Type* type = qualType.GetSubType();
+
     if (auto* arrayType = dynamic_cast<ArrayType*>(type)) {
         if (arrayType->HasSize()) {
             return false;
