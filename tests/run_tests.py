@@ -37,7 +37,7 @@ def main():
     args = parser.parse_args()
 
     test_files = [
-        "basic/answer.c",
+        "basic/answer.c", "basic/conv.c",
         "call/variadic_hello.c", "call/long_answer.c",
         "loop/count.c", "loop/fib.c", "loop/nested.c", "loop/goto.c",
         "array/reverse.c",
