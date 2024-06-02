@@ -275,7 +275,8 @@ private:
         ANCL_ERROR("{} {}", location.ToString(), text);
 
         // TODO: Handle error
-        exit(EXIT_FAILURE);
+        throw std::runtime_error("Semantic error");
+        // exit(EXIT_FAILURE);
     }
 
     class ASTLocationBuilder {

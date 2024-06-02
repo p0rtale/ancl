@@ -69,7 +69,8 @@ void SSAPass::renameAllocas(BasicBlock* block) {
                     if (m_AllocaValueStacks[alloca].empty()) {
                         // TODO: Set some empty Value
                         ANCL_CRITICAL("Undefined behavior: Alloca without Store was promoted");
-                        exit(EXIT_FAILURE);
+                        throw std::runtime_error("SSAPass error");
+                        // exit(EXIT_FAILURE);
                     }
                     m_LoadValueMap[load] = m_AllocaValueStacks[alloca].top();
                     isPromotableInstr = true;

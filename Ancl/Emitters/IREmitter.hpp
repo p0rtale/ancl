@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_set>
 #include <fstream>
 #include <string>
 
@@ -27,6 +28,8 @@ private:
 
 private:
     std::ofstream m_OutputStream;
+
+    std::unordered_set<std::string> m_StructNames;
 };
 
 }  // namespace ir

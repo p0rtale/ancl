@@ -18,6 +18,10 @@ public:
 
     std::string GetName() const;
 
+    void SetElementTypes(const std::vector<Type*>& elementTypes) {
+        m_ElementTypes = elementTypes;
+    }
+
     Type* GetElementType(size_t index) const;
 
     std::vector<Type*> GetElementTypes() const;

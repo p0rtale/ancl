@@ -294,6 +294,7 @@ private:
     std::unordered_map<std::string, ir::BasicBlock*> m_FunBBMap;
 
     std::unordered_map<Declaration*, ir::AllocaInstruction*> m_AllocasMap;
+    std::unordered_map<RecordDeclaration*, ir::Type*> m_StructTypesMap;
 
     std::stack<ir::AllocaInstruction*> m_AllocaBuffer;
 

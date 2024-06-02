@@ -348,6 +348,10 @@ std::string IREmitter::getTypeString(const Type* type) {
 
     if (const auto* structType = dynamic_cast<const StructType*>(type)) {
         std::string structName = structType->GetName();
+        if (m_StructNames.contains(structName)) {
+            return structName;
+        }
+        m_StructNames.insert(structName);
 
         std::string result = structName + "{";
         for (const Type* type : structType->GetElementTypes()) {

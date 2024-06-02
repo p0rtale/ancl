@@ -74,17 +74,21 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    anclDriver.RunSemanticPass();
-    anclDriver.GenerateAnclIR();
+    try {
+        anclDriver.RunSemanticPass();
+        anclDriver.GenerateAnclIR();
 
-    anclDriver.OptimizeIR();
+        anclDriver.OptimizeIR();
 
-    anclDriver.GenerateMachineIR();
-    anclDriver.RunInstructionSelection();
-    anclDriver.AllocateRegisters();
+        anclDriver.GenerateMachineIR();
+        anclDriver.RunInstructionSelection();
+        anclDriver.AllocateRegisters();
 
-    anclDriver.Finalize();
-    anclDriver.EmitAssembler();
+        anclDriver.Finalize();
+        anclDriver.EmitAssembler();
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << '\n';
+    }
 
     return EXIT_SUCCESS;
 }

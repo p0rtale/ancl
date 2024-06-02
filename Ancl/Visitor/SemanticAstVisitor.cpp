@@ -1435,7 +1435,8 @@ void SemanticAstVisitor::Visit(InitializerList& initList) {
 
     // TODO: ...
     ANCL_CRITICAL("Initializer lists are not supported yet :(");
-    exit(EXIT_FAILURE);
+    throw std::runtime_error("Not implemented error");
+    // exit(EXIT_FAILURE);
 }
 
 void SemanticAstVisitor::Visit(IntExpression& intExpr) {
@@ -1726,10 +1727,11 @@ bool SemanticAstVisitor::checkArrayInitialization(QualType arrayQualType, Expres
 
     // TODO: ...
     ANCL_CRITICAL("Initializer lists are not supported yet :(");
-    exit(EXIT_FAILURE);
+    throw std::runtime_error("Not implemented error");
+    // exit(EXIT_FAILURE);
 
-    printSemanticError("array initializer must be an initializer list or string literal",
-                       initExpr->GetLocation());
+    // printSemanticError("array initializer must be an initializer list or string literal",
+    //                    initExpr->GetLocation());
 
     return true;
 }

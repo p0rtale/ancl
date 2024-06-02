@@ -231,7 +231,8 @@ private:
 
         // TODO: Handle error
         m_Status = Status::kError;
-        exit(EXIT_FAILURE);
+        throw std::runtime_error("Semantic error");
+        // exit(EXIT_FAILURE);
     }
 
 private:

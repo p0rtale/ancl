@@ -50,7 +50,7 @@ public:
                               fieldDecl.GetName()),
                   fieldDecl.GetLocation().ToString());
 
-        acceptQualType(fieldDecl.GetType(), "Type");
+        // acceptQualType(fieldDecl.GetType(), "Type");
     }
 
     void Visit(FunctionDeclaration& funcDecl) override {

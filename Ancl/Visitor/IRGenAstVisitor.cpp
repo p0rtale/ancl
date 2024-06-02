@@ -215,7 +215,8 @@ void IRGenAstVisitor::Visit(VariableDeclaration& varDecl) {
         if (auto* structType = dynamic_cast<ir::StructType*>(varIRType)) {
             // TODO: memcpy for init list and init struct (memset for zero init)
             ANCL_CRITICAL("Struct/Union initialization is not implemented :(");
-            exit(EXIT_FAILURE);
+            throw std::runtime_error("Not implemented error");
+            // exit(EXIT_FAILURE);
         } else if (auto* arrayType = dynamic_cast<ir::ArrayType*>(varIRType)) {
             if (auto* stringExpr = dynamic_cast<StringExpression*>(init)) {
                 std::string labelName = std::format(".L__const.{}.{}",
@@ -1147,6 +1148,22 @@ void IRGenAstVisitor::Visit(RecordType& recordType) {
     std::vector<ir::Type*> elementTypes;
 
     RecordDeclaration* decl = recordType.GetDeclaration();
+    if (m_StructTypesMap.contains(decl)) {
+        m_IRType = m_StructTypesMap[decl];
+        return;
+    }
+
+    auto* structIRType = m_IRProgram.CreateType<ir::StructType>(m_IRProgram, elementTypes);
+    m_StructTypesMap[decl] = structIRType;
+
+    static uint64_t counter = 0;
+    std::string structIRName = decl->GetName();
+    if (counter > 0) {
+        structIRName += "." + std::to_string(counter);
+    }
+    ++counter;
+    structIRType->SetName(structIRName);
+
     std::vector<FieldDeclaration*> fields = decl->GetFields();
 
     elementTypes.reserve(fields.size());
@@ -1156,7 +1173,8 @@ void IRGenAstVisitor::Visit(RecordType& recordType) {
     }
 
     if (decl->IsStruct()) {
-        m_IRType = ir::StructType::Create(elementTypes);
+        structIRType->SetElementTypes(elementTypes);
+        m_IRType = structIRType;
         return;
     }
 
@@ -1190,7 +1208,8 @@ void IRGenAstVisitor::Visit(RecordType& recordType) {
         unionElemTypes.push_back(restBytesType);
     }
 
-    m_IRType = ir::StructType::Create(unionElemTypes);
+    structIRType->SetElementTypes(unionElemTypes);
+    m_IRType = structIRType;
 }
 
 void IRGenAstVisitor::Visit(TypedefType& typedefType) {
